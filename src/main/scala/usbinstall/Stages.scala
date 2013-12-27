@@ -1,6 +1,7 @@
 package usbinstall
 
 import org.controlsfx.dialog.Dialogs
+import scala.language.postfixOps
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.geometry.{Insets, Pos}
@@ -9,6 +10,7 @@ import scalafx.scene.control.Button
 import scalafx.scene.layout.{
   ColumnConstraints,
   GridPane,
+  Priority,
   RowConstraints,
   VBox
 }
@@ -43,6 +45,7 @@ object Stages {
   }
 
   def stepChange(pane: StepPane) = new GridPane {
+    maxHeight = 30
     rowConstraints.add(new RowConstraints(30))
     val columnInfo = new ColumnConstraints()
     columnInfo.setPercentWidth(50)
@@ -57,7 +60,7 @@ object Stages {
         alignmentInParent = Pos.BASELINE_CENTER
       }
       GridPane.setConstraints(button, 0, 0)
-      /* Note: those subscriptions on tied objects do not need to be cancelled
+      /* Note: subscriptions on tied objects do not need to be cancelled
        * for parent stage to be GCed. */
       previous.disabled.onChange { (_, _, disabled) =>
         button.disable = disabled
@@ -77,7 +80,7 @@ object Stages {
         alignmentInParent = Pos.BASELINE_CENTER
       }
       GridPane.setConstraints(button, 1, 0)
-      /* Note: those subscriptions on tied objects do not need to be cancelled
+      /* Note: subscriptions on tied objects do not need to be cancelled
        * for parent stage to be GCed. */
       next.disabled.onChange { (_, _, disabled) =>
         button.disable = disabled
@@ -97,11 +100,19 @@ object Stages {
       minHeight = 400
 
       scene = new Scene {
-        root = new VBox {
+        root = new GridPane {
           padding = Insets(5)
-          spacing = 5
-          alignment = Pos.CENTER
-          content = List(pane, stepChange(pane))
+          alignment = Pos.TOP_CENTER
+
+          val stepPane = stepChange(pane)
+
+          rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
+          rowConstraints.add(new RowConstraints(height = 20, prefHeight = 30, maxHeight = 40))
+
+          GridPane.setConstraints(pane, 0, 0)
+          GridPane.setConstraints(stepPane, 0, 1)
+
+          children ++= List(pane, stepPane)
         }
       }
 
@@ -118,5 +129,8 @@ object Stages {
 
   def choosePartitions: JFXApp.PrimaryStage =
     step("Choose partitions", Panes.choosePartitions)
+
+  def install: JFXApp.PrimaryStage =
+    step("Install", Panes.install)
 
 }

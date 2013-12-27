@@ -60,6 +60,20 @@ class OSSettings(
   val iso: XProperty[Option[File]] =
     XProperty(None)
 
+  def enabled = installStatus() != OSInstallStatus.NotInstalled
+
+  def installable = enabled && partition().isDefined &&
+    (!isoPattern.isDefined || iso().isDefined)
+
+  def formatable = (installStatus() == OSInstallStatus.Install) &&
+    format() && installable
+
+  def syslinuxFile = partitionFormat match {
+    case PartitionFormat.ext2 => "extlinux.conf"
+    case PartitionFormat.ntfs => "syslinux.cfg"
+    case PartitionFormat.fat32 => "syslinux.cfg"
+  }
+
   override def toString =
     s"OSSettings(kind=$kind, label=$label, format=$format, installStatus=$installStatus, partition=${partition().map(_.dev)})"
 

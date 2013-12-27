@@ -27,7 +27,7 @@ import scalafx.event.subscriptions.Subscription
 import usbinstall.os.{OSInstallStatus, OSSettings}
 import usbinstall.device.{DeviceInfo, PartitionInfo}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.{RichOptional, Utils}
+import usbinstall.util.{LogArea, RichOptional, Utils}
 
 
 object Panes {
@@ -462,15 +462,14 @@ object Panes {
       })
 
       override val next = new NextButton(this, {
-        println(Settings.core.oses)
+        USBInstall.stage = Stages.install
         true
       }) {
         disable.value = true
 
         private def updateDisable {
           disable.value = Settings.core.oses.exists { settings =>
-            ((settings.installStatus() != OSInstallStatus.NotInstalled) && !settings.partition().isDefined) ||
-            (settings.isoPattern.isDefined && !settings.iso().isDefined)
+            settings.enabled && !settings.installable
           }
         }
 
@@ -478,9 +477,44 @@ object Panes {
          * this pane to be GCed. */
         Settings.core.oses foreach { settings =>
           subscriptions ::= settings.installStatus.property.onChange(updateDisable)
+          subscriptions ::= settings.partition.property.onChange(updateDisable)
           subscriptions ::= settings.iso.property.onChange(updateDisable)
         }
       }
+    }
+  }
+
+
+  def install = {
+    println(Settings.core.oses)
+
+    val stepsArea = new LogArea
+
+    val activityArea = new LogArea
+
+    /* Note: for correct behaviour, actions on UI elements must be done inside
+     * the JavaFX UI thread.
+     */
+    import usbinstall.util.JFXExecutor.executor
+    scala.concurrent.Future[Unit] {
+      println("Test")
+      (1 to 40) foreach { i =>
+        activityArea.appendLine(s"Test $i")
+        stepsArea.prependLine(s"Test $i")
+      }
+    }
+
+    new HBox with StepPane {
+      padding = Insets(5)
+      spacing = 5
+      alignment = Pos.TOP_CENTER
+      maxHeight = Double.MaxValue
+      content = List(stepsArea, activityArea)
+
+      override val previous = NoButton
+
+      override val next = NoButton
+
     }
   }
 
