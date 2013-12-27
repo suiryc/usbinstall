@@ -5,7 +5,19 @@ import scala.util.matching.Regex
 import scalafx.beans.property.{ObjectProperty, ReadOnlyObjectProperty}
 
 
-object OSInstallStatus extends Enumeration {
+object OSKind extends XEnumeration {
+  val Win7_8 = Value("Win7&8")
+  val GParted = Value
+  val syslinux = Value
+  val GPartedLive = Value
+  val SystemRescueCD = Value
+  val Ubuntu = Value
+  val Redhat = Value
+  val ArchLinux = Value
+  val Kali = Value
+}
+
+object OSInstallStatus extends XEnumeration {
   val NotInstalled = Value
   val Installed = Value
   val Install = Value
@@ -16,14 +28,14 @@ class SyslinuxEntry(
   val label: String
 )
 
-object PartitionFormat extends Enumeration {
+object PartitionFormat extends XEnumeration {
   val ext2 = Value
   val fat32 = Value
   val ntfs = Value
 }
 
 class OSSettings(
-  val kind: String,
+  val kind: OSKind.Value,
   val label: String,
   val size: Long,
   val isoPattern: Option[Regex],

@@ -40,15 +40,15 @@ class Settings(config: Config) extends BaseSettings(config) {
     val kind = config.getString("kind")
     val label = option(config, "label") getOrElse(kind)
     new OSSettings(
-      kind,
+      OSKind(kind),
       label,
       Utils.fromHumanReadableSize(config.getString("size")),
       option(config, "iso.pattern") map { _.r },
       config.getString("partition.label"),
-      PartitionFormat.withName(config.getString("partition.format").toLowerCase()),
+      PartitionFormat(config.getString("partition.format")),
       option(config, "syslinux.label"),
       option(config, "syslinux.version") map { _.toInt },
-      option(config, "status") map { OSInstallStatus.withName(_) } getOrElse(OSInstallStatus.Install)
+      option(config, "status") map { OSInstallStatus(_) } getOrElse(OSInstallStatus.Install)
     )
   }
 
