@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.util
 
 import dev.scalascript.sys.Command
 import java.io.File

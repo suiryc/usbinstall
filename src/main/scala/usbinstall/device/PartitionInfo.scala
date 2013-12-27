@@ -1,8 +1,10 @@
-package usbinstall
+package usbinstall.device
 
 import java.io.File
 import java.nio.file.Paths
 import scala.io.Source
+import usbinstall.Stages
+import usbinstall.util.Utils
 
 
 class PartitionInfo(val device: DeviceInfo, val partNumber: Int) {

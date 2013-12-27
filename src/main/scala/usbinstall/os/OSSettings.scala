@@ -1,8 +1,9 @@
-package usbinstall
+package usbinstall.os
 
 import java.io.File
 import scala.util.matching.Regex
-import scalafx.beans.property.{ObjectProperty, ReadOnlyObjectProperty}
+import usbinstall.util.{XEnumeration, XProperty}
+import usbinstall.device.PartitionInfo
 
 
 object OSKind extends XEnumeration {

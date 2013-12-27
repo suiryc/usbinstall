@@ -1,4 +1,6 @@
-package usbinstall
+package usbinstall.util
+
+import scala.language.implicitConversions
 
 
 class RichOptional[T](val underlying: T) extends AnyVal {

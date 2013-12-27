@@ -1,9 +1,9 @@
-package usbinstall
+package usbinstall.device
 
-import dev.scalascript.io.{NameFilter, PathFinder}
 import java.io.File
 import java.nio.file.Paths
 import scala.io.Source
+import dev.scalascript.io.{NameFilter, PathFinder}
 
 
 class DeviceInfo(val block: File) {

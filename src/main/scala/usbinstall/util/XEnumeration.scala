@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.util
 
 import scala.language.postfixOps
 

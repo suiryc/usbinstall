@@ -24,6 +24,10 @@ import scalafx.scene.layout.{
   VBox
 }
 import scalafx.event.subscriptions.Subscription
+import usbinstall.os.{OSInstallStatus, OSSettings}
+import usbinstall.device.{DeviceInfo, PartitionInfo}
+import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.util.{RichOptional, Utils}
 
 
 object Panes {
@@ -150,13 +154,13 @@ object Panes {
         selectionModel().selectionMode = SelectionMode.SINGLE
         /* Note: we need to reset the setting, because assigning the same value
          * is not seen as a value change. */
-        InstallSettings.device = None
+        InstallSettings.device() = None
       }
 
       deviceList.selectionModel().selectedItem.onChange { (_, _, newValue) =>
         devices.get(newValue) match {
           case oDevice @ Some(device) =>
-            InstallSettings.device = oDevice
+            InstallSettings.device() = oDevice
             Settings.core.oses foreach { os =>
               if (os.partition().exists(_.device != device))
                 os.partition() = None
@@ -192,7 +196,7 @@ object Panes {
       override val previous = NoButton
 
       override val next = new NextButton(this, {
-        InstallSettings.device map { device =>
+        InstallSettings.device() map { device =>
           USBInstall.stage = Stages.choosePartitions
           //System.gc()
           true
@@ -202,7 +206,7 @@ object Panes {
 
         /* Note: this subscription on external object needs to be cancelled for
          * this pane to be GCed. */
-        subscriptions ::= InstallSettings.deviceProperty.onChange { (_, _, device) =>
+        subscriptions ::= InstallSettings.device.property.onChange { (_, _, device) =>
           Option(device) match {
             case Some(_) =>
               disable.value = false
@@ -219,7 +223,7 @@ object Panes {
 
   def choosePartitions = {
     var subscriptions_extra: List[Subscription] = Nil
-    val partitions = InstallSettings.device.get.partitions.toList.sortBy(_.partNumber)
+    val partitions = InstallSettings.device().get.partitions.toList.sortBy(_.partNumber)
 
     def osRow(settings: OSSettings, idx: Int): List[Node] = {
       val osLabel = new Label {

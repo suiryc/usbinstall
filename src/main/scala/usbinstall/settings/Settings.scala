@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.settings
 
 import com.typesafe.config.{Config, ConfigFactory}
 import dev.scalascript.io.{DirectoryFileFilter, PathFinder, RichFile}
@@ -7,6 +7,8 @@ import dev.scalascript.io.PathFinder._
 import java.io.File
 import scala.collection.JavaConversions._
 import scala.language.postfixOps
+import usbinstall.util.Utils
+import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
 
 
 object Settings {

@@ -1,6 +1,5 @@
-package usbinstall
+package usbinstall.util
 
-import scala.language.implicitConversions
 import scalafx.beans.property.{ObjectProperty, ReadOnlyObjectProperty}
 
 
