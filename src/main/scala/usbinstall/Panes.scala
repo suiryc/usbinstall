@@ -204,7 +204,7 @@ object Panes {
       }) {
         disable.value = true
 
-        /* Note: this subscription on external object needs to be cancelled for
+        /* Note: subscriptions on external object need to be cancelled for
          * this pane to be GCed. */
         subscriptions ::= InstallSettings.device.property.onChange { (_, _, device) =>
           Option(device) match {
@@ -241,7 +241,7 @@ object Panes {
       osFormat.selected.onChange { (_, _, selected) =>
         settings.format() = selected
       }
-      /* Note: this subscription on external object needs to be cancelled for
+      /* Note: subscriptions on external object need to be cancelled for
        * this pane to be GCed. */
       subscriptions_extra ::= settings.format.property.onChange { (_, _, newValue) =>
         osFormat.selected = newValue
@@ -277,7 +277,7 @@ object Panes {
         osFormat.disable = (v != OSInstallStatus.Install)
       }
 
-      /* Note: this subscription on external object needs to be cancelled for
+      /* Note: subscriptions on external object need to be cancelled for
        * this pane to be GCed. */
       subscriptions_extra ::= settings.installStatus.property.onChange { (_, _, newValue) =>
         installStatusToUI(newValue)
@@ -307,7 +307,7 @@ object Panes {
           }
         }
       }
-      /* Note: this subscription on external object needs to be cancelled for
+      /* Note: subscriptions on external object need to be cancelled for
        * this pane to be GCed. */
       subscriptions_extra ::= settings.partition.property.onChange { (_, _, newValue) =>
         settings.partition().fold(osPartition.selectionModel().select(-1)) { partition =>
@@ -463,8 +463,24 @@ object Panes {
 
       override val next = new NextButton(this, {
         println(Settings.core.oses)
-        false
-      })
+        true
+      }) {
+        disable.value = true
+
+        private def updateDisable {
+          disable.value = Settings.core.oses.exists { settings =>
+            ((settings.installStatus() != OSInstallStatus.NotInstalled) && !settings.partition().isDefined) ||
+            (settings.isoPattern.isDefined && !settings.iso().isDefined)
+          }
+        }
+
+        /* Note: subscriptions on external object need to be cancelled for
+         * this pane to be GCed. */
+        Settings.core.oses foreach { settings =>
+          subscriptions ::= settings.installStatus.property.onChange(updateDisable)
+          subscriptions ::= settings.iso.property.onChange(updateDisable)
+        }
+      }
     }
   }
 
