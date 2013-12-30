@@ -9,6 +9,7 @@ import scalafx.application.Platform
 /* See:
  *  - https://groups.google.com/forum/#!msg/scalafx-users/JxXXNTKC4Kk/riJCqyaEG1cJ
  *  - https://gist.github.com/saberduck/5150719
+ *  - https://gist.github.com/viktorklang/2422443
  */
 
 object JFXExecutor {

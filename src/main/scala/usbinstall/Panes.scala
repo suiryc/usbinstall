@@ -27,7 +27,7 @@ import scalafx.event.subscriptions.Subscription
 import usbinstall.os.{OSInstallStatus, OSSettings}
 import usbinstall.device.{DeviceInfo, PartitionInfo}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.{LogArea, RichOptional, Utils}
+import usbinstall.util.{LogArea, RichOptional, Util}
 
 
 object Panes {
@@ -169,7 +169,7 @@ object Panes {
             modelValue.text = device.model
             device.size match {
               case Right(size) =>
-                sizeValue.text = Utils.toHumanReadableSize(size)
+                sizeValue.text = Util.toHumanReadableSize(size)
 
               case Left(e) =>
                 sizeValue.text = "<Unknown>"
@@ -223,7 +223,10 @@ object Panes {
 
   def choosePartitions = {
     var subscriptions_extra: List[Subscription] = Nil
-    val partitions = InstallSettings.device().get.partitions.toList.sortBy(_.partNumber)
+    val partitions = InstallSettings.device().get.partitions.toList filter { partition =>
+      val size = partition.size
+      (size == 0) || (size > 1 * 1024 * 1024)
+    } sortBy(_.partNumber)
 
     def osRow(settings: OSSettings, idx: Int): List[Node] = {
       val osLabel = new Label {
@@ -421,7 +424,7 @@ object Panes {
 
       partitions.foldLeft(0) { (idx, partition) =>
         val label = new Label {
-          text = s"${partition.dev.toString}: ${Utils.toHumanReadableSize(partition.size)}"
+          text = s"${partition.dev.toString}: ${Util.toHumanReadableSize(partition.size)}"
         }
         GridPane.setConstraints(label, 0, idx)
         children += label

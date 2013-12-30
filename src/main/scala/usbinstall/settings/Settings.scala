@@ -7,7 +7,7 @@ import dev.scalascript.io.PathFinder._
 import java.io.File
 import scala.collection.JavaConversions._
 import scala.language.postfixOps
-import usbinstall.util.Utils
+import usbinstall.util.Util
 import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
 
 
@@ -44,7 +44,7 @@ class Settings(config: Config) extends BaseSettings(config) {
     new OSSettings(
       OSKind(kind),
       label,
-      Utils.fromHumanReadableSize(config.getString("size")),
+      Util.fromHumanReadableSize(config.getString("size")),
       option(config, "iso.pattern") map { _.r },
       config.getString("partition.label"),
       PartitionFormat(config.getString("partition.format")),
