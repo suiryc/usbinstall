@@ -1,6 +1,7 @@
 package usbinstall
 
 import dev.scalascript.io.{PathFinder, AllPassFileFilter}
+import org.slf4j.LoggerFactory
 import scalafx.Includes._
 import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
 import scalafx.collections.ObservableBuffer
@@ -24,8 +25,8 @@ import scalafx.scene.layout.{
   VBox
 }
 import scalafx.event.subscriptions.Subscription
-import usbinstall.os.{OSInstallStatus, OSSettings}
 import usbinstall.device.{DeviceInfo, PartitionInfo}
+import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.{LogArea, RichOptional, Util}
 
@@ -33,6 +34,8 @@ import usbinstall.util.{LogArea, RichOptional, Util}
 object Panes {
 
   import Stages._
+
+  protected lazy val logger = LoggerFactory getLogger getClass
 
   abstract class AbstractStepButton(val visible: Boolean, xdisabled: Boolean, val label: String) {
     def armed: Unit
@@ -222,6 +225,10 @@ object Panes {
 
 
   def choosePartitions = {
+    /* XXX - programmatically add appenders ? */
+    logger.debug("Test debug")
+    logger.info("Test info")
+
     var subscriptions_extra: List[Subscription] = Nil
     val partitions = InstallSettings.device().get.partitions.toList filter { partition =>
       val size = partition.size
@@ -504,6 +511,21 @@ object Panes {
       (1 to 40) foreach { i =>
         activityArea.appendLine(s"Test $i")
         stepsArea.prependLine(s"Test $i")
+      }
+    }
+
+    /* XXX - access lazy vals (mount points) */
+    /* XXX - loop on oses to prepare/... */
+    /* XXX - catch issues */
+    /* XXX - how to proxy log messages (steps and info) from os install to GUI ? */
+    Settings.core.oses foreach { settings =>
+      if (settings.kind == OSKind.GPartedLive) {
+        val os = OSInstall(settings)
+
+        OSInstall.prepare(os)
+        OSInstall.preInstall(os)
+        OSInstall.install(os)
+        OSInstall.postInstall(os)
       }
     }
 

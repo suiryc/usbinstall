@@ -8,7 +8,6 @@ import usbinstall.device.PartitionInfo
 
 object OSKind extends XEnumeration {
   val Win7_8 = Value("Win7&8")
-  val GParted = Value
   val syslinux = Value
   val GPartedLive = Value
   val SystemRescueCD = Value
