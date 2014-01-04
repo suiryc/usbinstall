@@ -225,10 +225,6 @@ object Panes {
 
 
   def choosePartitions = {
-    /* XXX - programmatically add appenders ? */
-    logger.debug("Test debug")
-    logger.info("Test info")
-
     var subscriptions_extra: List[Subscription] = Nil
     val partitions = InstallSettings.device().get.partitions.toList filter { partition =>
       val size = partition.size

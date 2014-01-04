@@ -7,16 +7,9 @@
     </encoder>
   </appender>
 
-  <appender name="PROXY" class="usbinstall.util.ProxyAppender">
-  </appender>
-
   <!-- The level of root is set to DEBUG by default -->
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />
   </root>
-
-  <logger name="usbinstall">
-    <appender-ref ref="PROXY" />
-  </logger>
 
 </configuration>
