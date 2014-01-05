@@ -1,12 +1,13 @@
 package usbinstall.settings
 
 import com.typesafe.config.{Config, ConfigFactory}
-import dev.scalascript.io.{DirectoryFileFilter, PathFinder, RichFile}
-import dev.scalascript.io.NameFilter._
-import dev.scalascript.io.PathFinder._
 import java.io.File
 import scala.collection.JavaConversions._
 import scala.language.postfixOps
+import suiryc.scala.io.{DirectoryFileFilter, PathFinder, RichFile}
+import suiryc.scala.io.NameFilter._
+import suiryc.scala.io.PathFinder._
+import suiryc.scala.misc.Units
 import usbinstall.util.Util
 import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
 
@@ -44,7 +45,7 @@ class Settings(config: Config) extends BaseSettings(config) {
     new OSSettings(
       OSKind(kind),
       label,
-      Util.fromHumanReadableSize(config.getString("size")),
+      Units.storage.fromHumanReadable(config.getString("size")),
       option(config, "iso.pattern") map { _.r },
       config.getString("partition.label"),
       PartitionFormat(config.getString("partition.format")),

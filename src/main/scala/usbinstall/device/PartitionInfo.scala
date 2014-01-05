@@ -3,10 +3,11 @@ package usbinstall.device
 import java.io.File
 import java.nio.file.Paths
 import scala.io.Source
+import suiryc.scala.sys.Command
 import usbinstall.Stages
-import usbinstall.util.Util
 
 
+/* XXX - move to scala-misc, suiryc.scala.sys.linux ? */
 class PartitionInfo(val device: DeviceInfo, val partNumber: Int) {
 
   val dev = new File(device.dev.getParentFile(), device.dev.getName() + partNumber)
@@ -24,7 +25,7 @@ object PartitionInfo {
 
   def size(dev: File) =
     try {
-      val (result, stdout, stderr) = Util.doCmd(Seq("blockdev", "--getsz", dev.toString))
+      val (result, stdout, stderr) = Command.execute(Seq("blockdev", "--getsz", dev.toString))
       if (result == 0) {
         Right(stdout.trim.toLong * 512)
       }
@@ -39,7 +40,7 @@ object PartitionInfo {
 
   def uuid(dev: File) =
     try {
-      val (result, stdout, stderr) = Util.doCmd(Seq("blkid", "-o", "value", "-s", "UUID", dev.toString))
+      val (result, stdout, stderr) = Command.execute(Seq("blkid", "-o", "value", "-s", "UUID", dev.toString))
       if ((result == 0) && (stdout.trim() != "")) {
         Right(stdout.trim)
       }
@@ -63,7 +64,7 @@ object PartitionInfo {
     }
 
   def umount(partition: PartitionInfo) {
-    val (result, stdout, stderr) = Util.doCmd(Seq("umount", partition.dev.toString()))
+    val (result, stdout, stderr) = Command.execute(Seq("umount", partition.dev.toString()))
 
     if (result != 0) {
       Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)

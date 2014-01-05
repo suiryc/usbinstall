@@ -3,9 +3,10 @@ package usbinstall.device
 import java.io.File
 import java.nio.file.Paths
 import scala.io.Source
-import dev.scalascript.io.{NameFilter, PathFinder}
+import suiryc.scala.io.{NameFilter, PathFinder}
 
 
+/* XXX - move to scala-misc, suiryc.scala.sys.linux ? */
 class DeviceInfo(val block: File) {
   import DeviceInfo._
   import PathFinder._
@@ -39,16 +40,20 @@ object DeviceInfo {
 
     Option(
       if (file.exists()) 
-        Source.fromFile(file).getLines().map(_.trim()).mkString(" / ")
+        Source.fromFile(file).getLines() map { line =>
+          line.trim()
+        } filterNot { line =>
+          line == ""
+        } mkString(" / ")
       else null
     )
   }
 
   def deviceVendor(block: File) =
-    devicePropertyContent(block, "device", "vendor") getOrElse "<Unknown>"
+    devicePropertyContent(block, "device", "vendor") getOrElse "<unknown>"
 
   def deviceModel(block: File) =
-    devicePropertyContent(block, "device", "model") getOrElse "<Unknown>"
+    devicePropertyContent(block, "device", "model") getOrElse "<unknown>"
 
   private def ueventProps(block: File) = {
     val uevent = Paths.get(block.toString(), "device", "uevent").toFile()

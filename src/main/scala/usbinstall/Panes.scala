@@ -1,6 +1,5 @@
 package usbinstall
 
-import dev.scalascript.io.{PathFinder, AllPassFileFilter}
 import org.slf4j.LoggerFactory
 import scalafx.Includes._
 import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
@@ -25,10 +24,12 @@ import scalafx.scene.layout.{
   VBox
 }
 import scalafx.event.subscriptions.Subscription
+import suiryc.scala.io.{PathFinder, AllPassFileFilter}
+import suiryc.scala.misc.{RichOptional, Units}
 import usbinstall.device.{DeviceInfo, PartitionInfo}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.{LogArea, RichOptional, Util}
+import usbinstall.util.{LogArea, Util}
 
 
 object Panes {
@@ -172,10 +173,10 @@ object Panes {
             modelValue.text = device.model
             device.size match {
               case Right(size) =>
-                sizeValue.text = Util.toHumanReadableSize(size)
+                sizeValue.text = Units.storage.toHumanReadable(size)
 
               case Left(e) =>
-                sizeValue.text = "<Unknown>"
+                sizeValue.text = "<unknown>"
                 errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
                 /*deviceList.selectionModel().select(-1)
                 resetDeviceInfo*/
@@ -427,7 +428,7 @@ object Panes {
 
       partitions.foldLeft(0) { (idx, partition) =>
         val label = new Label {
-          text = s"${partition.dev.toString}: ${Util.toHumanReadableSize(partition.size)}"
+          text = s"${partition.dev.toString}: ${Units.storage.toHumanReadable(partition.size)}"
         }
         GridPane.setConstraints(label, 0, idx)
         children += label

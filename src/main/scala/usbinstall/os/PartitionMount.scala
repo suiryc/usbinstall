@@ -1,8 +1,8 @@
 package usbinstall.os
 
 import java.io.File
+import suiryc.scala.sys.Command
 import usbinstall.Stages
-import usbinstall.util.Util
 
 
 class PartitionMount(
@@ -17,7 +17,7 @@ class PartitionMount(
   def mounted = _mounted
 
   def mount = if (!mounted) {
-    val (result, stdout, stderr) = Util.doCmd(Seq("mount") ++ mountOptions ++ Seq(from.toString(), to.toString()))
+    val (result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString(), to.toString()))
 
     if (result != 0) {
       Stages.errorStage("Cannot mount partition", Some(s"From $from to $to"), stderr)
@@ -28,10 +28,10 @@ class PartitionMount(
   }
 
   def umount = if (mounted) {
-    val (result, stdout, stderr) = Util.doCmd(Seq("umount", to.toString()))
+    val (result, stdout, stderr) = Command.execute(Seq("umount", to.toString()))
 
     if (result != 0) {
-      val (result, stdout, stderr) = Util.doCmd(Seq("umount", "-lf", to.toString()))
+      val (result, stdout, stderr) = Command.execute(Seq("umount", "-lf", to.toString()))
 
       if (result != 0) {
         Stages.errorStage("Cannot unmount partition", Some(to.toString()), stderr)

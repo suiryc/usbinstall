@@ -9,12 +9,11 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <encoding>UTF-8</encoding>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
 
     <scala.version>2.10</scala.version>
-    <scala-library.version>${scala.version}.4</scala-library.version>
+    <scala-library.version>${scala.version}.3</scala-library.version>
     <slf4j.version>1.7.5</slf4j.version>
     <logback.version>1.0.13</logback.version>
     <config.version>1.0.2</config.version>
@@ -61,9 +60,9 @@
       <version>${controlsfx.version}</version>
     </dependency>
     <dependency>
-      <groupId>dev</groupId>
-      <artifactId>dev-scalascript</artifactId>
-      <version>0.1</version>
+      <groupId>suiryc</groupId>
+      <artifactId>scala-misc_${scala.version}</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

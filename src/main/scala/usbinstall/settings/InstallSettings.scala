@@ -2,13 +2,13 @@ package usbinstall.settings
 
 import java.nio.file.Files
 import usbinstall.device.DeviceInfo
-import usbinstall.util.XProperty
+import usbinstall.util.PropertyEx
 
 
 object InstallSettings {
 
-  val device: XProperty[Option[DeviceInfo]] =
-    new XProperty(None)
+  val device: PropertyEx[Option[DeviceInfo]] =
+    new PropertyEx(None)
 
   lazy val pathMountISO = {
     val file = Files.createTempDirectory("usbinstall.iso-").toFile()

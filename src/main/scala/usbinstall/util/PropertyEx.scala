@@ -3,7 +3,7 @@ package usbinstall.util
 import scalafx.beans.property.{ObjectProperty, ReadOnlyObjectProperty}
 
 
-class XProperty[T] {
+class PropertyEx[T] {
 
   private var _value: T = _
   def apply() = _value
@@ -24,20 +24,20 @@ class XProperty[T] {
 
 }
 
-object XProperty {
+object PropertyEx {
 
   def apply[T](v: T) =
-    new XProperty[T](v)
+    new PropertyEx[T](v)
 
   /* Note: defining an implicit conversion from Any may be dangerous:
-   * val v1 = XProperty(Some(true))
-   * val v2 = XProperty(Some(false))
+   * val v1 = PropertyEx(true)
+   * val v2 = PropertyEx(false)
    * v1() = v2
-   *  compiles, but creates a temporary XProperty[Xproperty[Option[Boolean]]]
+   *  compiles, but creates a temporary PropertyEx[PropertyEx[Boolean]]
    *  from 'v1' to assign v2
    *
   implicit def anyToProp[T](v: T) =
-    new XProperty[T](v)
+    new PropertyEx[T](v)
    */
 
 }

@@ -14,7 +14,7 @@ import scalafx.scene.layout.{
   RowConstraints,
   VBox
 }
-import usbinstall.util.RichOptional
+import suiryc.scala.misc.RichOptional
 
 
 object Stages {

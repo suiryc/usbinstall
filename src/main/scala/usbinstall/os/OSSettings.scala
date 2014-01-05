@@ -2,11 +2,12 @@ package usbinstall.os
 
 import java.io.File
 import scala.util.matching.Regex
-import usbinstall.util.{XEnumeration, XProperty}
+import suiryc.scala.misc.EnumerationEx
 import usbinstall.device.PartitionInfo
+import usbinstall.util.PropertyEx
 
 
-object OSKind extends XEnumeration {
+object OSKind extends EnumerationEx {
   val Win7_8 = Value("Win7&8")
   val syslinux = Value
   val GPartedLive = Value
@@ -17,7 +18,7 @@ object OSKind extends XEnumeration {
   val Kali = Value
 }
 
-object OSInstallStatus extends XEnumeration {
+object OSInstallStatus extends EnumerationEx {
   val NotInstalled = Value
   val Installed = Value
   val Install = Value
@@ -28,7 +29,7 @@ class SyslinuxEntry(
   val label: String
 )
 
-object PartitionFormat extends XEnumeration {
+object PartitionFormat extends EnumerationEx {
   val ext2 = Value
   val fat32 = Value
   val ntfs = Value
@@ -45,19 +46,18 @@ class OSSettings(
   val syslinuxVersion: Option[Int],
   val xInstallStatus: OSInstallStatus.Value
 ) {
-  import XProperty._
 
-  val format: XProperty[Boolean] =
-    XProperty(true)
+  val format: PropertyEx[Boolean] =
+    PropertyEx(true)
 
-  val installStatus: XProperty[OSInstallStatus.Value] =
-    XProperty(xInstallStatus)
+  val installStatus: PropertyEx[OSInstallStatus.Value] =
+    PropertyEx(xInstallStatus)
 
-  val partition: XProperty[Option[PartitionInfo]] =
-    XProperty(None)
+  val partition: PropertyEx[Option[PartitionInfo]] =
+    PropertyEx(None)
 
-  val iso: XProperty[Option[File]] =
-    XProperty(None)
+  val iso: PropertyEx[Option[File]] =
+    PropertyEx(None)
 
   def enabled = installStatus() != OSInstallStatus.NotInstalled
 
