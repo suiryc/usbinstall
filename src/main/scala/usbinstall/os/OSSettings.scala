@@ -3,7 +3,7 @@ package usbinstall.os
 import java.io.File
 import scala.util.matching.Regex
 import suiryc.scala.misc.EnumerationEx
-import usbinstall.device.PartitionInfo
+import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.util.PropertyEx
 
 
@@ -53,7 +53,7 @@ class OSSettings(
   val installStatus: PropertyEx[OSInstallStatus.Value] =
     PropertyEx(xInstallStatus)
 
-  val partition: PropertyEx[Option[PartitionInfo]] =
+  val partition: PropertyEx[Option[DevicePartition]] =
     PropertyEx(None)
 
   val iso: PropertyEx[Option[File]] =

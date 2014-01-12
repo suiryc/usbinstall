@@ -61,7 +61,12 @@
     </dependency>
     <dependency>
       <groupId>suiryc</groupId>
-      <artifactId>scala-misc_${scala.version}</artifactId>
+      <artifactId>suiryc-scala-core_${scala.version}</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>suiryc</groupId>
+      <artifactId>suiryc-scala-log_${scala.version}</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
   </dependencies>

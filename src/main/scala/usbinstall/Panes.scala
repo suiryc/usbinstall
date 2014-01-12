@@ -1,6 +1,6 @@
 package usbinstall
 
-import org.slf4j.LoggerFactory
+import grizzled.slf4j.Logging
 import scalafx.Includes._
 import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
 import scalafx.collections.ObservableBuffer
@@ -26,17 +26,18 @@ import scalafx.scene.layout.{
 import scalafx.event.subscriptions.Subscription
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.misc.{RichOptional, Units}
-import usbinstall.device.{DeviceInfo, PartitionInfo}
+import suiryc.scala.sys.CommandResult
+import suiryc.scala.sys.linux.{Device, DevicePartition}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.{LogArea, Util}
 
 
-object Panes {
+object Panes
+  extends Logging
+{
 
   import Stages._
-
-  protected lazy val logger = LoggerFactory getLogger getClass
 
   abstract class AbstractStepButton(val visible: Boolean, xdisabled: Boolean, val label: String) {
     def armed: Unit
@@ -77,13 +78,13 @@ object Panes {
   }
 
   val devices = (PathFinder("/") / "sys" / "block" * AllPassFileFilter).get().map { block =>
-    DeviceInfo(block)
+    Device(block)
   }.filter { device =>
-    device.props.get("DRIVER") match {
+    device.ueventProps.get("DRIVER") match {
       case Some("sd") => true
       case _ => false
     }
-  }.toList.foldLeft(Map.empty[String, DeviceInfo]) { (devices, device) =>
+  }.toList.foldLeft(Map.empty[String, Device]) { (devices, device) =>
     devices + (device.dev.toString() -> device)
   }
 
@@ -171,7 +172,7 @@ object Panes {
             }
             vendorValue.text = device.vendor
             modelValue.text = device.model
-            device.size match {
+            device.size.either match {
               case Right(size) =>
                 sizeValue.text = Units.storage.toHumanReadable(size)
 
@@ -228,8 +229,8 @@ object Panes {
   def choosePartitions = {
     var subscriptions_extra: List[Subscription] = Nil
     val partitions = InstallSettings.device().get.partitions.toList filter { partition =>
-      val size = partition.size
-      (size == 0) || (size > 1 * 1024 * 1024)
+      val size = partition.size()
+      size > 1 * 1024 * 1024
     } sortBy(_.partNumber)
 
     def osRow(settings: OSSettings, idx: Int): List[Node] = {
@@ -410,15 +411,15 @@ object Panes {
         !partitions.isEmpty
       )
         os.partition() = Some(
-          partitions.filter(_.size >= os.size).headOption.getOrElse(
+          partitions.filter(_.size() >= os.size).headOption.getOrElse(
             /* Note: double reverse gives us the 'first' partition when more
              * than one have the same size
              */
-            partitions.reverse.sortBy(_.size).reverse.head
+            partitions.reverse.sortBy(_.size()).reverse.head
           )
         )
 
-      partitions.optional[PartitionInfo](os.partition(), (parts, part) => parts.filterNot(_ == part))
+      partitions.optional[DevicePartition](os.partition(), (parts, part) => parts.filterNot(_ == part))
     }
 
     val partitionsPane = new GridPane {
@@ -428,12 +429,12 @@ object Panes {
 
       partitions.foldLeft(0) { (idx, partition) =>
         val label = new Label {
-          text = s"${partition.dev.toString}: ${Units.storage.toHumanReadable(partition.size)}"
+          text = s"${partition.dev.toString}: ${Units.storage.toHumanReadable(partition.size())}"
         }
         GridPane.setConstraints(label, 0, idx)
         children += label
 
-        if (PartitionInfo.mounted(partition)) {
+        if (partition.mounted) {
           val button = new Button {
             text = "Unmount"
             alignmentInParent = Pos.BASELINE_CENTER
@@ -441,7 +442,13 @@ object Panes {
           GridPane.setConstraints(button, 1, idx)
           button.armed.onChange { (_, _, armed) =>
             if (!armed) {
-              PartitionInfo.umount(partition)
+              val CommandResult(result, stdout, stderr) = partition.umount
+
+              if (result != 0) {
+                error(s"Cannot unmount partition[${partition.dev}]: $stderr")
+                Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
+              }
+
               USBInstall.stage = Stages.choosePartitions
             }
           }

@@ -1,13 +1,13 @@
 package usbinstall.settings
 
 import java.nio.file.Files
-import usbinstall.device.DeviceInfo
+import suiryc.scala.sys.linux.Device
 import usbinstall.util.PropertyEx
 
 
 object InstallSettings {
 
-  val device: PropertyEx[Option[DeviceInfo]] =
+  val device: PropertyEx[Option[Device]] =
     new PropertyEx(None)
 
   lazy val pathMountISO = {
