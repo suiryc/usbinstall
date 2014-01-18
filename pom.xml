@@ -69,6 +69,11 @@
       <artifactId>suiryc-scala-log_${scala.version}</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>suiryc</groupId>
+      <artifactId>suiryc-scala-javafx_${scala.version}</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>

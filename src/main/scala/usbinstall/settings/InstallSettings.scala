@@ -1,8 +1,8 @@
 package usbinstall.settings
 
 import java.nio.file.Files
+import suiryc.scala.javafx.beans.property.PropertyEx
 import suiryc.scala.sys.linux.Device
-import usbinstall.util.PropertyEx
 
 
 object InstallSettings {

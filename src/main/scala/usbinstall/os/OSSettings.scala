@@ -2,9 +2,9 @@ package usbinstall.os
 
 import java.io.File
 import scala.util.matching.Regex
+import suiryc.scala.javafx.beans.property.PropertyEx
 import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.sys.linux.DevicePartition
-import usbinstall.util.PropertyEx
 
 
 object OSKind extends EnumerationEx {

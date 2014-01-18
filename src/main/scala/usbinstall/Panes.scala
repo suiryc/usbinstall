@@ -509,7 +509,7 @@ object Panes
     /* Note: for correct behaviour, actions on UI elements must be done inside
      * the JavaFX UI thread.
      */
-    import usbinstall.util.JFXExecutor.executor
+    import suiryc.scala.javafx.concurrent.JFXExecutor.executor
     scala.concurrent.Future[Unit] {
       println("Test")
       (1 to 40) foreach { i =>
@@ -527,7 +527,6 @@ object Panes
         val os = OSInstall(settings)
 
         OSInstall.prepare(os)
-        OSInstall.preInstall(os)
         OSInstall.install(os)
         OSInstall.postInstall(os)
       }
