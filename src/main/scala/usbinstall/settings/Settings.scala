@@ -39,6 +39,14 @@ class Settings(config: Config) extends BaseSettings(config) {
   def option(config: Config, path: String): Option[String] =
     if (config.hasPath(path)) Some(config.getString(path)) else None
 
+  def file(path: String) =
+    if (path.startsWith("~")) {
+      val rest = path.substring(2)
+      if (rest == "") RichFile.userHome
+      else new File(RichFile.userHome, rest)
+    }
+    else new File(path)
+
   val oses = config.getConfigList(optionPath("oses")).toList map { config =>
     val kind = config.getString("kind")
     val label = option(config, "label") getOrElse(kind)
@@ -56,16 +64,15 @@ class Settings(config: Config) extends BaseSettings(config) {
   }
 
   val isoPath = config.getStringList(optionPath("iso.path")).toList map { path =>
-    if (path.startsWith("~")) {
-      val rest = path.substring(2)
-      if (rest == "") RichFile.userHome
-      else new File(RichFile.userHome, rest)
-    }
-    else new File(path)
+    file(path)
   }
 
   def isos = isoPath flatMap { path =>
     ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get()
   } sortBy { _.toString() } reverse
+
+  val toolsPath = config.getStringList(optionPath("tools.path")).toList map { path =>
+    file(path)
+  }
 
 }
