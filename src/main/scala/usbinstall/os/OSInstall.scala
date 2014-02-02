@@ -67,8 +67,11 @@ object OSInstall {
     }
   }
 
-  private def preparePartition(part: DevicePartition, kind: PartitionFormat.Value, label: String) = {
+  private def preparePartition(os: OSInstall, part: DevicePartition) = {
     import suiryc.scala.misc.RichEither._
+
+    val kind = os.settings.partitionFormat
+    val label = os.settings.partitionLabel
 
     def format = {
       val command = kind match {
@@ -92,25 +95,14 @@ object OSInstall {
         case PartitionFormat.ntfs => "7"
       }
 
-      /* XXX */
-//# Set partition type
-//part_set_type()
-//{
-//    local diskpath=${1%%[0-9]*}
-//    local diskpart=${1##*[^0-9]}
-//
-//    # slow devices need some time before being usable
-//    sleep 1
-//
-//    fdisk ${diskpath} <<EOF && partprobe -d ${diskpath}
-//t
-//${diskpart}
-//$2
-//w
-//EOF
-//}
+      val input = s"""t
+${part.partNumber}
+$id
+w
+""".getBytes
 
-      /* && */Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
+      Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") &&
+        Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
     }
 
     def setLabel = {
@@ -146,15 +138,17 @@ object OSInstall {
   }
 
   def install(os: OSInstall): Unit = {
-    /* XXX - prepare syslinux (find files) - if required (install, or else ?) ? */
     if (os.settings.installStatus() == OSInstallStatus.Install) {
+      /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
         SyslinuxInstall.get(version)
       }
-    }
 
-    /* XXX - prepare partition (format, set type, set label) if required */
-    os.settings.partitionLabel
+      /* prepare partition */
+      os.settings.partition() foreach { part =>
+        preparePartition(os, part)
+      }
+    }
 
     /* XXX - only if 'install' required (and something to do ?) */
     mountAndDo(os, os.install)
