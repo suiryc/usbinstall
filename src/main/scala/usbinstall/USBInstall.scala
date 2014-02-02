@@ -18,8 +18,6 @@ object USBInstall extends JFXApp {
   val logger = LoggerFactory.getLogger("usbinstall").asInstanceOf[Logger]
   logger.addAppender(proxyAppender)
 
-  usbinstall.os.SyslinuxInstall.get(4)
-
   stage = Stages.chooseDevice
 
   override def stopApp() {
