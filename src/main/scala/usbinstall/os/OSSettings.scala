@@ -1,6 +1,7 @@
 package usbinstall.os
 
 import java.io.File
+import java.nio.file.Path
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.PropertyEx
 import suiryc.scala.misc.EnumerationEx
@@ -30,9 +31,13 @@ class SyslinuxEntry(
 )
 
 object PartitionFormat extends EnumerationEx {
-  val ext2 = Value
-  val fat32 = Value
-  val ntfs = Value
+
+  trait extX
+  trait MS
+
+  val ext2 = new Val with extX
+  val fat32 = new Val with MS
+  val ntfs = new Val with MS
 }
 
 class OSSettings(
@@ -59,18 +64,22 @@ class OSSettings(
   val iso: PropertyEx[Option[File]] =
     PropertyEx(None)
 
+  var efiBootloader: Option[Path] =
+    None
+
   def enabled = installStatus() != OSInstallStatus.NotInstalled
+
+  def install = installStatus() == OSInstallStatus.Install
 
   def installable = enabled && partition().isDefined &&
     (!isoPattern.isDefined || iso().isDefined)
 
-  def formatable = (installStatus() == OSInstallStatus.Install) &&
+  def formatable = install &&
     format() && installable
 
   def syslinuxFile = partitionFormat match {
-    case PartitionFormat.ext2 => "extlinux.conf"
-    case PartitionFormat.ntfs => "syslinux.cfg"
-    case PartitionFormat.fat32 => "syslinux.cfg"
+    case _: PartitionFormat.extX => "extlinux.conf"
+    case _: PartitionFormat.MS => "syslinux.cfg"
   }
 
   override def toString =

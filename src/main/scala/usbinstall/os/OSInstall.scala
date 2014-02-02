@@ -1,11 +1,14 @@
 package usbinstall.os
 
+import java.nio.file.Paths
 import usbinstall.settings.InstallSettings
+import suiryc.scala.io.NameFilter._
+import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
 
 
-class OSInstall(val settings: OSSettings) {
+class OSInstall(val settings: OSSettings, val efi: Boolean = false) {
 
   /**
    * Prepares OS installation.
@@ -23,7 +26,7 @@ class OSInstall(val settings: OSSettings) {
    * Partition is already formatted.
    * EFI setup and syslinux bootloader install are performed right after.
    */
-  def install: Unit = {}
+  def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {}
 
   /**
    * Performs any post-install steps.
@@ -41,11 +44,12 @@ object OSInstall {
       /* XXX */
   }
 
+  /* XXX - caller must check enabled && installable ? */
   def prepare(os: OSInstall): Unit =
-    if (os.settings.installStatus() == OSInstallStatus.Install)
+    if (os.settings.install)
       os.prepare
 
-  private def mountAndDo(os: OSInstall, todo: => Unit): Unit = {
+  private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
     val iso = os.settings.iso() map { pathISO =>
       new PartitionMount(pathISO, InstallSettings.pathMountISO)
     }
@@ -56,7 +60,7 @@ object OSInstall {
     try {
       iso foreach { _.mount }
       part foreach { _.mount }
-      todo
+      todo(iso, part)
     }
     /* XXX - catch and log */
     finally {
@@ -101,7 +105,7 @@ $id
 w
 """.getBytes
 
-      Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") &&
+      Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
         Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
     }
 
@@ -129,7 +133,8 @@ w
       Command.execute(command, envf = envf).toEither("Failed to label partition")
     }
 
-    val r = format && setType && setLabel
+    val r = (if (os.settings.formatable) format else Right("Partition formatting disabled")) &&
+      setType && setLabel
 
     /* slow devices need some time before being usable */
     Thread.sleep(1000)
@@ -137,11 +142,50 @@ w
     r
   }
 
+  private def findEFI(os: OSInstall, mount: Option[PartitionMount]): Unit = {
+    mount foreach { mount =>
+      val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
+      finder.get.toList.sorted.headOption foreach { path =>
+        os.settings.efiBootloader = Some(mount.to.toPath.relativize(path.toPath))
+      }
+    }
+  }
+
+  private def installBootloader(os: OSInstall, mount: Option[PartitionMount]): Unit = {
+    for {
+      syslinuxVersion <- os.settings.syslinuxVersion
+      part <- os.settings.partition()
+      mount <- mount
+    } {
+      SyslinuxInstall.get(syslinuxVersion).fold {
+        /* XXX - log error */
+      } { syslinuxRoot =>
+        os.settings.partitionFormat match {
+          case _: PartitionFormat.extX =>
+            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("extlinux", "extlinux")).toFile
+            val target = mount.to.toPath.resolve("syslinux").toFile
+            Command.execute(Seq(syslinux.getPath, "--install", target.getPath))
+
+          case _: PartitionFormat.MS =>
+            /* Note: it is safer (and mandatory for NTFS) to unmount partition first */
+            mount.umount
+            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("linux", "syslinux")).toFile
+            val target = part.dev
+            Command.execute(Seq(syslinux.getPath, "--install", target.getPath))
+        }
+        /* XXX - what to do with command result ? */
+      }
+    }
+  }
+
+  /* XXX - caller must check enabled && installable ? */
   def install(os: OSInstall): Unit = {
-    if (os.settings.installStatus() == OSInstallStatus.Install) {
+    if (os.settings.install) {
       /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
         SyslinuxInstall.get(version)
+        /* XXX - stop right now if problem ? */
+        /* XXX - setting to only set syslinux ? */
       }
 
       /* prepare partition */
@@ -150,79 +194,31 @@ w
       }
     }
 
-    /* XXX - only if 'install' required (and something to do ?) */
-    mountAndDo(os, os.install)
+    /* XXX - only if something to do ? */
+    if (os.settings.enabled) {
+      mountAndDo(os, (isoMount, partMount) => {
+        if (os.settings.install) {
+          os.install(isoMount, partMount)
+        }
 
-    /* XXX - prepare EFI */
-//efi_setup()
-//{
-//    local _idx=$1
-//    local bootloader=
-//
-//    if [ -n "${install_component_efi_bootloader[${_idx}]}" ]
-//    then
-//        efi_find_bootloader "${dirPartMount}" bootloader
-//    fi
-//    install_component_efi_bootloader[${_idx}]="${bootloader}"
-//}
-//
-//efi_find_bootloader() {
-//    local _dirSearch=$1
-//    local _varName=$2
-//
-//    eval ${_varName}=
-//
-//    local _bootloader=${_dirSearch}
-//    _bootloader=$(find "${_bootloader}"/ -maxdepth 1 -type d -iname "efi" 2> /dev/null | head -n 1)
-//    if [ -z "${_bootloader}" ]
-//    then
-//        return
-//    fi
-//    _bootloader=$(find "${_bootloader}"/ -maxdepth 1 -type d -iname "boot" 2> /dev/null | head -n 1)
-//    if [ -z "${_bootloader}" ]
-//    then
-//        return
-//    fi
-//    _bootloader=$(find "${_bootloader}"/ -maxdepth 1 -type f -iname "bootx64.efi" 2> /dev/null | head -n 1)
-//    if [ -z "${_bootloader}" ]
-//    then
-//        return
-//    fi
-//
-//    eval ${_varName}=\${_bootloader:\${#_dirSearch}+1}
-//}
+        /* prepare EFI */
+        if (os.efi) {
+          findEFI(os, partMount)
+        }
 
-    /* XXX - install syslinux if avaibale - and required ? */
-//bootloader_install()
-//{
-//    local _idx=$1
-//    local partpath=${install_component_partition[${_idx}]}
-//    local parttype=${install_component_partition_type[${_idx}]}
-//    local syslinuxVersion=${install_component_syslinux_version[${_idx}]}
-//    eval local syslinuxLocation=\${syslinux${syslinuxVersion}Location}
-//
-//    case "${parttype}" in
-//    ext*)
-//        "${syslinuxLocation}"/extlinux/extlinux --install "${dirPartMount}/syslinux"
-//        ;;
-//
-//    ntfs|fat*)
-//        # Note: it is safer (and mandatory for NTFS) to unmount partition first
-//        install_cleanMount "${dirPartMount}"
-//        "${syslinuxLocation}"/linux/syslinux --install "${partpath}"
-//        ;;
-//
-//    *)
-//        echo "Warning: Could not setup bootloader[$1]; unhandled partition type[${parttype}]"
-//        return 1
-//        ;;
-//    esac
-//}
+        if (os.settings.install) {
+          installBootloader(os, partMount)
+        }
+      })
+    }
   }
 
+  /* XXX - caller must check enabled && installable ? */
   def postInstall(os: OSInstall): Unit = {
-    /* XXX - only if 'install' required (and something to do ?) */
-    mountAndDo(os, os.postInstall)
+    /* XXX - only if something to do ? */
+    if (os.settings.install) {
+      mountAndDo(os, (_, _) => os.postInstall)
+    }
   }
 
 }

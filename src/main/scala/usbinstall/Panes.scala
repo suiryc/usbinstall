@@ -486,6 +486,7 @@ object Panes
             settings.enabled && !settings.installable
           }
         }
+        updateDisable
 
         /* Note: subscriptions on external object need to be cancelled for
          * this pane to be GCed. */

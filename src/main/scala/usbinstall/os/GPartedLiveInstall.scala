@@ -2,10 +2,12 @@ package usbinstall.os
 
 
 class GPartedLiveInstall(override val settings: OSSettings)
-  extends OSInstall(settings)
+  extends OSInstall(settings, true)
 {
 
-  override def install: Unit = {
+  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
+    settings.syslinuxFile
+
 //# Performs GParted installation
 //install_gparted_live()
 //{
