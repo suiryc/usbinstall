@@ -2,22 +2,24 @@ package usbinstall.util
 
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.Scene
-import scalafx.scene.layout.VBox
+import scalafx.scene.layout.{Priority, VBox}
 import scalafx.stage.Stage
-import suiryc.scala.io.{LineSplitterOutputStream, LineWriter}
+import suiryc.scala.io.LineSplitterOutputStream
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
+import suiryc.scala.misc.MessageLineWriter
 import suiryc.scala.sys.Command
 
 
 object DebugStage {
 
-  /* XXX - have debugArea height follow parent window resizing */
-  /* XXX - debugArea has scrollbar if resizing down, and scrollbar disappears when resizing up */
+  /* XXX - debugArea has scrollbars if resizing down, and scrollbars disappear when resizing up */
 
-  val area = new LogArea
+  val area = new LogArea {
+    vgrow = Priority.ALWAYS
+  }
 
-  val areaWriter = new LineWriter {
+  val areaWriter = new MessageLineWriter {
     override def write(line: String) =
       JFXSystem.schedule {
         area.write(line)
@@ -31,7 +33,6 @@ object DebugStage {
     padding = Insets(5)
     spacing = 5
     alignment = Pos.TOP_CENTER
-    maxHeight = Double.MaxValue
     content = List(area)
   }
   private val dscene = new Scene {

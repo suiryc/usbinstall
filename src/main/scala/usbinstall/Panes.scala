@@ -525,12 +525,18 @@ object Panes
     /* XXX - catch issues */
     /* XXX - how to proxy log messages (steps and info) from os install to GUI ? */
     Settings.core.oses foreach { settings =>
-      if (settings.kind == OSKind.GPartedLive) {
-        val os = OSInstall(settings)
+      try {
+        if (settings.kind == OSKind.GPartedLive) {
+          val os = OSInstall(settings)
 
-        OSInstall.prepare(os)
-        OSInstall.install(os)
-        OSInstall.postInstall(os)
+          OSInstall.prepare(os)
+          OSInstall.install(os)
+          OSInstall.postInstall(os)
+        }
+      }
+      catch {
+        case e: Throwable =>
+          error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
       }
     }
 
