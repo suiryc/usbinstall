@@ -25,12 +25,13 @@ import scalafx.scene.layout.{
 }
 import scalafx.event.subscriptions.Subscription
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
+import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.{Device, DevicePartition}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.{LogArea, Util}
+import usbinstall.util.Util
 
 
 object Panes
