@@ -3,7 +3,10 @@ package usbinstall.util
 import scalafx.scene.control.TextArea
 
 
-class LogArea extends TextArea {
+class LogArea(append: Boolean = true)
+  extends TextArea
+  with LineWriter
+{
 
   editable = false
 
@@ -19,6 +22,11 @@ class LogArea extends TextArea {
 
     if (current == "") this.setText(s)
     else this.setText(s"$s\n$current")
+  }
+
+  override def write(line: String) {
+    if (append) appendLine(line)
+    else prependLine(line)
   }
 
 }

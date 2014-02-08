@@ -8,14 +8,20 @@ import java.io.{ByteArrayOutputStream, IOException}
 import org.slf4j.LoggerFactory
 
 
-class ProxyAppender extends AppenderBase[ILoggingEvent] {
+class ProxyAppender(writers: Seq[LineWriter])
+  extends AppenderBase[ILoggingEvent]
+{
 
   override def start() {
     super.start()
   }
 
   override def append(event: ILoggingEvent) {
-    println(event.getMessage())
+    val msg = event.getMessage
+
+    writers foreach { writer =>
+      writer.write(msg)
+    }
   }
 
 }

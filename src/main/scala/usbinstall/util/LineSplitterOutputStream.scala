@@ -21,7 +21,7 @@ class LineSplitterOutputStream(
   }
 
   override def write(b: Array[Byte], off: Int, len: Int) {
-    process(java.nio.ByteBuffer.wrap(b, off, len), false)
+    process(ByteBuffer.wrap(b, off, len), false)
   }
 
   override def close {

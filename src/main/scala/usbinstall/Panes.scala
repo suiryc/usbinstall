@@ -126,7 +126,7 @@ object Panes
     GridPane.setConstraints(sizeValue, 1, 2)
 
     val grid = new GridPane {
-      val rowInfo = new RowConstraints(height = 20, prefHeight = 20, maxHeight = 40)
+      val rowInfo = new RowConstraints(minHeight = 20, prefHeight = 20, maxHeight = 40)
       val colInfo = new ColumnConstraints(minWidth = 50, prefWidth = 200, maxWidth = 400)
 
       padding = Insets(5)
@@ -395,11 +395,11 @@ object Panes
       columnConstraints.add(new ColumnConstraints(minWidth = 200, prefWidth = 400, maxWidth = 800))
 
       Settings.core.oses.foldLeft(1) { (idx, partition) =>
-        rowConstraints.add(new RowConstraints(height = 20, prefHeight = 30, maxHeight = 40))
+        rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
         children ++= (osRow(partition, idx) map { n => n:javafx.scene.Node })
         idx + 1
       }
-      rowConstraints.add(new RowConstraints(height = 20, prefHeight = 30, maxHeight = 40))
+      rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
     }
 
     /* Initial partitions selection */
@@ -456,7 +456,7 @@ object Panes
           children += button
         }
 
-        rowConstraints.add(new RowConstraints(height = 20, prefHeight = 30, maxHeight = 40))
+        rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
 
         idx + 1
       }
