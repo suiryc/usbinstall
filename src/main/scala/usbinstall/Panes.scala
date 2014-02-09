@@ -155,7 +155,6 @@ object Panes
       padding = Insets(5)
 
       val deviceList = new ListView[String] {
-        //maxWidth = 200
         items = ObservableBuffer(devices.keys.toList.map(_.toString).sorted)
         selectionModel().selectionMode = SelectionMode.SINGLE
         /* Note: we need to reset the setting, because assigning the same value

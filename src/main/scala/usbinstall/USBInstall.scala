@@ -14,7 +14,7 @@ object USBInstall extends JFXApp {
   /* XXX - close other windows when main window is closed */
 
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext]
-  val proxyAppender = new ProxyAppender(List(DebugStage.areaWriter))
+  val proxyAppender = new ProxyAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
   proxyAppender.setContext(lc)
   proxyAppender.start()
 
