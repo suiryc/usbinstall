@@ -71,7 +71,9 @@ object DebugStage {
   val listViewWriter = new MessageWriter {
 
     override def write(level: MessageLevel.LevelValue, msg: String) {
-      listView.items().add(MessageCellData(level, msg))
+      val item = MessageCellData(level, msg)
+      listView.items().add(item)
+      listView.scrollTo(listView.items().length)
     }
 
   }
