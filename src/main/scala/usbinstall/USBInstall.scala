@@ -23,9 +23,17 @@ object USBInstall extends JFXApp {
     logger.addAppender(proxyAppender)
   }
 
-  stage = Stages.chooseDevice
-
   DebugStage.show
+
+  //stage = Stages.chooseDevice
+  changeStage(Stages.chooseDevice)
+
+  def changeStage(s: JFXApp.PrimaryStage) {
+    System.out.println("Changing stage")
+    stage = s
+    stage.show()
+    stage.toFront()
+  }
 
   override def stopApp() {
     InstallSettings.pathTemp.delete(true)

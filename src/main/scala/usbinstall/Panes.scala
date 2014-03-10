@@ -1,6 +1,7 @@
 package usbinstall
 
 import grizzled.slf4j.Logging
+import javafx.{scene => jfxs}
 import scalafx.Includes._
 import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
 import scalafx.collections.ObservableBuffer
@@ -15,6 +16,7 @@ import scalafx.scene.control.{
   SelectionMode
 }
 import scalafx.scene.layout.{
+  AnchorPane,
   ColumnConstraints,
   GridPane,
   HBox,
@@ -24,6 +26,7 @@ import scalafx.scene.layout.{
   VBox
 }
 import scalafx.event.subscriptions.Subscription
+import scalafxml.core.{NoDependencyResolver, FXMLLoader, FXMLView}
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.misc.{RichOptional, Units}
@@ -33,6 +36,10 @@ import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.Util
 
+
+trait HasEventSubscriptions {
+  def getSubscriptions(): List[Subscription]
+}
 
 object Panes
   extends Logging
@@ -89,120 +96,20 @@ object Panes
     devices + (device.dev.toString() -> device)
   }
 
-  def chooseDevice = {
-    val vendorLabel = new Label {
-      text = "Vendor:"
-      style = "-fx-font-weight:bold"
-      alignmentInParent = Pos.BASELINE_RIGHT
-    }
-    GridPane.setConstraints(vendorLabel, 0, 0)
-    val vendorValue = new Label {
-      text = ""
-      alignmentInParent = Pos.BASELINE_LEFT
-    }
-    GridPane.setConstraints(vendorValue, 1, 0)
+  def chooseDevice =
+    new AnchorPane with StepPane {
+      val root = FXMLView(getClass.getResource("chooseDevice.fxml"),
+        NoDependencyResolver)
 
-    val modelLabel = new Label {
-      text = "Model:"
-      style = "-fx-font-weight:bold"
-      alignmentInParent = Pos.BASELINE_RIGHT
-    }
-    GridPane.setConstraints(modelLabel, 0, 1)
-    val modelValue = new Label {
-      text = ""
-      alignmentInParent = Pos.BASELINE_LEFT
-    }
-    GridPane.setConstraints(modelValue, 1, 1)
-
-    val sizeLabel = new Label {
-      text = "Size:"
-      style = "-fx-font-weight:bold"
-      alignmentInParent = Pos.BASELINE_RIGHT
-    }
-    GridPane.setConstraints(sizeLabel, 0, 2)
-    val sizeValue = new Label {
-      text = ""
-      alignmentInParent = Pos.BASELINE_LEFT
-    }
-    GridPane.setConstraints(sizeValue, 1, 2)
-
-    val grid = new GridPane {
-      val rowInfo = new RowConstraints(minHeight = 20, prefHeight = 20, maxHeight = 40)
-      val colInfo = new ColumnConstraints(minWidth = 50, prefWidth = 200, maxWidth = 400)
-
-      padding = Insets(5)
-      hgap = 5
-
-      for (_ <- 0 to 2) {
-        rowConstraints.add(rowInfo)
-      }
-      columnConstraints.add(new ColumnConstraints(minWidth = 70, prefWidth = 100, maxWidth = 200))
-      columnConstraints.add(new ColumnConstraints(minWidth = 100, prefWidth = 200, maxWidth = 400))
-
-      children ++= Seq(vendorLabel, vendorValue,
-        modelLabel, modelValue,
-        sizeLabel, sizeValue
-      )
-    }
-
-    def resetDeviceInfo {
-      vendorValue.text = ""
-      modelValue.text = ""
-      sizeValue.text = ""
-    }
-
-    val devicesPane = new StackPane {
-      padding = Insets(5)
-
-      val deviceList = new ListView[String] {
-        items = ObservableBuffer(devices.keys.toList.map(_.toString).sorted)
-        selectionModel().selectionMode = SelectionMode.SINGLE
-        /* Note: we need to reset the setting, because assigning the same value
-         * is not seen as a value change. */
-        InstallSettings.device() = None
-      }
-
-      deviceList.selectionModel().selectedItem.onChange { (_, _, newValue) =>
-        devices.get(newValue) match {
-          case oDevice @ Some(device) =>
-            InstallSettings.device() = oDevice
-            Settings.core.oses foreach { os =>
-              if (os.partition().exists(_.device != device))
-                os.partition() = None
-            }
-            vendorValue.text = device.vendor
-            modelValue.text = device.model
-            device.size.either match {
-              case Right(size) =>
-                sizeValue.text = Units.storage.toHumanReadable(size)
-
-              case Left(e) =>
-                sizeValue.text = "<unknown>"
-                errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
-                /*deviceList.selectionModel().select(-1)
-                resetDeviceInfo*/
-            }
-
-          case _ =>
-            deviceList.selectionModel().select(-1)
-            resetDeviceInfo
-        }
-      }
-
-      content = deviceList
-    }
-
-    new HBox with StepPane {
-      padding = Insets(5)
-      spacing = 5
-      alignment = Pos.CENTER
-      content = List(devicesPane, grid)
+      content = root
+      AnchorPane.setAnchors(root, 0, 0, 0, 0)
 
       override val previous = NoButton
 
       override val next = new NextButton(this, {
         InstallSettings.device() map { device =>
-          USBInstall.stage = Stages.choosePartitions
+          //USBInstall.stage = Stages.choosePartitions
+          USBInstall.changeStage(Stages.choosePartitions)
           //System.gc()
           true
         } getOrElse(false)
@@ -221,12 +128,59 @@ object Panes
           }
         }
       }
-
     }
-  }
 
+  def choosePartitions =
+    if (false) {
+      choosePartitionsOld
+    }
+    else {
+    new AnchorPane with StepPane {
+      val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"),
+        NoDependencyResolver)
 
-  def choosePartitions = {
+      loader.load()
+
+      val root = loader.getRoot[jfxs.Parent]
+      val controller = loader.getController[HasEventSubscriptions]
+
+      content = root
+      AnchorPane.setAnchors(root, 0, 0, 0, 0)
+
+      subscriptions :::= controller.getSubscriptions()
+
+      override val previous = new PreviousButton(this, {
+        //USBInstall.stage = Stages.chooseDevice
+        USBInstall.changeStage(Stages.chooseDevice)
+        true
+      })
+
+      override val next = new NextButton(this, {
+        //USBInstall.stage = Stages.install
+        USBInstall.changeStage(Stages.install)
+        true
+      }) {
+        disable.value = true
+
+        private def updateDisable {
+          disable.value = Settings.core.oses.exists { settings =>
+            settings.enabled && !settings.installable
+          }
+        }
+        updateDisable
+
+        /* Note: subscriptions on external object need to be cancelled for
+         * this pane to be GCed. */
+        Settings.core.oses foreach { settings =>
+          subscriptions ::= settings.installStatus.property.onChange(updateDisable)
+          subscriptions ::= settings.partition.property.onChange(updateDisable)
+          subscriptions ::= settings.iso.property.onChange(updateDisable)
+        }
+      }
+    }
+    }
+
+  def choosePartitionsOld = {
     var subscriptions_extra: List[Subscription] = Nil
     val partitions = InstallSettings.device().get.partitions.toList filter { partition =>
       val size = partition.size()
@@ -394,12 +348,12 @@ object Panes
       /* iso */
       columnConstraints.add(new ColumnConstraints(minWidth = 200, prefWidth = 400, maxWidth = 800))
 
+      rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
       Settings.core.oses.foldLeft(1) { (idx, partition) =>
         rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
         children ++= (osRow(partition, idx) map { n => n:javafx.scene.Node })
         idx + 1
       }
-      rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
     }
 
     /* Initial partitions selection */

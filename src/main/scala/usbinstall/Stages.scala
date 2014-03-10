@@ -96,8 +96,8 @@ object Stages {
   def step(xtitle: String, pane: StepPane) =
     new JFXApp.PrimaryStage {
       title = xtitle
-      minWidth = 400
-      minHeight = 400
+      //minWidth = 640
+      //minHeight = 480
 
       scene = new Scene {
         root = new GridPane {
@@ -106,6 +106,7 @@ object Stages {
 
           val stepPane = stepChange(pane)
 
+          columnConstraints.add(new ColumnConstraints() { hgrow = Priority.ALWAYS } delegate)
           rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
           rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
 
@@ -116,6 +117,9 @@ object Stages {
         }
       }
 
+      System.out.println(s"${width()}x${height()}")
+      //minWidth = width()
+      //minHeight = height()
       /*
       println(s"$this created")
       override def finalize {

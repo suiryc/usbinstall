@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<HBox alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="5.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.ChooseDeviceController">
+<padding>
+<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+</padding>
+<children><StackPane prefHeight="150.0" prefWidth="200.0" HBox.hgrow="SOMETIMES">
+<children><ListView fx:id="devices">
+<padding>
+<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+</padding></ListView>
+</children>
+<padding>
+<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+</padding></StackPane><GridPane hgap="5.0" maxHeight="40.0" minHeight="20.0" prefHeight="20.0" HBox.hgrow="SOMETIMES">
+  <columnConstraints>
+    <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="100.0" minWidth="70.0" prefWidth="100.0" />
+    <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="100.0" prefWidth="200.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints maxHeight="40.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="40.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="40.0" minHeight="20.0" prefHeight="20.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+<padding>
+<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+</padding>
+<children><Label alignment="CENTER_RIGHT" text="Vendor:">
+<font>
+<Font name="System Bold" size="13.0" />
+</font></Label><Label text="Model:" GridPane.rowIndex="1">
+<font>
+<Font name="System Bold" size="13.0" />
+</font></Label><Label text="Size:" GridPane.rowIndex="2">
+<font>
+<Font name="System Bold" size="13.0" />
+</font></Label><Label fx:id="vendor" GridPane.columnIndex="1" /><Label fx:id="model" GridPane.columnIndex="1" GridPane.rowIndex="1" /><Label fx:id="size" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+</children>
+</GridPane>
+</children></HBox>
