@@ -20,9 +20,6 @@ class StepChangeController(
   if (stepPrevious.visible) {
     previous.text = stepPrevious.label
     previous.disable = stepPrevious.disabled.value
-    previous.onAction = { e: ActionEvent =>
-      stepPrevious.triggered
-    }
     stepPrevious.disabled.onChange { (_, _, disabled) =>
       previous.disable = disabled
     }
@@ -33,13 +30,18 @@ class StepChangeController(
   if (stepNext.visible) {
     next.text = stepNext.label
     next.disable = stepNext.disabled.value
-    next.onAction = { e: ActionEvent =>
-      stepNext.triggered
-    }
     stepNext.disabled.onChange { (_, _, disabled) =>
       next.disable = disabled
     }
   }
   else next.visible = false
+
+  def onPrevious(event: ActionEvent) {
+    stepPrevious.triggered
+  }
+
+  def onNext(event: ActionEvent) {
+    stepNext.triggered
+  }
 
 }

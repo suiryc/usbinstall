@@ -12,6 +12,6 @@
   <rowConstraints>
     <RowConstraints maxHeight="30.0" minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
   </rowConstraints>
-<children><Button fx:id="previous" mnemonicParsing="false" text="Previous" GridPane.halignment="CENTER" GridPane.valignment="CENTER" /><Button fx:id="next" mnemonicParsing="false" text="Next" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+<children><Button fx:id="previous" mnemonicParsing="false" onAction="#onPrevious" text="Previous" GridPane.halignment="CENTER" GridPane.valignment="CENTER" /><Button fx:id="next" mnemonicParsing="false" onAction="#onNext" text="Next" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
 </children>
 </GridPane>
