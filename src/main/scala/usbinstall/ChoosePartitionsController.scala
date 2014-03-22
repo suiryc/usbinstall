@@ -14,6 +14,7 @@ import usbinstall.settings.{InstallSettings, Settings}
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
+import scalafx.event.ActionEvent
 
 
 /* Note: ScalaFXML macro fails when extending more than one trait? */
@@ -35,20 +36,18 @@ class ChoosePartitionsController(
     size > 1 * 1024 * 1024
   } sortBy(_.partNumber)
 
-  formatAll.selected.onChange { (_, _, selected) =>
+  formatAll.onAction = { e: ActionEvent =>
     Settings.core.oses foreach { settings =>
-      settings.format() = selected
+      settings.format() = formatAll.selected.value
     }
   }
 
-  installAll.armed.onChange { (_, _, armed) =>
-    if (!armed) {
-      val status = if (installAll.indeterminate.value) OSInstallStatus.Installed
-        else if (installAll.selected.value) OSInstallStatus.Install
-        else OSInstallStatus.NotInstalled
-      Settings.core.oses foreach { settings =>
-        settings.installStatus() = status
-      }
+  installAll.onAction = { e: ActionEvent =>
+    val status = if (installAll.indeterminate.value) OSInstallStatus.Installed
+      else if (installAll.selected.value) OSInstallStatus.Install
+      else OSInstallStatus.NotInstalled
+    Settings.core.oses foreach { settings =>
+      settings.installStatus() = status
     }
   }
 
@@ -90,10 +89,7 @@ class ChoosePartitionsController(
       val button = new Button {
         text = "Unmount"
         alignmentInParent = Pos.BASELINE_CENTER
-      }
-      GridPane.setConstraints(button, 1, idx)
-      button.armed.onChange { (_, _, armed) =>
-        if (!armed) {
+        onAction = { e: ActionEvent =>
           val CommandResult(result, stdout, stderr) = partition.umount
 
           if (result != 0) {
@@ -101,9 +97,10 @@ class ChoosePartitionsController(
             Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
           }
 
-          USBInstall.stage = Stages.choosePartitions
+          Stages.choosePartitions
         }
       }
+      GridPane.setConstraints(button, 1, idx)
 
       partitions.children += button
     }
@@ -140,15 +137,13 @@ class ChoosePartitionsController(
     val osInstall = new CheckBox {
       allowIndeterminate = true
       alignmentInParent = Pos.BASELINE_CENTER
-    }
-    GridPane.setConstraints(osInstall, 2, idx)
-    osInstall.armed.onChange { (_, _, armed) =>
-      if (!armed) {
-        settings.installStatus() = if (osInstall.indeterminate.value) OSInstallStatus.Installed
-          else if (osInstall.selected.value) OSInstallStatus.Install
+      onAction = { e: ActionEvent =>
+        settings.installStatus() = if (indeterminate.value) OSInstallStatus.Installed
+          else if (selected.value) OSInstallStatus.Install
           else OSInstallStatus.NotInstalled
       }
     }
+    GridPane.setConstraints(osInstall, 2, idx)
 
     def installStatusToUI(v: OSInstallStatus.Value) {
       v match {
@@ -175,7 +170,6 @@ class ChoosePartitionsController(
     installStatusToUI(settings.installStatus())
 
     val osPartition = new ComboBox[String] {
-      //maxWidth = 200
       promptText = "Partition"
       items = ObservableBuffer(devicePartitions.map(_.dev.toString))
       alignmentInParent = Pos.BASELINE_CENTER
@@ -213,7 +207,6 @@ class ChoosePartitionsController(
       }
 
       val osISO = new ComboBox[String] {
-        //maxWidth = 200
         items = ObservableBuffer(available.map(_.getName()))
         alignmentInParent = Pos.BASELINE_LEFT
       }

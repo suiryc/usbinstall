@@ -25,15 +25,7 @@ object USBInstall extends JFXApp {
 
   DebugStage.show
 
-  //stage = Stages.chooseDevice
-  changeStage(Stages.chooseDevice)
-
-  def changeStage(s: JFXApp.PrimaryStage) {
-    System.out.println("Changing stage")
-    stage = s
-    stage.show()
-    stage.toFront()
-  }
+  Stages.chooseDevice
 
   override def stopApp() {
     InstallSettings.pathTemp.delete(true)
