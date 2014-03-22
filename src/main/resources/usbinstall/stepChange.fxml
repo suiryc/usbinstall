@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="usbinstall.StepChangeController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="ALWAYS" minWidth="-Infinity" percentWidth="50.0" />
+    <ColumnConstraints hgrow="ALWAYS" minWidth="-Infinity" percentWidth="50.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints maxHeight="30.0" minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+<children><Button fx:id="previous" mnemonicParsing="false" text="Previous" GridPane.halignment="CENTER" GridPane.valignment="CENTER" /><Button fx:id="next" mnemonicParsing="false" text="Next" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="CENTER" />
+</children>
+</GridPane>
