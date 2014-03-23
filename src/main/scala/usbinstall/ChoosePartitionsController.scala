@@ -104,7 +104,7 @@ class ChoosePartitionsController(
           val CommandResult(result, stdout, stderr) = partition.umount
 
           if (result != 0) {
-            //error(s"Cannot unmount partition[${partition.dev}]: $stderr")
+            error(s"Cannot unmount partition[${partition.dev}]: $stderr")
             Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
           }
 

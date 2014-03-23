@@ -53,8 +53,6 @@ class ChooseDeviceController(
           case Left(e) =>
             size.text = "<unknown>"
             Stages.errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
-            /*deviceList.selectionModel().select(-1)
-            resetDeviceInfo()*/
         }
 
       case _ =>
