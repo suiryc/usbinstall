@@ -248,7 +248,7 @@ class ChoosePartitionsController(
 
   def selectPartitions(redo: Boolean) {
     Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
-      if ((!os.partition().isDefined || redo) &&
+      if ((redo || !os.partition().find(devicePartitions.contains(_)).isDefined) &&
         (os.installStatus() != OSInstallStatus.NotInstalled))
         os.partition() =
           if (devicePartitions.isEmpty) None
