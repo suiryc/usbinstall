@@ -124,14 +124,12 @@ object Stages
   def step(pane: Panes.StepPane) =
     new Scene {
       root = new GridPane {
-        padding = Insets(5)
         alignment = Pos.TOP_CENTER
 
         val stepPane = stepChange(pane)
 
         columnConstraints.add(new ColumnConstraints() { hgrow = Priority.ALWAYS } delegate)
         rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
-        rowConstraints.add(new RowConstraints(minHeight = 20, prefHeight = 30, maxHeight = 40))
 
         GridPane.setConstraints(pane, 0, 0)
         GridPane.setConstraints(stepPane, 0, 1)

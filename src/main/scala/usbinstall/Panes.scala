@@ -99,6 +99,8 @@ object Panes
 
   def chooseDevice =
     new AnchorPane with StepPane {
+      padding = Insets(5)
+
       val root = FXMLView(getClass.getResource("chooseDevice.fxml"),
         NoDependencyResolver)
 
