@@ -1,13 +1,55 @@
 package usbinstall.os
 
+import scala.language.postfixOps
+import suiryc.scala.io.FilesEx
+import suiryc.scala.io.PathFinder._
+import suiryc.scala.io.RichFile._
+import java.nio.file.Paths
+import java.nio.file.Files
+
 
 class GPartedLiveInstall(override val settings: OSSettings)
   extends OSInstall(settings, true)
 {
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
-    settings.syslinuxFile
+    val source = isoMount.get.to
+    val sourceRoot = source.toAbsolutePath
+    val targetRoot = partMount.get.to.toAbsolutePath
+    val finder = source ***
 
+    (for (file <- finder.get) yield file).toList.sortBy(_.getPath) foreach { file =>
+      val pathFile = file.toAbsolutePath
+      val pathRelative = sourceRoot.relativize(pathFile)
+      val pathTarget = targetRoot.resolve(pathRelative)
+      if (pathTarget.exists)
+        logger.warn(s"Source[$sourceRoot] path[$pathRelative] already processed, skipping")
+      else
+        FilesEx.copy(
+          sourceRoot,
+          pathRelative,
+          targetRoot,
+          followLinks = false
+        )
+    }
+
+    val syslinuxFile = Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
+    if (!syslinuxFile.exists) {
+      val syslinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "syslinux.cfg")
+      val isolinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "isolinux.cfg")
+      if (syslinuxCfg.exists) {
+        debug(s"Rename source[$syslinuxCfg] target[$syslinuxFile]")
+        Files.move(syslinuxCfg, syslinuxFile)
+      }
+      else if (isolinuxCfg.exists) {
+        syslinuxFile.getParent().delete(true)
+        debug(s"Rename source[${isolinuxCfg.getParent()}] target[${syslinuxFile.getParent()}]")
+        Files.move(isolinuxCfg, isolinuxCfg.getParent().relativize(syslinuxFile.getFileName()))
+        Files.move(isolinuxCfg.getParent(), syslinuxFile.getParent())
+      }
+    }
+    /* XXX - handle errors */
+    /* XXX - can a 'copy' fail ? */
 //# Performs GParted installation
 //install_gparted_live()
 //{

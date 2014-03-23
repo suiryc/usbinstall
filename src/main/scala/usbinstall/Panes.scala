@@ -193,7 +193,9 @@ object Panes
     /* XXX - access lazy vals (mount points) */
     /* XXX - loop on oses to prepare/... */
     /* XXX - catch issues */
-    /* XXX - how to proxy log messages (steps and info) from os install to GUI ? */
+    /* XXX - how to proxy steps messages from os install to GUI ? */
+    /* XXX - action needs to be done in separate Thread, otherwise GUI is blocked
+     * until finished */
     Settings.core.oses foreach { settings =>
       try {
         if (settings.kind == OSKind.GPartedLive) {

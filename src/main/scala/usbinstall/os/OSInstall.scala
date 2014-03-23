@@ -1,5 +1,6 @@
 package usbinstall.os
 
+import grizzled.slf4j.Logging
 import java.nio.file.Paths
 import usbinstall.settings.InstallSettings
 import suiryc.scala.io.NameFilter._
@@ -8,7 +9,9 @@ import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
 
 
-class OSInstall(val settings: OSSettings, val efi: Boolean = false) {
+class OSInstall(val settings: OSSettings, val efi: Boolean = false)
+  extends Logging
+{
 
   /**
    * Prepares OS installation.
@@ -41,7 +44,10 @@ object OSInstall {
     case OSKind.GPartedLive =>
       new GPartedLiveInstall(settings)
 
-      /* XXX */
+    /* XXX */
+    case kind =>
+      val msg = s"Unhandled OS type: $kind"
+      throw new Exception(msg)
   }
 
   /* XXX - caller must check enabled && installable ? */
