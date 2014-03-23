@@ -19,7 +19,7 @@
 <ColumnConstraints halignment="LEFT" minWidth="-Infinity" />
   </columnConstraints>
   <rowConstraints>
-    <RowConstraints maxHeight="60.0" minHeight="60.0" prefHeight="60.0" valignment="CENTER" />
+    <RowConstraints maxHeight="60.0" minHeight="60.0" prefHeight="60.0" valignment="BOTTOM" />
 <RowConstraints maxHeight="30.0" minHeight="30.0" prefHeight="30.0" valignment="CENTER" />
   </rowConstraints>
 <children><CheckBox fx:id="formatAll" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="1" /><CheckBox fx:id="installAll" allowIndeterminate="true" mnemonicParsing="false" GridPane.columnIndex="2" GridPane.rowIndex="1" /><Label minHeight="-Infinity" minWidth="-Infinity" rotate="-45.0" text="Format" translateX="10.0" translateY="-10.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM">
@@ -28,7 +28,9 @@
 </GridPane.margin>
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" />
-</padding></Label><Label minHeight="-Infinity" minWidth="-Infinity" rotate="-45.0" text="Install" translateX="10.0" translateY="-10.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM" /><Label text="Partition" GridPane.columnIndex="3" GridPane.rowIndex="1" /><Label text="Image" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+</padding></Label><Label minHeight="-Infinity" minWidth="-Infinity" rotate="-45.0" text="Install" translateX="10.0" translateY="-10.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM" /><Label text="Image" GridPane.columnIndex="4" GridPane.rowIndex="1" /><Hyperlink fx:id="autoSelectPartitions" onAction="#onAutoSelectPartitions" text="Partition" GridPane.columnIndex="3" GridPane.rowIndex="1">
+<tooltip><Tooltip text="Click for auto-select" />
+</tooltip></Hyperlink>
 </children>
 <padding>
 <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
