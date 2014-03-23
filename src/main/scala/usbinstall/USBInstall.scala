@@ -11,8 +11,6 @@ import usbinstall.util.DebugStage
 
 object USBInstall extends JFXApp {
 
-  /* XXX - close other windows when main window is closed */
-
   val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext]
   val proxyAppender = new ProxyAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
   proxyAppender.setContext(lc)
@@ -23,9 +21,9 @@ object USBInstall extends JFXApp {
     logger.addAppender(proxyAppender)
   }
 
-  DebugStage.show
+  DebugStage.show()
 
-  Stages.chooseDevice
+  Stages.chooseDevice()
 
   override def stopApp() {
     InstallSettings.pathTemp.delete(true)

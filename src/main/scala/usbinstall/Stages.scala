@@ -6,7 +6,7 @@ import javafx.beans.value.{ChangeListener, ObservableValue}
 import org.controlsfx.dialog.Dialogs
 import scala.language.postfixOps
 import scalafx.Includes._
-import scalafx.application.JFXApp
+import scalafx.application.{JFXApp, Platform}
 import scalafx.event.ActionEvent
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.Scene
@@ -18,6 +18,7 @@ import scalafx.scene.layout.{
   RowConstraints,
   VBox
 }
+import scalafx.stage.WindowEvent
 import scalafxml.core.{ExplicitDependencies, FXMLView}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.misc.RichOptional
@@ -37,7 +38,12 @@ object Stages
         stage.hide()
         (stage, Some(x, y))
       } getOrElse {
-        USBInstall.stage = new JFXApp.PrimaryStage
+        USBInstall.stage = new JFXApp.PrimaryStage {
+          onCloseRequest = { (event: WindowEvent) =>
+            close()
+            Platform.exit()
+          }
+        }
         (USBInstall.stage, None)
       }
 

@@ -29,6 +29,8 @@ class ChoosePartitionsController(
 ) extends ChoosePartitionsControllerTraits
 {
 
+  /* Note: subscriptions on external object need to be cancelled for
+   * pane/scene to be GCed. */
   var subscriptions: List[Subscription] = Nil
 
   val devicePartitions = InstallSettings.device().get.partitions.toList filter { partition =>
@@ -128,8 +130,6 @@ class ChoosePartitionsController(
     osFormat.selected.onChange { (_, _, selected) =>
       settings.format() = selected
     }
-    /* Note: subscriptions on external object need to be cancelled for
-     * this pane to be GCed. */
     subscriptions ::= settings.format.property.onChange { (_, _, newValue) =>
       osFormat.selected = newValue
     }
@@ -162,8 +162,6 @@ class ChoosePartitionsController(
       osFormat.disable = (v != OSInstallStatus.Install)
     }
 
-    /* Note: subscriptions on external object need to be cancelled for
-     * this pane to be GCed. */
     subscriptions ::= settings.installStatus.property.onChange { (_, _, newValue) =>
       installStatusToUI(newValue)
     }
@@ -191,8 +189,6 @@ class ChoosePartitionsController(
         }
       }
     }
-    /* Note: subscriptions on external object need to be cancelled for
-     * this pane to be GCed. */
     subscriptions ::= settings.partition.property.onChange { (_, _, newValue) =>
       settings.partition().fold(osPartition.selectionModel().select(-1)) { partition =>
         osPartition.selectionModel().select(partition.dev.toString)

@@ -75,6 +75,8 @@ object Panes
     extends StepButton(pane, f, "Next")
 
   trait StepPane extends Pane {
+    /* Note: subscriptions on external object need to be cancelled for
+     * pane/scene to be GCed. */
     var subscriptions: List[Subscription] = Nil
     def cancelSubscriptions {
       subscriptions foreach { _.cancel }
@@ -108,14 +110,11 @@ object Panes
       override val next = new NextButton(this, {
         InstallSettings.device() map { device =>
           Stages.choosePartitions()
-          //System.gc()
           true
         } getOrElse(false)
       }) {
         disable.value = true
 
-        /* Note: subscriptions on external object need to be cancelled for
-         * this pane to be GCed. */
         subscriptions ::= InstallSettings.device.property.onChange { (_, _, device) =>
           Option(device) match {
             case Some(_) =>
@@ -161,8 +160,6 @@ object Panes
         }
         updateDisable
 
-        /* Note: subscriptions on external object need to be cancelled for
-         * this pane to be GCed. */
         Settings.core.oses foreach { settings =>
           subscriptions ::= settings.installStatus.property.onChange(updateDisable)
           subscriptions ::= settings.partition.property.onChange(updateDisable)

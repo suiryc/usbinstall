@@ -7,7 +7,7 @@ import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.Scene
 import scalafx.scene.control.{Label, ListView}
 import scalafx.scene.layout.{HBox, Priority, VBox}
-import scalafx.stage.Stage
+import scalafx.stage.{Stage, WindowEvent}
 import suiryc.scala.io.LineSplitterOutputStream
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
@@ -17,7 +17,7 @@ import suiryc.scala.sys.Command
 
 object DebugStage {
 
-  /* XXX - debugArea has scrollbars if resizing down, and scrollbars disappear when resizing up */
+  /* XXX - scrollbars sometimes appear when resizing LogArea down */
 
   private val area = new LogArea {
     vgrow = Priority.ALWAYS
@@ -61,19 +61,24 @@ object DebugStage {
     }
   }
 
+  private val listViewItems = ObservableBuffer[MessageCellData]()
   private val listView = new ListView[MessageCellData] {
-    items = ObservableBuffer()
+    items = listViewItems
     cellFactory = { lv =>
       new MessageCell
     }
+  }
+
+  protected def scrollListViewToEnd() {
+    listView.scrollTo(listView.items().length)
   }
 
   val listViewWriter = new MessageWriter {
 
     override def write(level: MessageLevel.LevelValue, msg: String) {
       val item = MessageCellData(level, msg)
-      listView.items().add(item)
-      listView.scrollTo(listView.items().length)
+      listViewItems.add(item)
+      scrollListViewToEnd()
     }
 
   }
@@ -89,12 +94,22 @@ object DebugStage {
   }
   private val dstage = new Stage {
     scene = dscene
+    onCloseRequest = { (event: WindowEvent) =>
+      event.consume()
+      DebugStage.hide()
+    }
   }
 
-  def show =
+  def show() {
     dstage.show
+    listView.items = listViewItems
+    scrollListViewToEnd()
+  }
 
-  def hide =
+  def hide() {
+    /* Note: updating the list view when not visible generates warnings */
+    listView.items = ObservableBuffer[MessageCellData]()
     dstage.hide
+  }
 
 }

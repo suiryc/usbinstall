@@ -14,7 +14,7 @@ class StepChangeController(
 ) {
 
   /* Note: subscriptions on tied objects do not need to be cancelled
-   * for parent stage to be GCed. */
+   * for pane/scene to be GCed. */
 
   val stepPrevious = stepPane.previous
   if (stepPrevious.visible) {
