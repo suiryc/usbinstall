@@ -131,10 +131,8 @@ object Stages
         columnConstraints.add(new ColumnConstraints() { hgrow = Priority.ALWAYS } delegate)
         rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
 
-        GridPane.setConstraints(pane, 0, 0)
-        GridPane.setConstraints(stepPane, 0, 1)
-
-        children ++= List(pane, stepPane)
+        add(pane, 0, 0)
+        add(stepPane, 0, 1)
       }
     }
 

@@ -4,38 +4,17 @@ import grizzled.slf4j.Logging
 import javafx.{scene => jfxs}
 import scalafx.Includes._
 import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
-import scalafx.collections.ObservableBuffer
-import scalafx.geometry.{Insets, Pos}
-import scalafx.scene.Node
-import scalafx.scene.control.{
-  Button,
-  CheckBox,
-  ComboBox,
-  Label,
-  ListView,
-  SelectionMode
-}
-import scalafx.scene.layout.{
-  AnchorPane,
-  ColumnConstraints,
-  GridPane,
-  HBox,
-  Pane,
-  RowConstraints,
-  StackPane,
-  VBox
-}
+import scalafx.scene.layout.{AnchorPane, Pane}
 import scalafx.event.subscriptions.Subscription
-import scalafxml.core.{NoDependencyResolver, FXMLLoader, FXMLView}
+import scalafxml.core.{
+  ExplicitDependencies,
+  NoDependencyResolver,
+  FXMLLoader,
+  FXMLView
+}
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
-import suiryc.scala.javafx.scene.control.LogArea
-import suiryc.scala.misc.{RichOptional, Units}
-import suiryc.scala.sys.CommandResult
-import suiryc.scala.sys.linux.{Device, DevicePartition}
-import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
+import suiryc.scala.sys.linux.Device
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.Util
-import scalafx.event.ActionEvent
 
 
 trait HasEventSubscriptions {
@@ -74,6 +53,9 @@ object Panes
   class NextButton(pane: StepPane, f: => Boolean)
     extends StepButton(pane, f, "Next")
 
+  class CancelButton(pane: StepPane, f: => Boolean)
+    extends StepButton(pane, f, "Cancel")
+
   trait StepPane extends Pane {
     /* Note: subscriptions on external object need to be cancelled for
      * pane/scene to be GCed. */
@@ -99,8 +81,6 @@ object Panes
 
   def chooseDevice =
     new AnchorPane with StepPane {
-      padding = Insets(5)
-
       val root = FXMLView(getClass.getResource("chooseDevice.fxml"),
         NoDependencyResolver)
 
@@ -171,59 +151,27 @@ object Panes
     }
 
 
-  def install = {
-    println(Settings.core.oses)
+  def install =
+    new AnchorPane with StepPane {
+      val root = FXMLView(getClass.getResource("install.fxml"),
+        new ExplicitDependencies(Map(
+          "previous" -> previous,
+          "cancel" -> next
+        )))
 
-    val stepsArea = new LogArea
+      content = root
+      AnchorPane.setAnchors(root, 0, 0, 0, 0)
 
-    val activityArea = new LogArea
-
-    /* Note: for correct behaviour, actions on UI elements must be done inside
-     * the JavaFX UI thread.
-     */
-    import suiryc.scala.javafx.concurrent.JFXExecutor.executor
-    scala.concurrent.Future[Unit] {
-      println("Test")
-      (1 to 40) foreach { i =>
-        activityArea.appendLine(s"Test $i")
-        stepsArea.prependLine(s"Test $i")
+      override val previous = new PreviousButton(this, {
+        Stages.choosePartitions()
+        true
+      }) {
+        disable.value = true
       }
+
+      override val next = new CancelButton(this, {
+        true
+      })
     }
-
-    /* XXX - access lazy vals (mount points) */
-    /* XXX - loop on oses to prepare/... */
-    /* XXX - catch issues */
-    /* XXX - how to proxy steps messages from os install to GUI ? */
-    /* XXX - action needs to be done in separate Thread, otherwise GUI is blocked
-     * until finished */
-    Settings.core.oses foreach { settings =>
-      try {
-        if (settings.kind == OSKind.GPartedLive) {
-          val os = OSInstall(settings)
-
-          OSInstall.prepare(os)
-          OSInstall.install(os)
-          OSInstall.postInstall(os)
-        }
-      }
-      catch {
-        case e: Throwable =>
-          error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
-      }
-    }
-
-    new HBox with StepPane {
-      padding = Insets(5)
-      spacing = 5
-      alignment = Pos.TOP_CENTER
-      maxHeight = Double.MaxValue
-      content = List(stepsArea, activityArea)
-
-      override val previous = NoButton
-
-      override val next = NoButton
-
-    }
-  }
 
 }

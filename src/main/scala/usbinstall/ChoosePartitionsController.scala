@@ -64,7 +64,7 @@ class ChoosePartitionsController(
   /* Note: rows 1 (labels) and 2 (checkboxes) already used */
   Settings.core.oses.foldLeft(2) { (idx, partition) =>
     elements.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 30) { valignment = VPos.CENTER } delegate)
-    elements.children ++= (osRow(partition, idx) map { n => n:javafx.scene.Node })
+    elements.addRow(idx, osRow(partition) map { n => n:javafx.scene.Node } : _*)
     idx + 1
   }
 
@@ -97,23 +97,19 @@ class ChoosePartitionsController(
             updatePartitionsPane()
           }
         }
-        GridPane.setConstraints(button, 0, idx)
-
-        partitions.children += button
+        partitions.add(button, 0, idx)
       }
 
       val label = new Label {
         text = partition.dev.toString
         style = "-fx-font-weight:bold"
       }
-      GridPane.setConstraints(label, 1, idx)
-      partitions.children += label
+      partitions.add(label, 1, idx)
 
       val size = new Label {
         text = Units.storage.toHumanReadable(partition.size())
       }
-      GridPane.setConstraints(size, 2, idx)
-      partitions.children += size
+      partitions.add(size, 2, idx)
 
       partitions.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 40) { valignment = VPos.CENTER } delegate)
 
@@ -125,17 +121,15 @@ class ChoosePartitionsController(
 
   def getSubscriptions(): List[Subscription] = subscriptions
 
-  def osRow(settings: OSSettings, idx: Int): List[Node] = {
+  def osRow(settings: OSSettings): List[Node] = {
     val osLabel = new Label {
       text = settings.label
       style = "-fx-font-weight:bold"
     }
-    GridPane.setConstraints(osLabel, 0, idx)
 
     val osFormat = new CheckBox {
       selected = settings.format()
     }
-    GridPane.setConstraints(osFormat, 1, idx)
     osFormat.selected.onChange { (_, _, selected) =>
       settings.format() = selected
     }
@@ -151,7 +145,6 @@ class ChoosePartitionsController(
           else OSInstallStatus.NotInstalled
       }
     }
-    GridPane.setConstraints(osInstall, 2, idx)
 
     def installStatusToUI(v: OSInstallStatus.Value) {
       v match {
@@ -212,7 +205,6 @@ class ChoosePartitionsController(
       }
       settings.partition() = newValue
     }
-    GridPane.setConstraints(osPartition, 3, idx)
 
     val osISO = settings.isoPattern map { regex =>
       val available = Settings.core.isos.filter { file =>
@@ -222,7 +214,6 @@ class ChoosePartitionsController(
       val osISO = new ComboBox[String] {
         items = ObservableBuffer(available.map(_.getName()))
       }
-      GridPane.setConstraints(osISO, 4, idx)
       osISO.selectionModel().selectedIndex.onChange { (_, _, selected) =>
         settings.iso() = Some(available(selected.intValue()))
       }
