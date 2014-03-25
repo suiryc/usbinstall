@@ -26,9 +26,9 @@ object DebugStage {
   def logAreaWriter(area: LogArea) =
     new MessageLineWriter {
       override def write(line: String) =
-        JFXSystem.schedule {
+        JFXSystem.schedule({
           area.write(line)
-        }
+        }, false)
     }
 
   val areaWriter = logAreaWriter(area)

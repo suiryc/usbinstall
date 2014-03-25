@@ -126,11 +126,11 @@ object Stages
     errorStage(title, masthead, Right(error))
   }
 
-  def stepChange(pane: Panes.StepPane) =
+  def stepChange(pane: StepPane) =
     FXMLView(getClass.getResource("stepChange.fxml"),
       new ExplicitDependencies(Map("stepPane" -> pane)))
 
-  def step(pane: Panes.StepPane) =
+  def step(pane: StepPane) =
     new Scene {
       root = new GridPane {
         alignment = Pos.TOP_CENTER

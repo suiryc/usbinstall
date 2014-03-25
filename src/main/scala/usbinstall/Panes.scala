@@ -3,9 +3,7 @@ package usbinstall
 import grizzled.slf4j.Logging
 import javafx.{scene => jfxs}
 import scalafx.Includes._
-import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
-import scalafx.scene.layout.{AnchorPane, Pane}
-import scalafx.event.subscriptions.Subscription
+import scalafx.scene.layout.AnchorPane
 import scalafxml.core.{
   ExplicitDependencies,
   NoDependencyResolver,
@@ -17,56 +15,9 @@ import suiryc.scala.sys.linux.Device
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-trait HasEventSubscriptions {
-  def getSubscriptions(): List[Subscription]
-}
-
 object Panes
   extends Logging
 {
-
-  abstract class AbstractStepButton(val visible: Boolean, xdisabled: Boolean, val label: String) {
-    def triggered: Unit
-
-    val disable = new BooleanProperty()
-    def disable_=(v: Boolean) = disable.value = v
-    val disabled: ReadOnlyBooleanProperty = disable
-
-    disable.value = xdisabled
-  }
-
-  object NoButton extends AbstractStepButton(false, false, "") {
-    override def triggered = {}
-  }
-
-  class StepButton(pane: StepPane, f: => Boolean, override val label: String)
-    extends AbstractStepButton(true, false, label)
-  {
-    override def triggered = {
-      if (f) pane.cancelSubscriptions
-    }
-  }
-
-  class PreviousButton(pane: StepPane, f: => Boolean)
-    extends StepButton(pane, f, "Previous")
-
-  class NextButton(pane: StepPane, f: => Boolean)
-    extends StepButton(pane, f, "Next")
-
-  class CancelButton(pane: StepPane, f: => Boolean)
-    extends StepButton(pane, f, "Cancel")
-
-  trait StepPane extends Pane {
-    /* Note: subscriptions on external object need to be cancelled for
-     * pane/scene to be GCed. */
-    var subscriptions: List[Subscription] = Nil
-    def cancelSubscriptions {
-      subscriptions foreach { _.cancel }
-      subscriptions = Nil
-    }
-    val previous: AbstractStepButton
-    val next: AbstractStepButton
-  }
 
   val devices = (PathFinder("/") / "sys" / "block" * AllPassFileFilter).get().map { block =>
     Device(block)
@@ -113,7 +64,6 @@ object Panes
     new AnchorPane with StepPane {
       val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"),
         NoDependencyResolver)
-
       loader.load()
 
       val root = loader.getRoot[jfxs.Parent]
@@ -153,11 +103,15 @@ object Panes
 
   def install =
     new AnchorPane with StepPane {
-      val root = FXMLView(getClass.getResource("install.fxml"),
-        new ExplicitDependencies(Map(
-          "previous" -> previous,
-          "cancel" -> next
-        )))
+      /* Note: for some reason we need to tell 'loader' type. Otherwise
+       * compilation fails with 'recursive value loader needs type' message.
+       */
+      val loader: FXMLLoader = new FXMLLoader(getClass.getResource("install.fxml"),
+        new ExplicitDependencies(Map("stepPane" -> this)))
+      loader.load()
+
+      val root = loader.getRoot[jfxs.Parent]
+      val controller = loader.getController[HasCancel]
 
       content = root
       AnchorPane.setAnchors(root, 0, 0, 0, 0)
@@ -170,7 +124,8 @@ object Panes
       }
 
       override val next = new CancelButton(this, {
-        true
+        controller.onCancel()
+        false
       })
     }
 

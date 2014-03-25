@@ -12,7 +12,7 @@ class InstallUI(
 ) {
 
   def setStep(value: Option[String]) {
-    JFXSystem.schedule {
+    jfxSchedule {
       step.text = value.getOrElse("")
       value foreach { value =>
         activity.write(s"**** Step: $value")
@@ -25,7 +25,7 @@ class InstallUI(
   }
 
   def setAction(value: Option[String]) {
-    JFXSystem.schedule {
+    jfxSchedule {
       action.text = value.getOrElse("")
       value foreach { value =>
         activity.write(s"** Action: $value")
@@ -53,9 +53,13 @@ class InstallUI(
   }
 
   def activity(value: String) {
-    JFXSystem.schedule {
+    jfxSchedule {
       activity.write(value)
     }
+  }
+
+  protected def jfxSchedule(action: => Unit) {
+    JFXSystem.schedule(action, false)
   }
 
 }

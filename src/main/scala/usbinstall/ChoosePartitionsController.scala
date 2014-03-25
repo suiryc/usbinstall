@@ -24,7 +24,7 @@ import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-/* Note: ScalaFXML macro fails when extending more than one trait? */
+/* Note: ScalaFXML macro fails when extending more than one trait explicitely */
 trait ChoosePartitionsControllerTraits extends HasEventSubscriptions with Logging
 
 @sfxml

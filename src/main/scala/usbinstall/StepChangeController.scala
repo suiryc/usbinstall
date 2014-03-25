@@ -10,7 +10,7 @@ import scalafxml.core.macros.sfxml
 class StepChangeController(
   private val previous: Button,
   private val next: Button,
-  private val stepPane: Panes.StepPane
+  private val stepPane: StepPane
 ) {
 
   /* Note: subscriptions on tied objects do not need to be cancelled

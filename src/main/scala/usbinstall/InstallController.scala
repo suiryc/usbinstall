@@ -15,15 +15,17 @@ import usbinstall.settings.Settings
 import usbinstall.util.DebugStage
 
 
+/* Note: ScalaFXML macro fails when extending more than one trait explicitely */
+trait InstallControllerTraits extends HasCancel with Logging
+
 @sfxml
 class InstallController(
   private val vbox: VBox,
   private val grid: GridPane,
   private val step: Label,
   private val action: Label,
-  private val previous: Panes.PreviousButton,
-  private val cancel: Panes.CancelButton
-) extends Logging
+  private val stepPane: StepPane
+) extends InstallControllerTraits
 {
 
   println(Settings.core.oses)
@@ -36,6 +38,7 @@ class InstallController(
 
   val appender = USBInstall.newAppender(List(DebugStage.logAreaWriter(activityArea)))
   USBInstall.addAppender(appender)
+  val ui = new InstallUI(step, action, activityArea)
 
   val cancellableFuture = CancellableFuture(installTask(_))
   cancellableFuture.future.onComplete {
@@ -53,8 +56,6 @@ class InstallController(
   def installTask(cancellable: Cancellable) {
 
     checkCancelled(cancellable)
-
-    val ui = new InstallUI(step, action, activityArea)
 
     /* XXX - access lazy vals (mount points) */
     /* XXX - loop on oses to prepare/... */
@@ -91,5 +92,12 @@ class InstallController(
     cancellable.check {
       JFXSystem.schedule(activityArea.appendLine("Cancelled"))
     }
+
+  override def onCancel() {
+    /* Note: we are in the JavaFX thread */
+    ui.activity("Cancelling ...")
+    stepPane.next.disable.value = true
+    cancellableFuture.cancel()
+  }
 
 }
