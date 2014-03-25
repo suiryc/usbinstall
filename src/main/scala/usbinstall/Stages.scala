@@ -94,27 +94,36 @@ object Stages
     trackMinimumDimension("height", stage.minHeightProperty(), stage.heightProperty(), stage.scene().heightProperty())
   }
 
-  def errorStage(title: String, masthead: Option[String], ex: Throwable) {
+  protected def errorStage(title: String, masthead: Option[String], error: Either[Throwable, String]) {
     import RichOptional._
 
-    Dialogs.create()
+    val dialog = Dialogs.create()
       .owner(USBInstall.stage:javafx.stage.Window)
       .nativeTitleBar()
       .title(title)
       .optional[String](masthead, _.masthead(_))
-      .showException(ex)
+
+    val show = () => error match {
+      case Left(ex) =>
+        dialog.showException(ex)
+
+      case Right(error) =>
+        dialog.optional(error != "", _.message(error))
+          .showError()
+    }
+
+    if (Platform.isFxApplicationThread)
+      show()
+    else
+      JFXSystem.await(show())
+  }
+
+  def errorStage(title: String, masthead: Option[String], ex: Throwable) {
+    errorStage(title, masthead, Left(ex))
   }
 
   def errorStage(title: String, masthead: Option[String], error: String) {
-    import RichOptional._
-
-    Dialogs.create()
-      .owner(USBInstall.stage:javafx.stage.Window)
-      .nativeTitleBar()
-      .title(title)
-      .optional[String](masthead, _.masthead(_))
-      .optional(error != "", _.message(error))
-      .showError()
+    errorStage(title, masthead, Right(error))
   }
 
   def stepChange(pane: Panes.StepPane) =

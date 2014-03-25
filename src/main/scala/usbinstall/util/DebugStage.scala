@@ -23,12 +23,15 @@ object DebugStage {
     vgrow = Priority.ALWAYS
   }
 
-  val areaWriter = new MessageLineWriter {
-    override def write(line: String) =
-      JFXSystem.schedule {
-        area.write(line)
-      }
-  }
+  def logAreaWriter(area: LogArea) =
+    new MessageLineWriter {
+      override def write(line: String) =
+        JFXSystem.schedule {
+          area.write(line)
+        }
+    }
+
+  val areaWriter = logAreaWriter(area)
 
   private val areaOutputStream = new LineSplitterOutputStream(areaWriter)
   Command.addExtraOutputSink(areaOutputStream)
@@ -75,7 +78,7 @@ object DebugStage {
 
   val listViewWriter = new MessageWriter {
 
-    override def write(level: MessageLevel.LevelValue, msg: String) {
+    override def write(level: MessageLevel.LevelValue, msg: String, throwable: Option[Throwable]) {
       val item = MessageCellData(level, msg)
       listViewItems.add(item)
       scrollListViewToEnd()

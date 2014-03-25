@@ -12,14 +12,15 @@ import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.Settings
+import usbinstall.util.DebugStage
 
 
 @sfxml
 class InstallController(
   private val vbox: VBox,
   private val grid: GridPane,
-  private val action: Label,
   private val step: Label,
+  private val action: Label,
   private val previous: Panes.PreviousButton,
   private val cancel: Panes.CancelButton
 ) extends Logging
@@ -33,13 +34,18 @@ class InstallController(
   }
   vbox.content.add(activityArea)
 
+  val appender = USBInstall.newAppender(List(DebugStage.logAreaWriter(activityArea)))
+  USBInstall.addAppender(appender)
+
   val cancellableFuture = CancellableFuture(installTask(_))
   cancellableFuture.future.onComplete {
     case Failure(e) =>
       error(s"Task failed", e)
+      USBInstall.detachAppender(appender)
 
     case Success(_) =>
       info(s"Task succeeded")
+      USBInstall.detachAppender(appender)
   }
 
   /* XXX - link cancel button (or property) to cancellable */
@@ -48,27 +54,25 @@ class InstallController(
 
     checkCancelled(cancellable)
 
+    val ui = new InstallUI(step, action, activityArea)
+
     /* XXX - access lazy vals (mount points) */
     /* XXX - loop on oses to prepare/... */
     /* XXX - catch issues */
+    ui.none()
     Settings.core.oses foreach { settings =>
       try {
+        checkCancelled(cancellable)
         if (settings.kind == OSKind.GPartedLive) {
-          val os = OSInstall(settings)
+          val os = OSInstall(settings, ui)
 
-          checkCancelled(cancellable)
-          JFXSystem.schedule(activityArea.appendLine("Sleeping before acting ..."))
-          Thread.sleep(5000)
-          checkCancelled(cancellable)
-          JFXSystem.schedule(activityArea.appendLine("Acting ..."))
           OSInstall.prepare(os)
+          ui.none()
           checkCancelled(cancellable)
-          JFXSystem.schedule(activityArea.appendLine("Sleeping after acting ..."))
-          /*OSInstall.install(os)
-          OSInstall.postInstall(os)*/
-          Thread.sleep(5000)
-          checkCancelled(cancellable)
-          JFXSystem.schedule(activityArea.appendLine(s"Done ${settings.kind}"))
+          OSInstall.install(os)
+          ui.none()
+          OSInstall.postInstall(os)
+          ui.none()
         }
       }
       catch {
@@ -79,6 +83,7 @@ class InstallController(
           error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
           throw e
       }
+      ui.none()
     }
   }
 

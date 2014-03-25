@@ -1,14 +1,14 @@
 package usbinstall.util
 
 import ch.qos.logback.classic.{Level, LoggerContext}
-import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.classic.spi.{ILoggingEvent, ThrowableProxy}
 import ch.qos.logback.core.AppenderBase
 import ch.qos.logback.core.encoder.EchoEncoder
 import java.io.{ByteArrayOutputStream, IOException}
 import org.slf4j.LoggerFactory
 import suiryc.scala.misc.{MessageLevel, MessageWriter}
 
-/** XXX - do we want/can access the associated Throwable if any ? */
+
 class ProxyAppender(writers: Seq[MessageWriter])
   extends AppenderBase[ILoggingEvent]
 {
@@ -26,9 +26,16 @@ class ProxyAppender(writers: Seq[MessageWriter])
       case Level.WARN_INT => MessageLevel.WARNING
       case Level.ERROR_INT => MessageLevel.ERROR
     }
+    val throwable = event.getThrowableProxy() match {
+      case p: ThrowableProxy =>
+        Some(p.getThrowable())
+
+      case _ =>
+        None
+    }
 
     writers foreach { writer =>
-      writer.write(level, msg)
+      writer.write(level, msg, throwable)
     }
   }
 

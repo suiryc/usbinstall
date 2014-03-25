@@ -2,14 +2,15 @@ package usbinstall.os
 
 import grizzled.slf4j.Logging
 import java.nio.file.Paths
-import usbinstall.settings.InstallSettings
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
+import usbinstall.InstallUI
+import usbinstall.settings.InstallSettings
 
 
-class OSInstall(val settings: OSSettings, val efi: Boolean = false)
+class OSInstall(val settings: OSSettings, val ui: InstallUI, val efi: Boolean = false)
   extends Logging
 {
 
@@ -20,8 +21,9 @@ class OSInstall(val settings: OSSettings, val efi: Boolean = false)
    * Does anything necessary before partition is formatted (if requested) and
    * actual OS installation.
    * E.g.: find/compile tools files necessary for OS installation.
+   * Syslinux prepared separately.
    */
-  def prepare: Unit = {}
+  def prepare(): Unit = { }
 
   /**
    * Installs OS.
@@ -29,20 +31,20 @@ class OSInstall(val settings: OSSettings, val efi: Boolean = false)
    * Partition is already formatted.
    * EFI setup and syslinux bootloader install are performed right after.
    */
-  def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {}
+  def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = { }
 
   /**
    * Performs any post-install steps.
    */
-  def postInstall: Unit = {}
+  def postInstall(): Unit = { }
 
 }
 
 object OSInstall {
 
-  def apply(settings: OSSettings): OSInstall = settings.kind match {
+  def apply(settings: OSSettings, ui: InstallUI): OSInstall = settings.kind match {
     case OSKind.GPartedLive =>
-      new GPartedLiveInstall(settings)
+      new GPartedLiveInstall(settings, ui)
 
     /* XXX */
     case kind =>
@@ -52,8 +54,10 @@ object OSInstall {
 
   /* XXX - caller must check enabled && installable ? */
   def prepare(os: OSInstall): Unit =
-    if (os.settings.install)
-      os.prepare
+    if (os.settings.install) {
+      os.ui.setStep(s"Prepare ${os.settings.label} installation")
+      os.prepare()
+    }
 
   private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
     val iso = os.settings.iso() map { pathISO =>
@@ -95,7 +99,9 @@ object OSInstall {
           Seq(s"mkfs.${kind}", "--fast", part.dev.getPath)
       }
 
-      Command.execute(command).toEither("Failed to format partition")
+      os.ui.action(s"Format partition ${part.dev.getPath} ($kind)") {
+        Command.execute(command).toEither("Failed to format partition")
+      }
     }
 
     def setType = {
@@ -111,8 +117,10 @@ $id
 w
 """.getBytes
 
-      Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
-        Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
+      os.ui.action(s"Set partition ${part.dev.getPath} type ($kind)") {
+        Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
+          Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
+      }
     }
 
     def setLabel = {
@@ -136,7 +144,9 @@ w
           (Seq("ntfslabel", "--force", part.dev.getPath, label), None)
       }
 
-      Command.execute(command, envf = envf).toEither("Failed to label partition")
+      os.ui.action(s"Set partition ${part.dev.getPath} label ($label)") {
+        Command.execute(command, envf = envf).toEither("Failed to label partition")
+      }
     }
 
     val r = (if (os.settings.formatable) format else Right("Partition formatting disabled")) &&
@@ -186,12 +196,16 @@ w
 
   /* XXX - caller must check enabled && installable ? */
   def install(os: OSInstall): Unit = {
+    os.ui.setStep(s"Install ${os.settings.label}")
+
     if (os.settings.install) {
       /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
-        SyslinuxInstall.get(version)
-        /* XXX - stop right now if problem ? */
-        /* XXX - setting to only set syslinux ? */
+        os.ui.action(s"Search syslinux $version") {
+          SyslinuxInstall.get(version)
+          /* XXX - stop right now if problem ? */
+          /* XXX - setting to only set syslinux ? */
+        }
       }
 
       /* prepare partition */
@@ -209,11 +223,15 @@ w
 
         /* prepare EFI */
         if (os.efi) {
-          findEFI(os, partMount)
+          os.ui.action(s"Search EFI path") {
+            findEFI(os, partMount)
+          }
         }
 
         if (os.settings.install) {
-          installBootloader(os, partMount)
+          os.ui.action(s"Install bootloader") {
+            installBootloader(os, partMount)
+          }
         }
       })
     }
@@ -223,7 +241,8 @@ w
   def postInstall(os: OSInstall): Unit = {
     /* XXX - only if something to do ? */
     if (os.settings.install) {
-      mountAndDo(os, (_, _) => os.postInstall)
+      os.ui.setStep(s"Finalize ${os.settings.label} installation")
+      mountAndDo(os, (_, _) => os.postInstall())
     }
   }
 

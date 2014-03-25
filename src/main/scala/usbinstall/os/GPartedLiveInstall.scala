@@ -1,15 +1,17 @@
 package usbinstall.os
 
+import java.nio.file.{Files, Paths}
 import scala.language.postfixOps
 import suiryc.scala.io.FilesEx
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
-import java.nio.file.Paths
-import java.nio.file.Files
+import usbinstall.InstallUI
 
 
-class GPartedLiveInstall(override val settings: OSSettings)
-  extends OSInstall(settings, true)
+class GPartedLiveInstall(
+  override val settings: OSSettings,
+  override val ui: InstallUI
+) extends OSInstall(settings, ui, true)
 {
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
