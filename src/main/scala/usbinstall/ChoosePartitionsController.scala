@@ -41,6 +41,8 @@ class ChoosePartitionsController(
    * pane/scene to be GCed. */
   var subscriptions: List[Subscription] = Nil
 
+  def getSubscriptions(): List[Subscription] = subscriptions
+
   val devicePartitions = InstallSettings.device().get.partitions.toList sortBy(_.partNumber)
   var partitions = List[DevicePartition]()
   val partitionsStringProp = PropertyEx(ObservableBuffer[String]())
@@ -118,8 +120,6 @@ class ChoosePartitionsController(
     partitionsPane.content = partitions
   }
   updatePartitionsPane()
-
-  def getSubscriptions(): List[Subscription] = subscriptions
 
   def osRow(settings: OSSettings): List[Node] = {
     val osLabel = new Label {

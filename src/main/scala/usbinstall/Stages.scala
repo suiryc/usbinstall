@@ -126,7 +126,11 @@ object Stages
     errorStage(title, masthead, Right(error))
   }
 
-  def stepChange(pane: StepPane) =
+  protected def toolBar(pane: StepPane) =
+    FXMLView(getClass.getResource("toolBar.fxml"),
+      new ExplicitDependencies(Map("stepPane" -> pane)))
+
+  protected def stepChange(pane: StepPane) =
     FXMLView(getClass.getResource("stepChange.fxml"),
       new ExplicitDependencies(Map("stepPane" -> pane)))
 
@@ -135,13 +139,11 @@ object Stages
       root = new GridPane {
         alignment = Pos.TOP_CENTER
 
-        val stepPane = stepChange(pane)
-
         columnConstraints.add(new ColumnConstraints() { hgrow = Priority.ALWAYS } delegate)
+        rowConstraints.add(new RowConstraints() { vgrow = Priority.NEVER } delegate)
         rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
 
-        add(pane, 0, 0)
-        add(stepPane, 0, 1)
+        addColumn(0, toolBar(pane), pane, stepChange(pane))
       }
     }
 

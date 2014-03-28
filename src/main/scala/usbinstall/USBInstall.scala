@@ -18,8 +18,6 @@ object USBInstall extends JFXApp {
   val appender = newAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
   addAppender(appender)
 
-  DebugStage.show()
-
   Stages.chooseDevice()
 
   override def stopApp() {

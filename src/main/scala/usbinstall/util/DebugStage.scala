@@ -19,6 +19,9 @@ object DebugStage {
 
   /* XXX - scrollbars sometimes appear when resizing LogArea down */
 
+  private var pos: Option[(Double, Double)] = None
+  private var size: Option[(Double, Double)] = None
+
   private val area = new LogArea {
     vgrow = Priority.ALWAYS
   }
@@ -95,7 +98,7 @@ object DebugStage {
   private val dscene = new Scene {
     root = dpane
   }
-  private val dstage = new Stage {
+  private val stage = new Stage {
     scene = dscene
     onCloseRequest = { (event: WindowEvent) =>
       event.consume()
@@ -104,15 +107,27 @@ object DebugStage {
   }
 
   def show() {
-    dstage.show
+    pos foreach { pos =>
+      stage.x = pos._1
+      stage.y = pos._2
+    }
+    size foreach { pos =>
+      stage.width = pos._1
+      stage.height = pos._2
+    }
+    stage.show
     listView.items = listViewItems
     scrollListViewToEnd()
   }
 
   def hide() {
+    pos = Some(stage.x(), stage.y())
+    size = Some(stage.width(), stage.height())
     /* Note: updating the list view when not visible generates warnings */
     listView.items = ObservableBuffer[MessageCellData]()
-    dstage.hide
+    stage.hide
   }
+
+  def showing = stage.showing
 
 }
