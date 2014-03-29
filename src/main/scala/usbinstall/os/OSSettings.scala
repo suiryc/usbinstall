@@ -4,7 +4,9 @@ import java.io.File
 import java.nio.file.Path
 import scala.util.matching.Regex
 import scalafx.beans.property.ObjectProperty
+import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.misc.EnumerationEx
+import suiryc.scala.settings.PersistentSetting
 import suiryc.scala.sys.linux.DevicePartition
 
 
@@ -49,14 +51,14 @@ class OSSettings(
   val partitionFormat: PartitionFormat.Value,
   val syslinuxLabel: Option[String],
   val syslinuxVersion: Option[Int],
-  val xInstallStatus: OSInstallStatus.Value
+  val xInstallStatus: PersistentSetting[OSInstallStatus.Value]
 ) {
 
   val format: ObjectProperty[Boolean] =
     ObjectProperty(true)
 
   val installStatus: ObjectProperty[OSInstallStatus.Value] =
-    ObjectProperty(xInstallStatus)
+    PersistentProperty(xInstallStatus)
 
   val partition: ObjectProperty[Option[DevicePartition]] =
     ObjectProperty(None)

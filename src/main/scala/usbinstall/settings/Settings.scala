@@ -9,6 +9,7 @@ import scala.reflect.ClassTag
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, RichFile}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
+import suiryc.scala.settings.{BaseSettings, PersistentSetting}
 import suiryc.scala.misc.{EnumerationEx, Units}
 import usbinstall.util.Util
 import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
@@ -25,9 +26,13 @@ object Settings {
 }
 
 class Settings(
-  protected[settings] val config: Config,
-  protected[settings] val prefs: Preferences
-) {
+  config: Config,
+  prefs: Preferences
+) extends BaseSettings(config, prefs)
+{
+
+  implicit private val settings: BaseSettings = this
+  implicit private val errorAction: ErrorAction.type = ErrorAction
 
   protected def option(config: Config, path: String): Option[String] =
     if (config.hasPath(path)) Some(config.getString(path)) else None
@@ -43,6 +48,10 @@ class Settings(
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
     val label = option(config, "label") getOrElse(kind)
+
+    implicit val settings = new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
+    implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
+
     new OSSettings(
       OSKind(kind),
       label,
@@ -52,7 +61,7 @@ class Settings(
       PartitionFormat(config.getString("partition.format")),
       option(config, "syslinux.label"),
       option(config, "syslinux.version") map { _.toInt },
-      option(config, "status") map { OSInstallStatus(_) } getOrElse(OSInstallStatus.Install)
+      PersistentSetting.forEnumerationEx("status", OSInstallStatus.Install)
     )
   }
 
@@ -68,11 +77,8 @@ class Settings(
     file(path)
   }
 
-  implicit private val settings: Settings = this
-  implicit private val errorAction: ErrorAction.type = ErrorAction
-
   val componentInstallError =
-    PersistentSetting.forEnumerationEx[ErrorAction.type]("componentInstallError")
+    PersistentSetting.forEnumerationEx("componentInstallError", ErrorAction.Ask)
 
 }
 

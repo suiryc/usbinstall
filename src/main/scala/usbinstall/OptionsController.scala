@@ -3,8 +3,8 @@ package usbinstall
 import scalafx.event.ActionEvent
 import scalafx.scene.control.ComboBox
 import scalafxml.core.macros.sfxml
+import suiryc.scala.settings.PersistentSetting._
 import usbinstall.settings.{ErrorAction, Settings}
-import usbinstall.settings.PersistentSetting._
 
 
 @sfxml

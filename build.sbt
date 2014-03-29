@@ -14,6 +14,7 @@ val versions = Map[String, String](
   "akka" -> "2.3.0",
   "config" -> "1.2.0",
   "controlsfx" -> "8.0.4",
+  "grizzled" -> "1.0.1",
   "logback" -> "1.1.1",
   "paradise" -> "2.0.0-M3",
   "scalafx" -> "8.0.0-R4",
@@ -27,6 +28,7 @@ val versions = Map[String, String](
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % versions("slf4j"),
+  "org.clapper" %% "grizzled-slf4j" % versions("grizzled"),
   "ch.qos.logback" % "logback-classic" % versions("logback"),
   "com.typesafe" % "config" % versions("config"),
   "com.typesafe.akka" %% "akka-actor" % versions("akka"),
