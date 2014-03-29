@@ -19,7 +19,7 @@ class PersistentStringSetting(protected val path: String)(implicit settings: Set
 
   def apply(): String =
     /* XXX - more efficient way to check whether path exists and only use 'config' if not ? */
-    settings.prefs.get(path, settings.config.getString(settings.optionPath(path)))
+    settings.prefs.get(path, settings.config.getString(path))
 
   def update(v: String) =
     settings.prefs.put(path, v)
@@ -30,7 +30,7 @@ class PersistentEnumerationExSetting[T <: EnumerationEx](protected val path: Str
 {
 
   def apply(): T#Value =
-    enum(settings.prefs.get(path, settings.config.getString(settings.optionPath(path))))
+    enum(settings.prefs.get(path, settings.config.getString(path)))
 
   def update(v: T#Value) =
     settings.prefs.put(path, v.toString)

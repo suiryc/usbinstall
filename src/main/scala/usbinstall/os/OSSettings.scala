@@ -3,7 +3,7 @@ package usbinstall.os
 import java.io.File
 import java.nio.file.Path
 import scala.util.matching.Regex
-import suiryc.scala.javafx.beans.property.PropertyEx
+import scalafx.beans.property.ObjectProperty
 import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.sys.linux.DevicePartition
 
@@ -52,17 +52,17 @@ class OSSettings(
   val xInstallStatus: OSInstallStatus.Value
 ) {
 
-  val format: PropertyEx[Boolean] =
-    PropertyEx(true)
+  val format: ObjectProperty[Boolean] =
+    ObjectProperty(true)
 
-  val installStatus: PropertyEx[OSInstallStatus.Value] =
-    PropertyEx(xInstallStatus)
+  val installStatus: ObjectProperty[OSInstallStatus.Value] =
+    ObjectProperty(xInstallStatus)
 
-  val partition: PropertyEx[Option[DevicePartition]] =
-    PropertyEx(None)
+  val partition: ObjectProperty[Option[DevicePartition]] =
+    ObjectProperty(None)
 
-  val iso: PropertyEx[Option[File]] =
-    PropertyEx(None)
+  val iso: ObjectProperty[Option[File]] =
+    ObjectProperty(None)
 
   var efiBootloader: Option[Path] =
     None

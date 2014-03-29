@@ -48,7 +48,7 @@ object Panes
       }) {
         disable.value = true
 
-        subscriptions ::= InstallSettings.device.property.onChange { (_, _, device) =>
+        subscriptions ::= InstallSettings.device.onChange { (_, _, device) =>
           Option(device) match {
             case Some(_) =>
               disable.value = false
@@ -93,9 +93,9 @@ object Panes
         updateDisable
 
         Settings.core.oses foreach { settings =>
-          subscriptions ::= settings.installStatus.property.onChange(updateDisable)
-          subscriptions ::= settings.partition.property.onChange(updateDisable)
-          subscriptions ::= settings.iso.property.onChange(updateDisable)
+          subscriptions ::= settings.installStatus.onChange(updateDisable)
+          subscriptions ::= settings.partition.onChange(updateDisable)
+          subscriptions ::= settings.iso.onChange(updateDisable)
         }
       }
     }

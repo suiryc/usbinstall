@@ -2,14 +2,14 @@ package usbinstall.settings
 
 import java.io.File
 import java.nio.file.Files
-import suiryc.scala.javafx.beans.property.PropertyEx
+import scalafx.beans.property.ObjectProperty
 import suiryc.scala.sys.linux.Device
 
 
 object InstallSettings {
 
-  val device: PropertyEx[Option[Device]] =
-    new PropertyEx(None)
+  val device: ObjectProperty[Option[Device]] =
+    ObjectProperty(None)
 
   protected def tempDirectory(prefix: String): File = {
     val file = Files.createTempDirectory(prefix).toFile()

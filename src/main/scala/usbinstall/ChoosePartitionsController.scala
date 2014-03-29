@@ -3,6 +3,7 @@ package usbinstall
 import grizzled.slf4j.Logging
 import scala.language.postfixOps
 import scalafx.Includes._
+import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.event.ActionEvent
 import scalafx.event.subscriptions.Subscription
@@ -16,7 +17,6 @@ import scalafx.scene.layout.{
   RowConstraints
 }
 import scalafxml.core.macros.sfxml
-import suiryc.scala.javafx.beans.property.PropertyEx
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
@@ -45,7 +45,7 @@ class ChoosePartitionsController(
 
   val devicePartitions = InstallSettings.device().get.partitions.toList sortBy(_.partNumber)
   var partitions = List[DevicePartition]()
-  val partitionsStringProp = PropertyEx(ObservableBuffer[String]())
+  val partitionsStringProp = ObjectProperty(ObservableBuffer[String]())
   updateAvailablePartitions()
 
   formatAll.onAction = { event: ActionEvent =>
@@ -133,7 +133,7 @@ class ChoosePartitionsController(
     osFormat.selected.onChange { (_, _, selected) =>
       settings.format() = selected
     }
-    subscriptions ::= settings.format.property.onChange { (_, _, newValue) =>
+    subscriptions ::= settings.format.onChange { (_, _, newValue) =>
       osFormat.selected = newValue
     }
 
@@ -163,7 +163,7 @@ class ChoosePartitionsController(
       osFormat.disable = (v != OSInstallStatus.Install)
     }
 
-    subscriptions ::= settings.installStatus.property.onChange { (_, _, newValue) =>
+    subscriptions ::= settings.installStatus.onChange { (_, _, newValue) =>
       installStatusToUI(newValue)
     }
     installStatusToUI(settings.installStatus())
@@ -178,7 +178,7 @@ class ChoosePartitionsController(
       }
     }
     selectPartition()
-    partitionsStringProp.property.onChange { (_, _, newValue) =>
+    partitionsStringProp.onChange { (_, _, newValue) =>
       osPartition.items = newValue
       selectPartition()
     }
@@ -199,7 +199,7 @@ class ChoosePartitionsController(
         }
       }
     }
-    subscriptions ::= settings.partition.property.onChange { (_, _, newValue) =>
+    subscriptions ::= settings.partition.onChange { (_, _, newValue) =>
       settings.partition().fold(osPartition.selectionModel().select(-1)) { partition =>
         osPartition.selectionModel().select(partition.dev.toString)
       }

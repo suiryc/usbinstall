@@ -19,7 +19,7 @@ object Settings {
   protected val confPath = "usbinstall"
 
   /** Core settings. */
-  val core = new Settings(ConfigFactory.load(),
+  val core = new Settings(ConfigFactory.load().getConfig(confPath),
     Preferences.userRoot.node("suiryc.usbinstall").node(confPath))
 
 }
@@ -28,13 +28,6 @@ class Settings(
   protected[settings] val config: Config,
   protected[settings] val prefs: Preferences
 ) {
-
-  import Settings.confPath
-
-  protected[settings] def optionPath(name: String) = confPath + '.' + name
-
-  /* XXX - triggers Exception ? */
-  //config.checkValid(ConfigFactory.defaultReference(), confPath)
 
   protected def option(config: Config, path: String): Option[String] =
     if (config.hasPath(path)) Some(config.getString(path)) else None
@@ -47,7 +40,7 @@ class Settings(
     }
     else new File(path)
 
-  val oses = config.getConfigList(optionPath("oses")).toList map { config =>
+  val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
     val label = option(config, "label") getOrElse(kind)
     new OSSettings(
@@ -63,7 +56,7 @@ class Settings(
     )
   }
 
-  val isoPath = config.getStringList(optionPath("iso.path")).toList map { path =>
+  val isoPath = config.getStringList("iso.path").toList map { path =>
     file(path)
   }
 
@@ -71,7 +64,7 @@ class Settings(
     ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get()
   } sortBy { _.toString() } reverse
 
-  val toolsPath = config.getStringList(optionPath("tools.path")).toList map { path =>
+  val toolsPath = config.getStringList("tools.path").toList map { path =>
     file(path)
   }
 
