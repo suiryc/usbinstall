@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, RichFile}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
-import suiryc.scala.misc.Units
+import suiryc.scala.misc.{EnumerationEx, Units}
 import usbinstall.util.Util
 import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
 
@@ -76,45 +76,16 @@ class Settings(
   }
 
   implicit private val settings: Settings = this
+  implicit private val errorAction: ErrorAction.type = ErrorAction
 
   val componentInstallError =
-    PersistentSetting[String]("componentInstallError")
+    PersistentSetting.forEnumerationEx[ErrorAction.type]("componentInstallError")
 
 }
 
 
-abstract class PersistentSetting[T]
-{
-
-  protected val path: String
-
-  def apply(): T
-
-  def update(v: T): Unit
-
-}
-
-class PersistentStringSetting(protected val path: String)(implicit settings: Settings) extends PersistentSetting[String]
-{
-
-  def apply(): String =
-    /* XXX - more efficient way to check whether path exists and only use 'config' if not ? */
-    settings.prefs.get(path, settings.config.getString(settings.optionPath(path)))
-
-  def update(v: String) =
-    settings.prefs.put(path, v)
-
-}
-
-object PersistentSetting {
-
-  import scala.language.implicitConversions
-
-  implicit def toValue[T](p :PersistentSetting[T]): T = p()
-
-  implicit def forString(path: String)(implicit settings: Settings): PersistentSetting[String] =
-    new PersistentStringSetting(path)
-
-  def apply[T](p: PersistentSetting[T])(implicit settings: Settings) = p
-
+object ErrorAction extends EnumerationEx {
+  val Ask = Value
+  val Stop = Value
+  val Skip = Value
 }
