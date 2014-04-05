@@ -18,7 +18,7 @@ val versions = Map[String, String](
   "logback" -> "1.1.1",
   "paradise" -> "2.0.0-M3",
   "scalafx" -> "8.0.0-R4",
-  "scalafxml" -> "0.1",
+  "scalafxml" -> "0.2-SNAPSHOT",
   "slf4j" -> "1.7.6",
   "suiryc-scala" -> "0.0.1-SNAPSHOT",
   "maven-compiler-plugin" -> "3.1",

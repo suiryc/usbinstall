@@ -24,9 +24,6 @@ import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-/* Note: ScalaFXML macro fails when extending more than one trait explicitely */
-trait ChoosePartitionsControllerTraits extends HasEventSubscriptions with Logging
-
 @sfxml
 class ChoosePartitionsController(
   private val elements: GridPane,
@@ -34,7 +31,7 @@ class ChoosePartitionsController(
   private val installAll: CheckBox,
   private val autoSelectPartitions: Hyperlink,
   private val partitionsPane: AnchorPane
-) extends ChoosePartitionsControllerTraits
+) extends HasEventSubscriptions with Logging
 {
 
   /* Note: subscriptions on external object need to be cancelled for
@@ -73,7 +70,7 @@ class ChoosePartitionsController(
   /* Initial partitions selection */
   selectPartitions(false)
 
-  def updatePartitionsPane() {
+  private def updatePartitionsPane() {
     val partitions = new GridPane {
       padding = Insets(10)
       hgap = 5
@@ -121,7 +118,7 @@ class ChoosePartitionsController(
   }
   updatePartitionsPane()
 
-  def osRow(settings: OSSettings): List[Node] = {
+  private def osRow(settings: OSSettings): List[Node] = {
     val osLabel = new Label {
       text = settings.label
       style = "-fx-font-weight:bold"
@@ -226,18 +223,18 @@ class ChoosePartitionsController(
     osLabel :: osFormat :: osInstall :: osPartition :: Nil ++ osISO
   }
 
-  def availablePartitions() =
+  private def availablePartitions() =
     devicePartitions filter { partition =>
       val size = partition.size()
       !partition.mounted && (size > 1 * 1024 * 1024)
     }
 
-  def updateAvailablePartitions() {
+  private def updateAvailablePartitions() {
     partitions = availablePartitions()
     partitionsStringProp() = ObservableBuffer(partitions.map(_.dev.toString))
   }
 
-  def selectPartitions(redo: Boolean) {
+  private def selectPartitions(redo: Boolean) {
     Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
       if ((redo || !os.partition().find(devicePartitions.contains(_)).isDefined) &&
         (os.installStatus() != OSInstallStatus.NotInstalled))

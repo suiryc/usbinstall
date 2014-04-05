@@ -15,9 +15,6 @@ import usbinstall.settings.Settings
 import usbinstall.util.DebugStage
 
 
-/* Note: ScalaFXML macro fails when extending more than one trait explicitely */
-trait InstallControllerTraits extends HasCancel with Logging
-
 @sfxml
 class InstallController(
   private val vbox: VBox,
@@ -25,7 +22,7 @@ class InstallController(
   private val step: Label,
   private val action: Label,
   private val stepPane: StepPane
-) extends InstallControllerTraits
+) extends HasCancel with Logging
 {
 
   println(Settings.core.oses)
@@ -53,7 +50,7 @@ class InstallController(
 
   /* XXX - link cancel button (or property) to cancellable */
 
-  def installTask(cancellable: Cancellable) {
+  private def installTask(cancellable: Cancellable) {
 
     checkCancelled(cancellable)
 
@@ -88,7 +85,7 @@ class InstallController(
     }
   }
 
-  def checkCancelled(cancellable: Cancellable) =
+  private def checkCancelled(cancellable: Cancellable) =
     cancellable.check {
       JFXSystem.schedule(activityArea.appendLine("Cancelled"))
     }
