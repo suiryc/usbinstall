@@ -1,5 +1,6 @@
 package usbinstall
 
+import java.util.prefs.Preferences
 import scalafx.event.ActionEvent
 import scalafx.scene.control.ComboBox
 import scalafxml.core.macros.sfxml
@@ -19,12 +20,26 @@ class OptionsController(
    * object being constructed).
    */
   componentInstallError.items.get().setAll(ErrorAction.values.toList:_*)
-  componentInstallError.selectionModel().select(Settings.core.componentInstallError)
   componentInstallError.onAction =
     onComponentInstallError _
 
+  update()
+
+  def update() {
+    componentInstallError.selectionModel().select(Settings.core.componentInstallError)
+  }
+
   def onComponentInstallError(event: ActionEvent) {
     Settings.core.componentInstallError.update(componentInstallError.value())
+  }
+
+  def onReset(event: ActionEvent) {
+    Settings.core.componentInstallError.update(Settings.default.componentInstallError)
+    update()
+  }
+
+  def onClear(event: ActionEvent) {
+    Settings.core.prefs.removeNode()
   }
 
 }

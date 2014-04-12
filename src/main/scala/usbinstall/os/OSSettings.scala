@@ -6,7 +6,7 @@ import scala.util.matching.Regex
 import scalafx.beans.property.ObjectProperty
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.misc.EnumerationEx
-import suiryc.scala.settings.PersistentSetting
+import suiryc.scala.settings.{BaseSettings, PersistentSetting}
 import suiryc.scala.sys.linux.DevicePartition
 
 
@@ -50,15 +50,17 @@ class OSSettings(
   val partitionLabel: String,
   val partitionFormat: PartitionFormat.Value,
   val syslinuxLabel: Option[String],
-  val syslinuxVersion: Option[Int],
-  val xInstallStatus: PersistentSetting[OSInstallStatus.Value]
-) {
+  val syslinuxVersion: Option[Int]
+)(implicit settings: BaseSettings)
+{
+
+  implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
 
   val format: ObjectProperty[Boolean] =
-    ObjectProperty(true)
+    PersistentProperty(PersistentSetting.forBoolean("settings.format", true))
 
   val installStatus: ObjectProperty[OSInstallStatus.Value] =
-    PersistentProperty(xInstallStatus)
+    PersistentProperty(PersistentSetting.forEnumerationEx("settings.status", OSInstallStatus.Install))
 
   val partition: ObjectProperty[Option[DevicePartition]] =
     ObjectProperty(None)

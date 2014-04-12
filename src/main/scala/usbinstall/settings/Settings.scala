@@ -12,7 +12,7 @@ import suiryc.scala.io.PathFinder._
 import suiryc.scala.settings.{BaseSettings, PersistentSetting}
 import suiryc.scala.misc.{EnumerationEx, Units}
 import usbinstall.util.Util
-import usbinstall.os.{OSInstallStatus, OSKind, OSSettings, PartitionFormat}
+import usbinstall.os.{OSKind, OSSettings, PartitionFormat}
 
 
 object Settings {
@@ -22,6 +22,12 @@ object Settings {
   /** Core settings. */
   val core = new Settings(ConfigFactory.load().getConfig(confPath),
     Preferences.userRoot.node("suiryc.usbinstall").node(confPath))
+
+  object default {
+
+    val componentInstallError = ErrorAction.Ask
+
+  }
 
 }
 
@@ -50,7 +56,6 @@ class Settings(
     val label = option(config, "label") getOrElse(kind)
 
     implicit val settings = new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
-    implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
 
     new OSSettings(
       OSKind(kind),
@@ -60,8 +65,7 @@ class Settings(
       config.getString("partition.label"),
       PartitionFormat(config.getString("partition.format")),
       option(config, "syslinux.label"),
-      option(config, "syslinux.version") map { _.toInt },
-      PersistentSetting.forEnumerationEx("status", OSInstallStatus.Install)
+      option(config, "syslinux.version") map { _.toInt }
     )
   }
 
@@ -78,7 +82,7 @@ class Settings(
   }
 
   val componentInstallError =
-    PersistentSetting.forEnumerationEx("componentInstallError", ErrorAction.Ask)
+    PersistentSetting.forEnumerationEx("componentInstallError", Settings.default.componentInstallError)
 
 }
 
