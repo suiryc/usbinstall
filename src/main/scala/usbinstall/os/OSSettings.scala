@@ -56,10 +56,10 @@ class OSSettings(
 
   implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
 
-  val format: ObjectProperty[Boolean] =
+  val format: PersistentProperty[Boolean] =
     PersistentProperty(PersistentSetting.forBoolean("settings.format", true))
 
-  val installStatus: ObjectProperty[OSInstallStatus.Value] =
+  val installStatus: PersistentProperty[OSInstallStatus.Value] =
     PersistentProperty(PersistentSetting.forEnumerationEx("settings.status", OSInstallStatus.Install))
 
   val partition: ObjectProperty[Option[DevicePartition]] =
@@ -84,6 +84,11 @@ class OSSettings(
   def syslinuxFile = partitionFormat match {
     case _: PartitionFormat.extX => "extlinux.conf"
     case _: PartitionFormat.MS => "syslinux.cfg"
+  }
+
+  def reset() {
+    format.reset()
+    installStatus.reset()
   }
 
   override def toString =

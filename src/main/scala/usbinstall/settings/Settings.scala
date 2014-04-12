@@ -84,6 +84,11 @@ class Settings(
   val componentInstallError =
     PersistentSetting.forEnumerationEx("componentInstallError", Settings.default.componentInstallError)
 
+  def reset() =
+    for (os <- oses) {
+      os.reset()
+    }
+
 }
 
 

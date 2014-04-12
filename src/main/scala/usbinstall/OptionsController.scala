@@ -35,11 +35,16 @@ class OptionsController(
 
   def onReset(event: ActionEvent) {
     Settings.core.componentInstallError.update(Settings.default.componentInstallError)
+    /* Note: we need to update the pane; alternatively we could make a
+     * PersistentProperty out of this PersistentSetting and update the control
+     * upon value changing.
+     */
     update()
   }
 
   def onClear(event: ActionEvent) {
     Settings.core.prefs.removeNode()
+    Settings.core.reset()
   }
 
 }
