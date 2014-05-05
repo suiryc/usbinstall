@@ -52,25 +52,20 @@ class InstallController(
 
   private def installTask(cancellable: Cancellable) {
 
-    checkCancelled(cancellable)
+    def checkCancelled() =
+      cancellable.check {
+        JFXSystem.schedule(activityArea.appendLine("Cancelled"))
+      }
 
     /* XXX - access lazy vals (mount points) */
     /* XXX - loop on oses to prepare/... */
     /* XXX - catch issues */
-    ui.none()
     Settings.core.oses foreach { settings =>
       try {
-        checkCancelled(cancellable)
         if (Set(OSKind.GPartedLive, OSKind.SystemRescueCD).contains(settings.kind)) {
           val os = OSInstall(settings, ui)
 
-          OSInstall.prepare(os)
-          ui.none()
-          checkCancelled(cancellable)
-          OSInstall.install(os)
-          ui.none()
-          OSInstall.postInstall(os)
-          ui.none()
+          OSInstall.install(os, checkCancelled)
         }
       }
       catch {
@@ -81,7 +76,6 @@ class InstallController(
           error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
           throw e
       }
-      ui.none()
     }
   }
 

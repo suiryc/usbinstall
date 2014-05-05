@@ -55,13 +55,6 @@ object OSInstall {
       throw new Exception(msg)
   }
 
-  /* XXX - caller must check enabled && installable ? */
-  def prepare(os: OSInstall): Unit =
-    if (os.settings.install) {
-      os.ui.setStep(s"Prepare ${os.settings.label} installation")
-      os.prepare()
-    }
-
   private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
     val iso = os.settings.iso() map { pathISO =>
       new PartitionMount(pathISO, InstallSettings.pathMountISO)
@@ -152,6 +145,7 @@ w
       }
     }
 
+    /* XXX - if !format but install, clean partition */
     val r = (if (os.settings.formatable) format else Right("Partition formatting disabled")) &&
       setType && setLabel
 
@@ -198,8 +192,20 @@ w
   }
 
   /* XXX - caller must check enabled && installable ? */
-  def install(os: OSInstall): Unit = {
+  def install(os: OSInstall, checkCancelled: () => Unit): Unit = {
+    os.ui.none()
+
+    /* Prepare */
+    if (os.settings.install) {
+      os.ui.setStep(s"Prepare ${os.settings.label} installation")
+      checkCancelled()
+      os.prepare()
+    }
+
+    /* Actual install */
+    os.ui.none()
     os.ui.setStep(s"Install ${os.settings.label}")
+    checkCancelled()
 
     if (os.settings.install) {
       /* prepare syslinux */
@@ -213,40 +219,47 @@ w
 
       /* prepare partition */
       os.settings.partition() foreach { part =>
+        checkCancelled()
         preparePartition(os, part)
       }
     }
 
     /* XXX - only if something to do ? */
     if (os.settings.enabled) {
+      checkCancelled()
       mountAndDo(os, (isoMount, partMount) => {
         if (os.settings.install) {
+          checkCancelled()
           os.install(isoMount, partMount)
         }
 
         /* prepare EFI */
         if (os.efi) {
           os.ui.action(s"Search EFI path") {
+            checkCancelled()
             findEFI(os, partMount)
           }
         }
 
         if (os.settings.install) {
           os.ui.action(s"Install bootloader") {
+            checkCancelled()
             installBootloader(os, partMount)
           }
         }
       })
     }
-  }
 
-  /* XXX - caller must check enabled && installable ? */
-  def postInstall(os: OSInstall): Unit = {
+    /* Post-install */
     /* XXX - only if something to do ? */
     if (os.settings.install) {
+      os.ui.none()
       os.ui.setStep(s"Finalize ${os.settings.label} installation")
+      checkCancelled()
       mountAndDo(os, (_, _) => os.postInstall())
     }
+
+    os.ui.none()
   }
 
 }
