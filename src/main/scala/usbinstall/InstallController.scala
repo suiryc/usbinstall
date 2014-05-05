@@ -61,7 +61,7 @@ class InstallController(
     Settings.core.oses foreach { settings =>
       try {
         checkCancelled(cancellable)
-        if (settings.kind == OSKind.GPartedLive) {
+        if (Set(OSKind.GPartedLive, OSKind.SystemRescueCD).contains(settings.kind)) {
           val os = OSInstall(settings, ui)
 
           OSInstall.prepare(os)

@@ -46,6 +46,9 @@ object OSInstall {
     case OSKind.GPartedLive =>
       new GPartedLiveInstall(settings, ui)
 
+    case OSKind.SystemRescueCD =>
+      new SystemRescueCDInstall(settings, ui)
+
     /* XXX */
     case kind =>
       val msg = s"Unhandled OS type: $kind"

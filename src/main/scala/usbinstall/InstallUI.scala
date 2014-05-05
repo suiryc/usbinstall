@@ -40,10 +40,14 @@ class InstallUI(
   def action[T](value: String)(todo: => T): T = {
     setAction(value)
     try {
-      todo
-    }
-    finally {
+      val r = todo
       setAction(None)
+      r
+    }
+    catch {
+      case e: Throwable =>
+        setAction(s"'$value' failed")
+        throw e
     }
   }
 
