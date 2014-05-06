@@ -40,10 +40,6 @@ class ChooseDeviceController(
     Panes.devices.get(newValue) match {
       case oDevice @ Some(device) =>
         InstallSettings.device() = oDevice
-        Settings.core.oses foreach { os =>
-          if (os.partition().exists(_.device != device))
-            os.partition() = None
-        }
         vendor.text = device.vendor
         model.text = device.model
         device.size.either match {

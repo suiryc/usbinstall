@@ -1,13 +1,13 @@
 package usbinstall.os
 
-import java.io.File
+import java.nio.file.Path
 import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.Stages
 
 
 class PartitionMount(
-  val from: File,
-  val to: File,
+  val from: Path,
+  val to: Path,
   val mountOptions: Seq[String] = Nil
 )
 {

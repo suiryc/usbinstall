@@ -40,7 +40,8 @@ class ChoosePartitionsController(
 
   def getSubscriptions(): List[Subscription] = subscriptions
 
-  val devicePartitions = InstallSettings.device().get.partitions.toList sortBy(_.partNumber)
+  val device = InstallSettings.device().get
+  val devicePartitions = device.partitions.toList sortBy(_.partNumber)
   var partitions = List[DevicePartition]()
   val partitionsStringProp = ObjectProperty(ObservableBuffer[String]())
   updateAvailablePartitions()
@@ -60,15 +61,15 @@ class ChoosePartitionsController(
     }
   }
 
+  /* Initial partitions selection */
+  selectPartitions(false)
+
   /* Note: rows 1 (labels) and 2 (checkboxes) already used */
   Settings.core.oses.foldLeft(2) { (idx, partition) =>
     elements.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 30) { valignment = VPos.CENTER } delegate)
     elements.addRow(idx, osRow(partition) map { n => n:javafx.scene.Node } : _*)
     idx + 1
   }
-
-  /* Initial partitions selection */
-  selectPartitions(false)
 
   private def updatePartitionsPane() {
     val partitions = new GridPane {
@@ -240,6 +241,10 @@ class ChoosePartitionsController(
 
   private def selectPartitions(redo: Boolean) {
     Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
+      /* First reset settings for other devices */
+      if (os.partition().exists(_.device != device))
+        os.partition() = None
+
       if (os.installStatus() == OSInstallStatus.NotInstalled)
         os.partition() = None
       else if (redo || !os.partition().find(devicePartitions.contains(_)).isDefined)

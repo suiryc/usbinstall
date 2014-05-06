@@ -1,13 +1,14 @@
 package usbinstall.os
 
 import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 import scala.util.matching.Regex
 import scalafx.beans.property.ObjectProperty
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.settings.{BaseSettings, PersistentSetting}
-import suiryc.scala.sys.linux.DevicePartition
+import suiryc.scala.sys.linux.{Device, DevicePartition}
+import usbinstall.Panes
 
 
 object OSKind extends EnumerationEx {
@@ -62,8 +63,23 @@ class OSSettings(
   val installStatus: PersistentProperty[OSInstallStatus.Value] =
     PersistentProperty(PersistentSetting.forEnumerationEx("settings.status", OSInstallStatus.Install))
 
-  val partition: ObjectProperty[Option[DevicePartition]] =
-    ObjectProperty(None)
+  protected val partitionSetting: PersistentProperty[String] =
+    PersistentProperty(PersistentSetting.forString("settings.partition", null))
+
+  val partition: ObjectProperty[Option[DevicePartition]] = {
+    val partition = partitionSetting.setting.option flatMap { dev =>
+      val initial = DevicePartition(Paths.get(dev))
+      Panes.devices.get(initial.device.dev.toString) flatMap { device =>
+        device.partitions.find(_.partNumber == initial.partNumber)
+      }
+    }
+
+    ObjectProperty(partition)
+  }
+
+  partition.onChange { (_, _, newValue) =>
+    partitionSetting() = newValue.map(_.dev.toString).orNull
+  }
 
   val iso: ObjectProperty[Option[File]] =
     ObjectProperty(None)
@@ -92,6 +108,6 @@ class OSSettings(
   }
 
   override def toString =
-    s"OSSettings(kind=$kind, label=$label, format=$format, installStatus=$installStatus, partition=${partition().map(_.dev)})"
+    s"OSSettings(kind=$kind, label=$label, format=${format()}, installStatus=${installStatus()}, partition=${partition().map(_.dev)})"
 
 }

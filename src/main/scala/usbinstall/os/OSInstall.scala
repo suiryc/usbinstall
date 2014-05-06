@@ -142,16 +142,16 @@ object OSInstall {
     def format = {
       val command = kind match {
         case PartitionFormat.ext2 =>
-          Seq(s"mkfs.${kind}", part.dev.getPath)
+          Seq(s"mkfs.${kind}", part.dev.toString)
 
         case PartitionFormat.fat32 =>
-          Seq(s"mkfs.vfat", "-F", "32", part.dev.getPath)
+          Seq(s"mkfs.vfat", "-F", "32", part.dev.toString)
 
         case PartitionFormat.ntfs =>
-          Seq(s"mkfs.${kind}", "--fast", part.dev.getPath)
+          Seq(s"mkfs.${kind}", "--fast", part.dev.toString)
       }
 
-      os.ui.action(s"Format partition ${part.dev.getPath} ($kind)") {
+      os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
         Command.execute(command).toEither("Failed to format partition")
       }
     }
@@ -169,9 +169,9 @@ $id
 w
 """.getBytes
 
-      os.ui.action(s"Set partition ${part.dev.getPath} type ($kind)") {
-        Command.execute(Seq("fdisk", part.device.dev.getPath), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
-          Command.execute(Seq("partprobe", "-d", part.device.dev.getPath)).toEither("Failed to set partition type")
+      os.ui.action(s"Set partition ${part.dev.toString} type ($kind)") {
+        Command.execute(Seq("fdisk", part.device.dev.toString), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
+          Command.execute(Seq("partprobe", "-d", part.device.dev.toString)).toEither("Failed to set partition type")
       }
     }
 
@@ -179,7 +179,7 @@ w
       val (command, envf) = kind match {
         case PartitionFormat.ext2 =>
           /* Max ext2 label length: 16 */
-          (Seq("e2label", part.dev.getPath, label), None)
+          (Seq("e2label", part.dev.toString, label), None)
 
         case PartitionFormat.fat32 =>
           def commandEnvf(env: java.util.Map[String, String]) {
@@ -190,13 +190,13 @@ w
           /* Max FAT32 label length: 11
            * To work correctly, it is better to truncate/pad it.
            */
-          (Seq(s"mlabel", "-i", part.dev.getPath, s"::$actualLabel"), Some(commandEnvf _))
+          (Seq(s"mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
 
         case PartitionFormat.ntfs =>
-          (Seq("ntfslabel", "--force", part.dev.getPath, label), None)
+          (Seq("ntfslabel", "--force", part.dev.toString, label), None)
       }
 
-      os.ui.action(s"Set partition ${part.dev.getPath} label ($label)") {
+      os.ui.action(s"Set partition ${part.dev.toString} label ($label)") {
         Command.execute(command, envf = envf).toEither("Failed to label partition")
       }
     }
@@ -215,7 +215,7 @@ w
     mount foreach { mount =>
       val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
       finder.get.toList.sorted.headOption foreach { path =>
-        os.settings.efiBootloader = Some(mount.to.toPath.relativize(path.toPath))
+        os.settings.efiBootloader = Some(mount.to.relativize(path.toPath))
       }
     }
   }
@@ -231,16 +231,16 @@ w
       } { syslinuxRoot =>
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
-            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("extlinux", "extlinux")).toFile
-            val target = mount.to.toPath.resolve("syslinux").toFile
-            Command.execute(Seq(syslinux.getPath, "--install", target.getPath))
+            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("extlinux", "extlinux"))
+            val target = mount.to.resolve("syslinux")
+            Command.execute(Seq(syslinux.toString, "--install", target.toString))
 
           case _: PartitionFormat.MS =>
             /* Note: it is safer (and mandatory for NTFS) to unmount partition first */
             mount.umount
-            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("linux", "syslinux")).toFile
+            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("linux", "syslinux"))
             val target = part.dev
-            Command.execute(Seq(syslinux.getPath, "--install", target.getPath))
+            Command.execute(Seq(syslinux.toString, "--install", target.toString))
         }
         /* XXX - what to do with command result ? */
       }
