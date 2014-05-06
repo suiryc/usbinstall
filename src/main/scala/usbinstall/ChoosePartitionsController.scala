@@ -76,9 +76,8 @@ class ChoosePartitionsController(
       hgap = 5
       vgap = 3
 
-      columnConstraints.add(new ColumnConstraints() { halignment = HPos.RIGHT } delegate)
-      columnConstraints.add(new ColumnConstraints() { halignment = HPos.LEFT } delegate)
-      columnConstraints.add(new ColumnConstraints() { halignment = HPos.LEFT } delegate)
+      for (alignement <- List(HPos.RIGHT, HPos.LEFT, HPos.LEFT, HPos.LEFT))
+        columnConstraints.add(new ColumnConstraints() { halignment = alignement } delegate)
     }
 
     devicePartitions.foldLeft(0) { (idx, partition) =>
@@ -99,16 +98,21 @@ class ChoosePartitionsController(
         partitions.add(button, 0, idx)
       }
 
-      val label = new Label {
+      val name = new Label {
         text = partition.dev.toString
         style = "-fx-font-weight:bold"
       }
-      partitions.add(label, 1, idx)
+      partitions.add(name, 1, idx)
 
       val size = new Label {
         text = Units.storage.toHumanReadable(partition.size())
       }
       partitions.add(size, 2, idx)
+
+      val label = new Label {
+        text = partition.label.fold(_ => "", label => if (label == "") label else s"($label)")
+      }
+      partitions.add(label, 3, idx)
 
       partitions.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 40) { valignment = VPos.CENTER } delegate)
 

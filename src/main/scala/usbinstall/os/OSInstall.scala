@@ -39,8 +39,8 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI, val efi: Boolean = 
    */
   def postInstall(): Unit = { }
 
-  protected def getSyslinuxFile(targetRoot: Path)
-    = Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
+  protected def getSyslinuxFile(targetRoot: Path) =
+    Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
 
   protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, label: String) {
     ui.action(label) {
