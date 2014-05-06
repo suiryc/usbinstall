@@ -1,9 +1,10 @@
 package usbinstall.os
 
 import grizzled.slf4j.Logging
-import java.nio.file.Paths
+import java.nio.file.{Files, Path, Paths}
+import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
-import suiryc.scala.io.{PathFinder, RegularFileFilter}
+import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.InstallUI
@@ -38,6 +39,49 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI, val efi: Boolean = 
    */
   def postInstall(): Unit = { }
 
+  protected def getSyslinuxFile(targetRoot: Path)
+    = Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
+
+  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, label: String) {
+    ui.action(label) {
+      finder.get.toList.sortBy(_.getPath) foreach { file =>
+        val pathFile = file.toAbsolutePath
+        val pathRelative = sourceRoot.relativize(pathFile)
+        val pathTarget = targetRoot.resolve(pathRelative)
+        if (pathTarget.exists)
+          logger.warn(s"Path[$pathRelative] already processed, skipping")
+        else {
+          ui.activity(s"Copying file[$pathRelative]")
+          /* XXX - can a 'copy' fail ? */
+          FilesEx.copy(
+            sourceRoot,
+            pathRelative,
+            targetRoot,
+            followLinks = false
+          )
+        }
+      }
+    }
+  }
+
+  protected def renameSyslinux(targetRoot: Path) {
+    val syslinuxFile = getSyslinuxFile(targetRoot)
+    if (!syslinuxFile.exists) {
+      val syslinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "syslinux.cfg")
+      val isolinuxCfg = Paths.get(targetRoot.toString(), "isolinux", "isolinux.cfg")
+      if (syslinuxCfg.exists) ui.action("Rename syslinux configuration file") {
+        ui.activity(s"Rename source[${syslinuxCfg.relativize(targetRoot)}] target[${syslinuxFile.relativize(targetRoot)}]")
+        Files.move(syslinuxCfg, syslinuxFile)
+      }
+      else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
+        syslinuxFile.getParent().delete(true)
+        ui.activity(s"Rename source[${isolinuxCfg.relativize(targetRoot).getParent()}] target[${syslinuxFile.relativize(targetRoot).getParent()}]")
+        Files.move(isolinuxCfg, isolinuxCfg.getParent().relativize(syslinuxFile.getFileName()))
+        Files.move(isolinuxCfg.getParent(), syslinuxFile.getParent())
+      }
+    }
+  }
+
 }
 
 object OSInstall {
@@ -64,16 +108,28 @@ object OSInstall {
     }
 
     try {
-      iso foreach { _.mount }
-      part foreach { _.mount }
+      iso foreach { iso =>
+        os.ui.activity(s"Mounting ISO from[${iso.from}] to[${iso.to}]")
+        iso.mount
+      }
+      part foreach { part =>
+        os.ui.activity(s"Mounting partition from[${part.from}] to[${part.to}]")
+        part.mount
+      }
       todo(iso, part)
     }
     /* XXX - catch and log */
     finally {
       /* XXX - sync ? */
       /* XXX - try/catch ? */
-      part foreach { _.umount }
-      iso foreach { _.umount }
+      part foreach { part =>
+        os.ui.activity(s"Unmounting partition[${part.to}]")
+        part.umount
+      }
+      iso foreach { iso =>
+        os.ui.activity(s"Unmounting ISO[${iso.to}]")
+        iso.umount
+      }
     }
   }
 
