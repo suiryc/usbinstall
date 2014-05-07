@@ -9,7 +9,7 @@ import usbinstall.InstallUI
 class GPartedLiveInstall(
   override val settings: OSSettings,
   override val ui: InstallUI
-) extends OSInstall(settings, ui, efi = false)
+) extends OSInstall(settings, ui)
 {
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {

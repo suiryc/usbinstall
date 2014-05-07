@@ -11,7 +11,7 @@ import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
 
 
-class OSInstall(val settings: OSSettings, val ui: InstallUI, val efi: Boolean = false)
+class OSInstall(val settings: OSSettings, val ui: InstallUI)
   extends Logging
 {
 
@@ -33,11 +33,6 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI, val efi: Boolean = 
    * EFI setup and syslinux bootloader install are performed right after.
    */
   def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = { }
-
-  /**
-   * Performs any post-install steps.
-   */
-  def postInstall(): Unit = { }
 
   protected def getSyslinuxFile(targetRoot: Path) =
     Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
@@ -290,11 +285,9 @@ w
         }
 
         /* prepare EFI */
-        if (os.efi) {
-          os.ui.action(s"Search EFI path") {
-            checkCancelled()
-            findEFI(os, partMount)
-          }
+        os.ui.action(s"Search EFI path") {
+          checkCancelled()
+          findEFI(os, partMount)
         }
 
         if (os.settings.install) {
@@ -304,15 +297,6 @@ w
           }
         }
       })
-    }
-
-    /* Post-install */
-    /* XXX - only if something to do ? */
-    if (os.settings.install) {
-      os.ui.none()
-      os.ui.setStep(s"Finalize ${os.settings.label} installation")
-      checkCancelled()
-      mountAndDo(os, (_, _) => os.postInstall())
     }
 
     os.ui.none()
