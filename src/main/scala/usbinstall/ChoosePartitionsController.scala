@@ -245,12 +245,23 @@ class ChoosePartitionsController(
       if (os.partition().exists(_.device != device))
         os.partition() = None
 
-      /* XXX - if 'not installed' but saved partition is valid, do not reset unless 'redo' */
-      if (os.installStatus() == OSInstallStatus.NotInstalled)
-        os.partition() = None
-      else if (redo || !os.partition().find(devicePartitions.contains(_)).isDefined)
+      /* What we want is to the select the best fitting partition when either:
+       *   - we are redoing the selection
+       *   - the saved partition is not available
+       *   - there is no saved partition
+       * The best fitting partition is selected amongst the remaining available
+       * ones, unless the OS is not to be installed, in which case it is set to
+       * None.
+       *
+       * In particular, the saved partition of a 'not to install' OS is still
+       * reserved for this OS until we redo the selection or an OS configured
+       * earlier in the list needs to select a partition and finds this one as
+       * fitting.
+       */
+      if (redo || !os.partition().find(devicePartitions.contains(_)).isDefined)
         os.partition() =
-          if (devicePartitions.isEmpty) None
+          if (devicePartitions.isEmpty || (os.installStatus() == OSInstallStatus.NotInstalled))
+            None
           else Some(
             devicePartitions.filter(_.size() >= os.size).headOption.getOrElse(
               /* Note: double reverse gives us the 'first' partition when more
