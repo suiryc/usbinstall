@@ -25,7 +25,7 @@ class SystemRescueCDInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      RegexReplacer.inplace(syslinuxFile, RegexReplacer("(?i)scandelay=1", "scandelay=5"))
+      regexReplace(targetRoot, syslinuxFile, RegexReplacer("(?i)scandelay=1", "scandelay=5"))
     }
   }
 

@@ -1,12 +1,15 @@
 package usbinstall.os
 
 import grizzled.slf4j.Logging
+import java.io.File
 import java.nio.file.{Files, Path, Paths}
+import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.Command
 import suiryc.scala.sys.linux.DevicePartition
+import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
 
@@ -77,6 +80,18 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
     }
   }
 
+  def regexReplace(root: Path, path: Path, rrs: RegexReplacer*)(implicit codec: Codec): Boolean = {
+    val replaced = RegexReplacer.inplace(path, rrs:_*)
+
+    if (replaced)
+      ui.activity(s"Modified file[${root.relativize(path)}]")
+
+    replaced
+  }
+
+  def regexReplace(root: Path, file: File, rrs: RegexReplacer*)(implicit codec: Codec): Boolean =
+    regexReplace(root, file.toPath, rrs:_*)
+
 }
 
 object OSInstall {
@@ -93,6 +108,9 @@ object OSInstall {
 
     case OSKind.Ubuntu =>
       new UbuntuInstall(settings, ui)
+
+    case OSKind.RedHat =>
+      new RedHatInstall(settings, ui)
 
     /* XXX */
     case kind =>
@@ -212,12 +230,13 @@ w
     r
   }
 
-  private def findEFI(os: OSInstall, mount: Option[PartitionMount]): Unit = {
-    mount foreach { mount =>
+  private def findEFI(os: OSInstall, mount: Option[PartitionMount]): Option[Path] = {
+    mount flatMap { mount =>
       val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
       finder.get.toList.sorted.headOption foreach { path =>
         os.settings.efiBootloader = Some(mount.to.relativize(path.toPath))
       }
+      os.settings.efiBootloader
     }
   }
 
@@ -293,7 +312,13 @@ w
         /* prepare EFI */
         os.ui.action(s"Search EFI path") {
           checkCancelled()
-          findEFI(os, partMount)
+          findEFI(os, partMount) match {
+            case Some(path) =>
+              os.ui.activity(s"Found EFI[$path]")
+
+            case None =>
+              os.ui.activity("No EFI found")
+          }
         }
 
         if (os.settings.install) {

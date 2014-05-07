@@ -17,7 +17,7 @@ object OSKind extends EnumerationEx {
   val GPartedLive = Value
   val SystemRescueCD = Value
   val Ubuntu = Value
-  val Redhat = Value
+  val RedHat = Value
   val ArchLinux = Value
   val Kali = Value
 }

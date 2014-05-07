@@ -33,9 +33,9 @@ class UbuntuInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val uuid = settings.partition().get.uuid.fold(throw _, uuid => uuid)
+      val uuid = settings.partition().get.uuid.fold(throw _, v => v)
 
-      /* Original code for persistence: */
+      /* Original code for persistence */
 //    if [ ${_persistence} -ne 0 ]
 //    then
 //        find "${dirPartMount}"/boot/grub "${dirPartMount}"/syslinux -maxdepth 1 \( -name "*.cfg" -or -name "*.conf" \) \
@@ -52,11 +52,11 @@ class UbuntuInstall(
         s"${m.group("pre")} uuid=${uuid}"
       )
       for (conf <- confs.get()) {
-        RegexReplacer.inplace(conf, regexReplacer)
+        regexReplace(targetRoot, conf, regexReplacer)
       }
     }
 
-    /* Original code for persistence: */
+    /* Original code for persistence */
 //    persistenceFile="${dirPartMount}"/casper-rw
 //    if [ ${_persistence} -ne 0 ]
 //    then

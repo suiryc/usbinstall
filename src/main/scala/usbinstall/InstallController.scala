@@ -25,8 +25,6 @@ class InstallController(
 ) extends HasCancel with Logging
 {
 
-  println(Settings.core.oses)
-
   val activityArea = new LogArea {
     margin = Insets(0, 10, 10, 10)
     vgrow = Priority.ALWAYS
@@ -66,7 +64,8 @@ class InstallController(
           OSKind.Win7_8,
           OSKind.GPartedLive,
           OSKind.SystemRescueCD,
-          OSKind.Ubuntu
+          OSKind.Ubuntu,
+          OSKind.RedHat
         ).contains(settings.kind)) {
           val os = OSInstall(settings, ui)
 
