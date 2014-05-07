@@ -62,7 +62,11 @@ class InstallController(
     /* XXX - catch issues */
     Settings.core.oses foreach { settings =>
       try {
-        if (Set(OSKind.GPartedLive, OSKind.SystemRescueCD).contains(settings.kind)) {
+        if (Set(
+          OSKind.GPartedLive,
+          OSKind.SystemRescueCD,
+          OSKind.Ubuntu
+        ).contains(settings.kind)) {
           val os = OSInstall(settings, ui)
 
           OSInstall.install(os, checkCancelled)

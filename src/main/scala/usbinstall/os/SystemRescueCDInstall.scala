@@ -24,7 +24,9 @@ class SystemRescueCDInstall(
     val syslinuxFile = getSyslinuxFile(targetRoot)
     renameSyslinux(targetRoot)
 
-    RegexReplacer.inplace(syslinuxFile, RegexReplacer("scandelay=1", "scandelay=5"))
+    ui.action("Prepare syslinux") {
+      RegexReplacer.inplace(syslinuxFile, RegexReplacer("(?i)scandelay=1", "scandelay=5"))
+    }
   }
 
 }

@@ -11,7 +11,7 @@
   </appender>
 
   <!-- The level of root is set to DEBUG by default -->
-  <root level="TRACE">
+  <root level="INFO">
     <appender-ref ref="STDOUT" />
   </root>
 

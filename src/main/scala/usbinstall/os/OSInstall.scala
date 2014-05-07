@@ -65,13 +65,13 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
       val syslinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "syslinux.cfg")
       val isolinuxCfg = Paths.get(targetRoot.toString(), "isolinux", "isolinux.cfg")
       if (syslinuxCfg.exists) ui.action("Rename syslinux configuration file") {
-        ui.activity(s"Rename source[${syslinuxCfg.relativize(targetRoot)}] target[${syslinuxFile.relativize(targetRoot)}]")
+        ui.activity(s"Rename source[${targetRoot.relativize(syslinuxCfg)}] target[${targetRoot.relativize(syslinuxFile)}]")
         Files.move(syslinuxCfg, syslinuxFile)
       }
       else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
         syslinuxFile.getParent().delete(true)
-        ui.activity(s"Rename source[${isolinuxCfg.relativize(targetRoot).getParent()}] target[${syslinuxFile.relativize(targetRoot).getParent()}]")
-        Files.move(isolinuxCfg, isolinuxCfg.getParent().relativize(syslinuxFile.getFileName()))
+        ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent()}] target[${targetRoot.relativize(syslinuxFile).getParent()}]")
+        Files.move(isolinuxCfg, isolinuxCfg.getParent().resolve(syslinuxFile.getFileName()))
         Files.move(isolinuxCfg.getParent(), syslinuxFile.getParent())
       }
     }
@@ -87,6 +87,9 @@ object OSInstall {
 
     case OSKind.SystemRescueCD =>
       new SystemRescueCDInstall(settings, ui)
+
+    case OSKind.Ubuntu =>
+      new UbuntuInstall(settings, ui)
 
     /* XXX */
     case kind =>
