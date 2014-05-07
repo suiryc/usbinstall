@@ -63,6 +63,7 @@ class InstallController(
     Settings.core.oses foreach { settings =>
       try {
         if (Set(
+          OSKind.Win7_8,
           OSKind.GPartedLive,
           OSKind.SystemRescueCD,
           OSKind.Ubuntu

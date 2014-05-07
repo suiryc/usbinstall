@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
-import suiryc.scala.sys.{Command, CommandResult}
+import suiryc.scala.sys.Command
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
@@ -82,6 +82,9 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
 object OSInstall {
 
   def apply(settings: OSSettings, ui: InstallUI): OSInstall = settings.kind match {
+    case OSKind.Win7_8 =>
+      new Windows7_8Install(settings, ui)
+
     case OSKind.GPartedLive =>
       new GPartedLiveInstall(settings, ui)
 
