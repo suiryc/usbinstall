@@ -97,6 +97,9 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
 object OSInstall {
 
   def apply(settings: OSSettings, ui: InstallUI): OSInstall = settings.kind match {
+    case OSKind.syslinux =>
+      new SyslinuxInstall(settings, ui)
+
     case OSKind.Win7_8 =>
       new Windows7_8Install(settings, ui)
 
@@ -111,6 +114,12 @@ object OSInstall {
 
     case OSKind.RedHat =>
       new RedHatInstall(settings, ui)
+
+    case OSKind.ArchLinux =>
+      new ArchLinuxInstall(settings, ui)
+
+    case OSKind.Kali =>
+      new KaliInstall(settings, ui)
 
     /* XXX */
     case kind =>
@@ -279,9 +288,11 @@ w
     }
 
     /* Actual install */
-    os.ui.none()
-    os.ui.setStep(s"Install ${os.settings.label}")
-    checkCancelled()
+    if (os.settings.enabled) {
+      os.ui.none()
+      os.ui.setStep(s"Install ${os.settings.label}")
+      checkCancelled()
+    }
 
     if (os.settings.install) {
       /* prepare syslinux */

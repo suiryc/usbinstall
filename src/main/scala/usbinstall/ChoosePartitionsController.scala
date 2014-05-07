@@ -245,6 +245,7 @@ class ChoosePartitionsController(
       if (os.partition().exists(_.device != device))
         os.partition() = None
 
+      /* XXX - if 'not installed' but saved partition is valid, do not reset unless 'redo' */
       if (os.installStatus() == OSInstallStatus.NotInstalled)
         os.partition() = None
       else if (redo || !os.partition().find(devicePartitions.contains(_)).isDefined)

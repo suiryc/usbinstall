@@ -4,9 +4,22 @@ import java.io.File
 import scala.collection.mutable
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
-import usbinstall.settings.{InstallSettings, Settings}
 import suiryc.scala.sys.{Command, CommandResult}
+import usbinstall.InstallUI
+import usbinstall.settings.{InstallSettings, Settings}
 
+
+class SyslinuxInstall(
+  override val settings: OSSettings,
+  override val ui: InstallUI
+) extends OSInstall(settings, ui)
+{
+
+  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
+    /* XXX - TODO */
+  }
+
+}
 
 object SyslinuxInstall {
 

@@ -46,8 +46,6 @@ class InstallController(
       USBInstall.detachAppender(appender)
   }
 
-  /* XXX - link cancel button (or property) to cancellable */
-
   private def installTask(cancellable: Cancellable) {
 
     def checkCancelled() =
@@ -60,17 +58,9 @@ class InstallController(
     /* XXX - catch issues */
     Settings.core.oses foreach { settings =>
       try {
-        if (Set(
-          OSKind.Win7_8,
-          OSKind.GPartedLive,
-          OSKind.SystemRescueCD,
-          OSKind.Ubuntu,
-          OSKind.RedHat
-        ).contains(settings.kind)) {
-          val os = OSInstall(settings, ui)
+        val os = OSInstall(settings, ui)
 
-          OSInstall.install(os, checkCancelled)
-        }
+        OSInstall.install(os, checkCancelled)
       }
       catch {
         case e @ Cancelled =>
