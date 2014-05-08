@@ -98,8 +98,9 @@ class OSSettings(
   def installable = enabled && partition().isDefined &&
     (!isoPattern.isDefined || iso().isDefined)
 
-  def formatable = install &&
-    format() && installable
+  def formatable = install && format() && installable
+
+  def erasable = install && !format() && installable
 
   def syslinuxFile = partitionFormat match {
     case _: PartitionFormat.extX => "extlinux.conf"

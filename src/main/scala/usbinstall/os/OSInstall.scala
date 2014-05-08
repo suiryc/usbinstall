@@ -229,9 +229,7 @@ w
       }
     }
 
-    /* XXX - if !format but install, clean partition */
-    val r = (if (os.settings.formatable) format else Right("Partition formatting disabled")) &&
-      setType && setLabel
+    val r = format && setType && setLabel
 
     /* slow devices need some time before being usable */
     Thread.sleep(1000)
@@ -276,7 +274,6 @@ w
     }
   }
 
-  /* XXX - caller must check enabled && installable ? */
   def install(os: OSInstall, checkCancelled: () => Unit): Unit = {
     os.ui.none()
 
@@ -304,17 +301,25 @@ w
         }
       }
 
-      /* prepare partition */
-      os.settings.partition() foreach { part =>
-        checkCancelled()
-        preparePartition(os, part)
+      /* format partition */
+      if (os.settings.formatable) {
+        os.settings.partition() foreach { part =>
+          checkCancelled()
+          preparePartition(os, part)
+        }
       }
     }
 
-    /* XXX - only if something to do ? */
     if (os.settings.enabled) {
       checkCancelled()
       mountAndDo(os, (isoMount, partMount) => {
+        /* erase content */
+        if (os.settings.erasable) {
+          checkCancelled()
+          os.ui.activity("Erasing partition content")
+          partMount.get.to.toFile.delete(true, true)
+        }
+
         if (os.settings.install) {
           checkCancelled()
           os.install(isoMount, partMount)
