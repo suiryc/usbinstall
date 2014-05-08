@@ -11,7 +11,7 @@ import scalafxml.core.{
   FXMLView
 }
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
-import suiryc.scala.sys.linux.Device
+import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -23,8 +23,14 @@ object Panes
     Device(block)
   }.filter { device =>
     device.ueventProps.get("DRIVER") match {
-      case Some("sd") => true
-      case _ => false
+      case Some("sd") =>
+        true
+
+      case _ =>
+        if (device.isInstanceOf[NetworkBlockDevice])
+          device.size.either.fold(_ => false, v => (v > 0) && !device.readOnly)
+        else
+          false
     }
   }.toList.foldLeft(Map.empty[String, Device]) { (devices, device) =>
     devices + (device.dev.toString() -> device)
