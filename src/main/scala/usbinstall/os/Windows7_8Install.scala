@@ -28,7 +28,7 @@ class Windows7_8Install(
       val wimExtract = "1/Windows/Boot/EFI/bootmgfw.efi"
       val bootmgfw = targetRoot.resolve(Paths.get("efi", "boot", "bootmgfw.efi"))
 
-      ui.activity(s"Extract source[${sourceRoot.relativize(wim)}] file[$wimExtract] to[${bootmgfw.getParent}]")
+      ui.activity(s"Extract source[${sourceRoot.relativize(wim)}] file[$wimExtract] to[${targetRoot.relativize(bootmgfw).getParent}]")
       Command.execute(Seq(
         "7z", "e",
         wim.toString,
