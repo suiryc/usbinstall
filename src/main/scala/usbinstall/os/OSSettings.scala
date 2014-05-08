@@ -67,10 +67,15 @@ class OSSettings(
 
   val partition: ObjectProperty[Option[DevicePartition]] = {
     val partition = partitionSetting.setting.option flatMap { dev =>
-      val initial = DevicePartition(Paths.get(dev))
-      Panes.devices.get(initial.device.dev.toString) flatMap { device =>
-        device.partitions.find(_.partNumber == initial.partNumber)
+      val path = Paths.get(dev)
+      if (path.toFile.exists) {
+        DevicePartition.option(path) flatMap { initial =>
+          Panes.devices.get(initial.device.dev.toString) flatMap { device =>
+            device.partitions.find(_.partNumber == initial.partNumber)
+          }
+        }
       }
+      else None
     }
 
     ObjectProperty(partition)
