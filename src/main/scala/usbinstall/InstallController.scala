@@ -53,10 +53,10 @@ class InstallController(
         JFXSystem.schedule(activityArea.appendLine("Cancelled"))
       }
 
-    /* XXX - access lazy vals (mount points) */
-    /* XXX - loop on oses to prepare/... */
-    /* XXX - catch issues */
-    Settings.core.oses foreach { settings =>
+    /* XXX - handle issues (skip/stop) */
+    val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.syslinux)
+    val oses = notsyslinux ::: syslinux
+    oses foreach { settings =>
       try {
         val os = OSInstall(settings, ui)
 
