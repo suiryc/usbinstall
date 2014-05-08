@@ -209,12 +209,12 @@ class ChoosePartitionsController(
     }
 
     val osISO = settings.isoPattern map { regex =>
-      val available = Settings.core.isos.filter { file =>
-        regex.pattern.matcher(file.getName()).find()
+      val available = Settings.core.isos.filter { path =>
+        regex.pattern.matcher(path.getFileName.toString).find()
       }
 
       val osISO = new ComboBox[String] {
-        items = ObservableBuffer(available.map(_.getName()))
+        items = ObservableBuffer(available.map(_.getFileName.toString))
       }
       osISO.selectionModel().selectedIndex.onChange { (_, _, selected) =>
         settings.iso() = Some(available(selected.intValue()))

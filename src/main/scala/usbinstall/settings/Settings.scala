@@ -1,7 +1,7 @@
 package usbinstall.settings
 
 import com.typesafe.config.{Config, ConfigFactory}
-import java.io.File
+import java.nio.file.{Path, Paths}
 import java.util.prefs.Preferences
 import scala.collection.JavaConversions._
 import scala.language.postfixOps
@@ -43,13 +43,14 @@ class Settings(
   protected def option(config: Config, path: String): Option[String] =
     if (config.hasPath(path)) Some(config.getString(path)) else None
 
-  protected def file(path: String) =
+  protected def makePath(path: String): Path =
     if (path.startsWith("~")) {
       val rest = path.substring(2)
-      if (rest == "") RichFile.userHome
-      else new File(RichFile.userHome, rest)
+      val home = RichFile.userHome.toPath
+      if (rest == "") home
+      else home.resolve(rest)
     }
-    else new File(path)
+    else Paths.get(path)
 
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
@@ -70,15 +71,15 @@ class Settings(
   }
 
   val isoPath = config.getStringList("iso.path").toList map { path =>
-    file(path)
+    makePath(path)
   }
 
   val isos = isoPath flatMap { path =>
-    ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get()
-  } sortBy { _.toString() } reverse
+    ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get map(_.toPath)
+  } sortBy { _.toString } reverse
 
   val toolsPath = config.getStringList("tools.path").toList map { path =>
-    file(path)
+    makePath(path)
   }
 
   val componentInstallError =

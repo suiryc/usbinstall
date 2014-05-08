@@ -1,6 +1,6 @@
 package usbinstall.os
 
-import java.io.File
+import java.nio.file.Path
 import scala.collection.mutable
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
@@ -23,43 +23,43 @@ class SyslinuxInstall(
 
 object SyslinuxInstall {
 
-  private val versions = mutable.Map[Int, Option[File]]()
+  private val versions = mutable.Map[Int, Option[Path]]()
 
   def get(version: Int) =
     versions.getOrElseUpdate(version, find(version))
 
-  protected def find(version: Int): Option[File] = {
-    findArchive(version).fold[Option[File]] {
+  protected def find(version: Int): Option[Path] = {
+    findArchive(version).fold[Option[Path]] {
       /* XXX - log error */
       None
-    } { file =>
-      findBase(uncompress(file)).fold[Option[File]] {
+    } { path =>
+      findBase(uncompress(path)).fold[Option[Path]] {
         /* XXX - log error */
         None
-      } { file =>
-        build(file)
-        Some(file)
+      } { path =>
+        build(path)
+        Some(path)
       }
     }
   }
 
-  protected def findArchive(version: Int): Option[File] = {
-    val files = Settings.core.toolsPath flatMap { file =>
-      val finder = PathFinder(file) ** (s"""syslinux.*-${version}.*""".r & RegularFileFilter)
+  protected def findArchive(version: Int): Option[Path] = {
+    val files = Settings.core.toolsPath flatMap { path =>
+      val finder = PathFinder(path) ** (s"""syslinux.*-${version}.*""".r & RegularFileFilter)
 
-      finder.get
+      finder.get map(_.toPath)
     }
     files.sorted.reverse.headOption
   }
 
-  protected def uncompress(file: File) = {
-    val isZip = file.getName.endsWith(".zip")
+  protected def uncompress(path: Path): Path = {
+    val isZip = path.getFileName.toString.endsWith(".zip")
 
-    val uncompressPath = new File(InstallSettings.pathTemp, file.getName)
-    uncompressPath.mkdirs
+    val uncompressPath = InstallSettings.pathTemp.resolve(path.getFileName)
+    uncompressPath.toFile.mkdirs
     val CommandResult(result, stdout, stderr) =
-      if (isZip) Command.execute(Seq("unzip", "-qq", file.getPath, "-d", uncompressPath.getPath))
-      else Command.execute(Seq("tar", "xf", file.getPath, "-C", uncompressPath.getPath))
+      if (isZip) Command.execute(Seq("unzip", "-qq", path.toString, "-d", uncompressPath.toString))
+      else Command.execute(Seq("tar", "xf", path.toString, "-C", uncompressPath.toString))
 
       if (result != 0) {
         /* XXX - log error; missing file will be apparent later */
@@ -68,14 +68,14 @@ object SyslinuxInstall {
     uncompressPath
   }
 
-  protected def findBase(root: File) = {
-    def parentOption(file: File) = Option(file.getParentFile)
+  protected def findBase(root: Path): Option[Path] = {
+    def parentOption(path: Path) = Option(path.getParent)
 
     val finder = PathFinder(root) ** "extlinux" / "extlinux"
-    finder.get.toList.sorted.headOption flatMap(parentOption) flatMap(parentOption)
+    finder.get.toList.sorted.headOption map(_.toPath) flatMap(parentOption) flatMap(parentOption)
   }
 
-  protected def build(base: File) {
+  protected def build(base: Path) {
     /*import scala.collection.JavaConversions._
 
     def commandEnvf(env: java.util.Map[String, String]) {
@@ -85,7 +85,7 @@ object SyslinuxInstall {
     val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
 
     if ((result == 0) && (arch != "i386")) {
-      Command.execute(Seq("make"), workingDirectory = Some(base), envf = Some(commandEnvf _))
+      Command.execute(Seq("make"), workingDirectory = Some(base.toFile), envf = Some(commandEnvf _))
     }*/
   }
 

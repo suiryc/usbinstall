@@ -1,6 +1,5 @@
 package usbinstall.os
 
-import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.util.matching.Regex
 import scalafx.beans.property.ObjectProperty
@@ -81,7 +80,7 @@ class OSSettings(
     partitionSetting() = newValue.map(_.dev.toString).orNull
   }
 
-  val iso: ObjectProperty[Option[File]] =
+  val iso: ObjectProperty[Option[Path]] =
     ObjectProperty(None)
 
   var efiBootloader: Option[Path] =

@@ -26,7 +26,7 @@ class UbuntuInstall(
     copy(finder, sourceRoot, targetRoot, "Copy ISO content")
 
     /* Without 'casper', we need to patch 'initrd'. See comments below. */
-    if (!targetRoot.resolve(Paths.get("casper")).isDirectory)
+    if (!targetRoot.resolve("casper").isDirectory)
       throw new Exception("Ubuntu LiveCD without 'casper' directory are not handled")
 
     val syslinuxFile = getSyslinuxFile(targetRoot)

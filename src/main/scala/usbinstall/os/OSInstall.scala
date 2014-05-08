@@ -260,14 +260,14 @@ w
       } { syslinuxRoot =>
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
-            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("extlinux", "extlinux"))
+            val syslinux = syslinuxRoot.resolve(Paths.get("extlinux", "extlinux"))
             val target = mount.to.resolve("syslinux")
             Command.execute(Seq(syslinux.toString, "--install", target.toString))
 
           case _: PartitionFormat.MS =>
             /* Note: it is safer (and mandatory for NTFS) to unmount partition first */
             mount.umount
-            val syslinux = syslinuxRoot.toPath.resolve(Paths.get("linux", "syslinux"))
+            val syslinux = syslinuxRoot.resolve(Paths.get("linux", "syslinux"))
             val target = part.dev
             Command.execute(Seq(syslinux.toString, "--install", target.toString))
         }
