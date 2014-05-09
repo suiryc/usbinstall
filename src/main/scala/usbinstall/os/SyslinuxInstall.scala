@@ -5,7 +5,6 @@ import java.nio.file.attribute.PosixFilePermissions
 import scala.collection.mutable
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
-import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.{InstallUI, Stages}
@@ -35,15 +34,15 @@ class SyslinuxInstall(
 
       List(pathModules, pathImages, pathBootdisk) foreach(_.toFile.mkdirs())
 
-      val finder = PathFinder(syslinuxRoot) / "com32" / (
-          ("libutil" / "libutil.c32") ++
-          ("lib" / "libcom32.c32") ++
-          ("menu" / "vesamenu.c32") ++
-          ("chain" / "chain.c32")
-        ) ++
-        PathFinder(syslinuxRoot) / "memdisk" / "memdisk"
+      val syslinuxCom32 = syslinuxRoot.resolve("com32")
+      val com32Sources = List(
+        syslinuxCom32.resolve(Paths.get("libutil", "libutil.c32")),
+        syslinuxCom32.resolve(Paths.get("lib", "libcom32.c32")),
+        syslinuxCom32.resolve(Paths.get("menu", "vesamenu.c32")),
+        syslinuxCom32.resolve(Paths.get("chain", "chain.c32"))
+      )
 
-      copy(finder.get().toList.map(_.toPath), syslinuxRoot, pathModules, None)
+      copy(com32Sources, syslinuxRoot, pathModules, None)
       copy(syslinuxRoot.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinuxRoot, pathImages, None)
 
       for {
