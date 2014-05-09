@@ -8,6 +8,7 @@ import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
+import suiryc.scala.misc.RichEither._
 import suiryc.scala.sys.Command
 import suiryc.scala.sys.linux.DevicePartition
 import suiryc.scala.util.matching.RegexReplacer
@@ -248,12 +249,8 @@ w
       }
     }
 
-    val r = format && setType && setLabel
-
-    /* slow devices need some time before being usable */
-    Thread.sleep(1000)
-
-    r
+    format && setType && setLabel &&
+      part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
   private def findEFI(os: OSInstall, mount: Option[PartitionMount]): Option[Path] = {
@@ -324,7 +321,7 @@ w
       if (os.settings.formatable) {
         os.settings.partition() foreach { part =>
           checkCancelled()
-          preparePartition(os, part)
+          preparePartition(os, part).orThrow
         }
       }
     }
