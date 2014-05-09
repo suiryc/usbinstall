@@ -11,7 +11,7 @@ import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
 import usbinstall.os.{OSInstall, OSKind}
-import usbinstall.settings.Settings
+import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.DebugStage
 
 
@@ -53,14 +53,18 @@ class InstallController(
         JFXSystem.schedule(activityArea.appendLine("Cancelled"))
       }
 
+    ui.activity(s"Temp path[${InstallSettings.pathTemp}]")
+    ui.activity(s"ISO mount path[${InstallSettings.pathMountISO}]")
+    ui.activity(s"Partition mount path[${InstallSettings.pathMountPartition}]")
+
     /* XXX - handle issues (skip/stop) */
-    val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.syslinux)
+    val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
     oses foreach { settings =>
       try {
-        val os = OSInstall(settings, ui)
+        val os = OSInstall(settings, ui, checkCancelled)
 
-        OSInstall.install(os, checkCancelled)
+        OSInstall.install(os)
       }
       catch {
         case e @ Cancelled =>

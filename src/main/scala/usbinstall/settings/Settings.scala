@@ -123,6 +123,8 @@ class Settings(
     )
   }
 
+  val rEFIndPath = makePath(config.getString("refind.path"))
+
   val componentInstallError =
     PersistentSetting.forEnumerationEx("componentInstallError", Settings.default.componentInstallError)
 

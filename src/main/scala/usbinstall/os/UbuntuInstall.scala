@@ -13,8 +13,9 @@ import usbinstall.InstallUI
 
 class UbuntuInstall(
   override val settings: OSSettings,
-  override val ui: InstallUI
-) extends OSInstall(settings, ui)
+  override val ui: InstallUI,
+  override val checkCancelled: () => Unit
+) extends OSInstall(settings, ui, checkCancelled)
 {
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {

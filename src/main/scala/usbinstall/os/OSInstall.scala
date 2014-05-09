@@ -15,9 +15,13 @@ import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
 
-
-class OSInstall(val settings: OSSettings, val ui: InstallUI)
-  extends Logging
+/* XXX - checkCancelled before each file to copy ? */
+/* XXX - checkCancelled between some actions in each implementation ? */
+class OSInstall(
+  val settings: OSSettings,
+  val ui: InstallUI,
+  val checkCancelled: () => Unit
+) extends Logging
 {
 
   /**
@@ -112,40 +116,67 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
   def regexReplace(root: Path, file: File, rrs: RegexReplacer*)(implicit codec: Codec): Boolean =
     regexReplace(root, file.toPath, rrs:_*)
 
+  private def findEFI(mount: PartitionMount): Option[Path] = {
+    val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
+    finder.get.toList.sorted.headOption foreach { path =>
+      settings.efiBootloader = Some(mount.to.relativize(path.toPath))
+    }
+    settings.efiBootloader
+  }
+
+  def searchEFI(partMount: Option[PartitionMount]) {
+    if (!settings.efiBootloader.isDefined) partMount.foreach { partMount =>
+      ui.action(s"Search EFI path") {
+        checkCancelled()
+        findEFI(partMount) match {
+          case Some(path) =>
+            ui.activity(s"Found EFI[$path]")
+
+          case None =>
+            ui.activity("No EFI found")
+        }
+      }
+    }
+  }
+
 }
 
 object OSInstall {
 
-  def apply(settings: OSSettings, ui: InstallUI): OSInstall = settings.kind match {
-    case OSKind.syslinux =>
-      new SyslinuxInstall(settings, ui)
+  def apply(settings: OSSettings, ui: InstallUI, checkCancelled: () => Unit): OSInstall =
+    settings.kind match {
+      case OSKind.Syslinux =>
+        new SyslinuxInstall(settings, ui, checkCancelled)
 
-    case OSKind.Win7_8 =>
-      new Windows7_8Install(settings, ui)
+      case OSKind.Win7_8 =>
+        new Windows7_8Install(settings, ui, checkCancelled)
 
-    case OSKind.GPartedLive =>
-      new GPartedLiveInstall(settings, ui)
+      case OSKind.GPartedLive =>
+        new GPartedLiveInstall(settings, ui, checkCancelled)
 
-    case OSKind.SystemRescueCD =>
-      new SystemRescueCDInstall(settings, ui)
+      case OSKind.SystemRescueCD =>
+        new SystemRescueCDInstall(settings, ui, checkCancelled)
 
-    case OSKind.Ubuntu =>
-      new UbuntuInstall(settings, ui)
+      case OSKind.Ubuntu =>
+        new UbuntuInstall(settings, ui, checkCancelled)
 
-    case OSKind.RedHat =>
-      new RedHatInstall(settings, ui)
+      case OSKind.Fedora =>
+        new RedHatInstall(settings, ui, checkCancelled)
 
-    case OSKind.ArchLinux =>
-      new ArchLinuxInstall(settings, ui)
+      case OSKind.CentOS =>
+        new RedHatInstall(settings, ui, checkCancelled)
 
-    case OSKind.Kali =>
-      new KaliInstall(settings, ui)
+      case OSKind.ArchLinux =>
+        new ArchLinuxInstall(settings, ui, checkCancelled)
 
-    /* XXX */
-    case kind =>
-      val msg = s"Unhandled OS type: $kind"
-      throw new Exception(msg)
-  }
+      case OSKind.Kali =>
+        new KaliInstall(settings, ui, checkCancelled)
+
+      /* XXX */
+      case kind =>
+        val msg = s"Unhandled OS type: $kind"
+        throw new Exception(msg)
+    }
 
   private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
     val iso = os.settings.iso() map { pathISO =>
@@ -157,25 +188,24 @@ object OSInstall {
 
     try {
       iso foreach { iso =>
-        os.ui.activity(s"Mounting ISO from[${iso.from}] to[${iso.to}]")
+        os.ui.activity(s"Mounting ISO[${iso.from.getFileName()}]")
         iso.mount
       }
       part foreach { part =>
-        os.ui.activity(s"Mounting partition from[${part.from}] to[${part.to}]")
+        os.ui.activity(s"Mounting partition[${part.from}]")
         part.mount
       }
       todo(iso, part)
     }
     /* XXX - catch and log */
     finally {
-      /* XXX - sync ? */
       /* XXX - try/catch ? */
       part foreach { part =>
-        os.ui.activity(s"Unmounting partition[${part.to}]")
+        os.ui.activity("Unmounting partition")
         part.umount
       }
       iso foreach { iso =>
-        os.ui.activity(s"Unmounting ISO[${iso.to}]")
+        os.ui.activity("Unmounting ISO")
         iso.umount
       }
     }
@@ -253,16 +283,6 @@ w
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
-  private def findEFI(os: OSInstall, mount: Option[PartitionMount]): Option[Path] = {
-    mount flatMap { mount =>
-      val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
-      finder.get.toList.sorted.headOption foreach { path =>
-        os.settings.efiBootloader = Some(mount.to.relativize(path.toPath))
-      }
-      os.settings.efiBootloader
-    }
-  }
-
   private def installBootloader(os: OSInstall, mount: Option[PartitionMount]): Unit = {
     for {
       syslinuxVersion <- os.settings.syslinuxVersion
@@ -290,13 +310,13 @@ w
     }
   }
 
-  def install(os: OSInstall, checkCancelled: () => Unit): Unit = {
+  def install(os: OSInstall): Unit = {
     os.ui.none()
 
     /* Prepare */
     if (os.settings.install) {
       os.ui.setStep(s"Prepare ${os.settings.label} installation")
-      checkCancelled()
+      os.checkCancelled()
       os.prepare()
     }
 
@@ -304,7 +324,7 @@ w
     if (os.settings.enabled) {
       os.ui.none()
       os.ui.setStep(s"Install ${os.settings.label}")
-      checkCancelled()
+      os.checkCancelled()
     }
 
     if (os.settings.install) {
@@ -320,42 +340,33 @@ w
       /* format partition */
       if (os.settings.formatable) {
         os.settings.partition() foreach { part =>
-          checkCancelled()
+          os.checkCancelled()
           preparePartition(os, part).orThrow
         }
       }
     }
 
     if (os.settings.enabled) {
-      checkCancelled()
+      os.checkCancelled()
       mountAndDo(os, (isoMount, partMount) => {
         /* erase content */
         if (os.settings.erasable) {
-          checkCancelled()
+          os.checkCancelled()
           os.ui.activity("Erasing partition content")
           partMount.get.to.toFile.delete(true, true)
         }
 
         if (os.settings.install) {
-          checkCancelled()
+          os.checkCancelled()
           os.install(isoMount, partMount)
         }
 
         /* prepare EFI */
-        os.ui.action(s"Search EFI path") {
-          checkCancelled()
-          findEFI(os, partMount) match {
-            case Some(path) =>
-              os.ui.activity(s"Found EFI[$path]")
-
-            case None =>
-              os.ui.activity("No EFI found")
-          }
-        }
+        os.searchEFI(partMount)
 
         if (os.settings.install) {
           os.ui.action(s"Install bootloader") {
-            checkCancelled()
+            os.checkCancelled()
             installBootloader(os, partMount)
           }
         }

@@ -12,13 +12,28 @@ import usbinstall.Panes
 
 object OSKind extends EnumerationEx {
   val Win7_8 = Value("Win7&8")
-  val syslinux = Value
+  val Syslinux = Value
   val GPartedLive = Value
   val SystemRescueCD = Value
   val Ubuntu = Value
-  val RedHat = Value
+  val Fedora = Value
+  val CentOS = Value
   val ArchLinux = Value
   val Kali = Value
+
+  def efiIcon(v: Value) = v match {
+    case Win7_8 => "os_win.icns"
+    case Syslinux => "os_linux.icns"
+    case GPartedLive => "os_linux.icns"
+    case SystemRescueCD => "os_linux.icns"
+    case Ubuntu => "os_ubuntu.icns"
+    case Fedora => "os_fedora.icns"
+    case CentOS => "os_centos.icns"
+    case ArchLinux => "os_arch.icns"
+    case Kali => "os_arch.icns"
+    case _ => "os_unknown.icns"
+  }
+
 }
 
 object OSInstallStatus extends EnumerationEx {

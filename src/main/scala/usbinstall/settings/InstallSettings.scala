@@ -10,16 +10,23 @@ object InstallSettings {
   val device: ObjectProperty[Option[Device]] =
     ObjectProperty(None)
 
-  protected def tempDirectory(prefix: String): Path = {
-    val path = Files.createTempDirectory(prefix)
-    path.toFile.deleteOnExit()
+  protected def tempDirectory(root: Option[Path], prefix: String, deleteOnExit: Boolean): Path = {
+    val path = root.fold {
+      Files.createTempDirectory(prefix)
+    } { root =>
+      Files.createTempDirectory(root, prefix)
+    }
+    if (deleteOnExit) path.toFile.deleteOnExit()
     path
   }
 
-  lazy val pathTemp = tempDirectory("usbinstall.tmp-")
+  def tempDirectory(prefix: String): Path =
+    tempDirectory(Some(pathTemp), prefix, false)
 
-  lazy val pathMountISO = tempDirectory("usbinstall.iso-")
+  lazy val pathTemp = tempDirectory(None, "usbinstall.tmp-", true)
 
-  lazy val pathMountPartition = tempDirectory("usbinstall.part-")
+  lazy val pathMountISO = tempDirectory(None, "usbinstall.iso-", true)
+
+  lazy val pathMountPartition = tempDirectory(None, "usbinstall.part-", true)
 
 }

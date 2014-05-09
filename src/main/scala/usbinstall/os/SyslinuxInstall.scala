@@ -3,9 +3,11 @@ package usbinstall.os
 import java.nio.file.{Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
 import scala.collection.mutable
+import scala.language.postfixOps
 import scala.util.matching.Regex
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
+import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.misc.RichEither._
 import suiryc.scala.sys.{Command, CommandResult}
@@ -15,8 +17,9 @@ import usbinstall.settings.{InstallSettings, Settings}
 
 class SyslinuxInstall(
   override val settings: OSSettings,
-  override val ui: InstallUI
-) extends OSInstall(settings, ui)
+  override val ui: InstallUI,
+  override val checkCancelled: () => Unit
+) extends OSInstall(settings, ui, checkCancelled)
 {
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
@@ -41,14 +44,15 @@ class SyslinuxInstall(
       List(pathModules, pathImages, pathBootdisk) foreach(_.toFile.mkdirs())
 
       val syslinuxCom32 = syslinuxRoot.resolve("com32")
-      val com32Sources = List(
+      val syslinuxModules = List(
         syslinuxCom32.resolve(Paths.get("libutil", "libutil.c32")),
         syslinuxCom32.resolve(Paths.get("lib", "libcom32.c32")),
         syslinuxCom32.resolve(Paths.get("menu", "vesamenu.c32")),
-        syslinuxCom32.resolve(Paths.get("chain", "chain.c32"))
+        syslinuxCom32.resolve(Paths.get("chain", "chain.c32")),
+        syslinuxRoot.resolve(Paths.get("memdisk", "memdisk"))
       )
 
-      copy(com32Sources, syslinuxRoot, pathModules, None)
+      copy(syslinuxModules, syslinuxRoot, pathModules, None)
       copy(syslinuxRoot.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinuxRoot, pathImages, None)
 
       for {
@@ -233,7 +237,7 @@ MENU END
 
     installGrub4DOS(partMount.get)
 
-    /* XXX - TODO */
+    installREFInd(partMount.get)
   }
 
   protected def installGrub4DOS(partMount: PartitionMount): Unit = {
@@ -256,6 +260,62 @@ MENU END
 """)
 
       grub4dosFile.toFile.write(sb.toString)
+    }
+  }
+
+  protected def installREFInd(partMount: PartitionMount): Unit = {
+    val refindPath = Settings.core.rEFIndPath
+    val pathISO = ui.action(s"Search rEFInd") {
+      SyslinuxInstall.findPath(List(refindPath.resolve("iso")), """(?i)refind.*""".r).fold {
+        throw new Exception("Could not find rEFInd ISO")
+      } { path => path}
+    }
+    val iso = new PartitionMount(pathISO, InstallSettings.tempDirectory("rEFInd"))
+    val targetRoot = partMount.to.toAbsolutePath
+
+    iso.mount
+    try {
+      val source = iso.to
+      val sourceRoot = source.toAbsolutePath
+
+      copy(source ***, sourceRoot, targetRoot, "Copy rEFInd ISO content")
+    }
+    finally {
+      iso.umount
+    }
+
+    copy(PathFinder(refindPath) / "drivers_x64" ***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), "Copy rEFInd extra content")
+
+    ui.action("Configure rEFInd") {
+      val refindFile = targetRoot.resolve(Paths.get("EFI", "boot", "refind.conf"))
+      val sb = new StringBuilder
+
+      sb.append(refindFile.read)
+
+      sb.append(
+"""
+# USB stick configuration
+
+scanfor manual
+""")
+
+      searchEFI(Some(partMount))
+      for {
+        os <- Settings.core.oses if (os.enabled)
+        _ <- os.partition()
+        efiBootloader <- os.efiBootloader
+      } {
+        sb.append(
+s"""
+menuentry \"${os.label}\" {
+    icon /EFI/boot/icons/${OSKind.efiIcon(os.kind)}
+    volume \"${os.partitionLabel}\"
+    loader /${efiBootloader}
+}
+""")
+      }
+
+      refindFile.toFile.write(sb.toString)
     }
   }
 
@@ -344,8 +404,8 @@ object SyslinuxInstall {
     }
   }
 
-  protected def findArchive(regex: Regex): Option[Path] = {
-    val files = Settings.core.toolsPath flatMap { path =>
+  protected def findPath(roots: List[Path], regex: Regex): Option[Path] = {
+    val files = roots flatMap { path =>
       val finder = PathFinder(path) ** (regex & RegularFileFilter)
 
       finder.get map(_.toPath)
@@ -354,7 +414,7 @@ object SyslinuxInstall {
   }
 
   protected def findSyslinuxArchive(version: Int): Option[Path] =
-    findArchive(s"""(?i)syslinux.*-${version}.*""".r)
+    findPath(Settings.core.toolsPath, s"""(?i)syslinux.*-${version}.*""".r)
 
   protected def uncompress(path: Path): Path = {
     val isZip = path.getFileName.toString.endsWith(".zip")
@@ -394,7 +454,7 @@ object SyslinuxInstall {
   }
 
   protected def findGrub4DOSArchive(): Option[Path] =
-    findArchive("""(?i)grub4dos.*""".r)
+    findPath(Settings.core.toolsPath, """(?i)grub4dos.*""".r)
 
   def getGrub4DOS(): Path = {
     findGrub4DOSArchive.fold[Path] {
