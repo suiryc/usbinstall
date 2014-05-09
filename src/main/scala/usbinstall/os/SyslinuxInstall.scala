@@ -6,6 +6,7 @@ import scala.collection.mutable
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
+import suiryc.scala.misc.RichEither._
 import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.{InstallUI, Stages}
 import usbinstall.settings.{InstallSettings, Settings}
@@ -21,13 +22,16 @@ class SyslinuxInstall(
     val syslinuxVersion = settings.syslinuxVersion.get
     val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
     val partition = settings.partition().get
-    val devicePath = partition.device.dev
+    val device = partition.device
+    val devicePath = device.dev
     val targetRoot = partMount.get.to.toAbsolutePath
+
+    val others = Settings.core.oses filter(other => ((other ne settings) && other.enabled && other.syslinuxLabel.isDefined))
 
     Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
       skipResult = false)
 
-    ui.action("Apply syslinux") {
+    ui.action("Copy syslinux files") {
       val pathModules = targetRoot.resolve(Paths.get("syslinux", "modules"))
       val pathImages = targetRoot.resolve(Paths.get("syslinux", "images"))
       val pathBootdisk = targetRoot.resolve("bootdisk")
@@ -51,8 +55,10 @@ class SyslinuxInstall(
       } {
         copy(image, image.getParent, pathBootdisk, Some(PosixFilePermissions.fromString("rw-rw-rw-")))
       }
+    }
 
-      /* Original disabled code wth altmbr */
+    ui.action("Apply MBR") {
+      /* Original (disabled) code with altmbr */
 //    # altmbr does not seem to work as expected ...
 //    #[ -e "${syslinuxLocation}"/mbr/altmbr.bin ] \
 //    #    && dd bs=439 count=1 if="${syslinuxLocation}"/mbr/altmbr.bin of=${_devpath} \
@@ -68,107 +74,78 @@ class SyslinuxInstall(
       }
     }
 
-    /* XXX - TODO */
-  }
+    ui.action("Backup MBR") {
+      Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${devicePath}", s"of=${targetRoot.resolve("mbr.backup")}"),
+        skipResult = false)
+    }
 
-}
+    for {
+      other <- others
+      _ <- other.syslinuxLabel
+      otherPartition <- other.partition() if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
+    } {
+      try {
+        ui.action(s"Backup MBR for partition ${otherPartition.partNumber}") {
+          for (otherPartNumber <- 1 until otherPartition.partNumber) {
+            Command.execute(Seq("parted", "-s", devicePath.toString, "rm", otherPartNumber.toString),
+              skipResult = false)
+          }
+          device.partprobe().toEither("Failed to refresh partition table").orThrow
 
-//post_install_syslinux()
-//{
-//    local _flavor=$1
-//    local toolname=${install_component[${_flavor}]}
-//    local partpath=${install_component_partition[${_flavor}]}
-//    local partnb=
-//    local partnb2=
-//    local line=
-//    local component=
-//    local component_ext=
-//    local component_label=
-//    local component_iso=
-//    local component_partpath=
-//    local component_kernel=
-//    local syslinuxFile=${install_component_syslinux_file[${_flavor}]}
-//    local dialogStatus=
-//
-//    updateStatus dialogStatus "Post-install ${toolname}"
-//
-//    updateStatus dialogStatus " * Mount ${partpath} on ${dirPartMount}"
-//
-//    install_cleanMount "${dirPartMount}"
-//    mkdir -p "${dirPartMount}"
-//    mount "${partpath}" "${dirPartMount}"
-//    checkReturnCode "Failed to mount partition" 2
-//
-//    updateStatus dialogStatus " * Backup MBR"
-//
-//    dd if="${_devpath}" of="${dirPartMount}"/mbr.backup bs=512 count=1 conv=notrunc
-//    checkReturnCode "Failed to backup MBR" 2
-//
-//    local component_idx=0
-//    for ((component_idx=0; component_idx<${#install_component[@]}; component_idx++))
-//    do
-//        component_label=${install_component_syslinux_label[${component_idx}]}
-//        component_partpath=${install_component_partition[${component_idx}]}
-//
-//        if [ "${component}" = "syslinux" ] || [ -z "${component_label}" ] \
-//        || [ -z "${component_partpath}" ]
-//        then
-//            continue
-//        fi
-//
-//        partnb=${component_partpath:${#_partpath_prefix}}
-//        if [ ${partnb} -eq 1 ] || [ ${partnb} -gt 4 ]
-//        then
-//            continue
-//        fi
-//
-//        for ((partnb2=1; partnb2<${partnb}; partnb2++))
-//        do
-//            parted -s "${_devpath}" rm ${partnb2} && sync && sleep 1
-//            checkReturnCode "Failed to remove partition ${partnb2}" 2
-//        done
-//
-//        dd if="${_devpath}" of="${dirPartMount}"/mbr.part${partnb} bs=512 count=1 conv=notrunc
-//        checkReturnCode "Failed to backup MBR for part ${partnb}" 2
-//
-//        dd if="${dirPartMount}"/mbr.backup of="${_devpath}" bs=512 count=1 conv=notrunc && sync && sleep 1
-//        checkReturnCode "Failed to restore MBR" 2
-//    done
-//
-//    updateStatus dialogStatus " * Apply syslinux"
-//
-//    local defaultEntry=${install_component_syslinux_label[${SYSTEMRESCUECD_IDX}]}
-//    local confFile="${dirPartMount}/syslinux/${syslinuxFile}"
-//    echo "PATH modules
-//UI vesamenu.c32
-//MENU TITLE Boot menu
-//MENU BACKGROUND images/syslinux_splash.jpg
-//
-//PROMPT 0
-//TIMEOUT 100
-//ONTIMEOUT ${defaultEntry}
-//
-//MENU DEFAULT ${defaultEntry}
-//
-//" > "${confFile}"
-//
-//    for ((component_idx=0; component_idx<${#install_component[@]}; component_idx++))
-//    do
-//        component=${install_component[${component_idx}]}
-//        component_label=${install_component_syslinux_label[${component_idx}]}
-//        component_partpath=${install_component_partition[${component_idx}]}
-//        component_kernel=${install_component_syslinux_kernel[${component_idx}]}
-//        component_append=${install_component_syslinux_append[${component_idx}]}
-//
-//        if [ "${component}" = "syslinux" ] || [ -z "${component_label}" ] \
-//        || [ -z "${component_partpath}" ]
-//        then
-//            continue
-//        fi
-//
-//        echo "LABEL ${component_label}
-//    MENU LABEL ^${component}" >> "${confFile}"
-//
+          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${devicePath}", s"of=${targetRoot.resolve(s"mbr.part${otherPartition.partNumber}")}"),
+            skipResult = false)
+        }
+      }
+      finally {
+        ui.action("Restore MBR") {
+          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${targetRoot.resolve("mbr.backup")}", s"of=${devicePath}"),
+            skipResult = false)
+
+          device.partprobe().toEither("Failed to refresh partition table").orThrow
+        }
+      }
+    }
+
+    ui.action("Configure syslinux") {
+      val syslinuxFile = getSyslinuxFile(targetRoot)
+      val sb = new StringBuilder
+      val defaultEntry = others find { other =>
+        other.kind == OSKind.SystemRescueCD
+      } orElse others.headOption
+
+      sb.append(
+"""PATH modules
+UI vesamenu.c32
+MENU TITLE Boot menu
+MENU BACKGROUND images/syslinux_splash.jpg
+
+PROMPT 0
+TIMEOUT 100
+""")
+
+      defaultEntry flatMap(_.syslinuxLabel) foreach { label =>
+        sb.append(
+s"""ONTIMEOUT ${label}
+
+MENU DEFAULT ${label}
+
+""")
+      }
+
+      for {
+        other <- others
+        syslinuxLabel <- other.syslinuxLabel
+        otherPartition <- other.partition()
+      } {
+        sb.append(
+s"""
+LABEL ${syslinuxLabel}
+    MENU LABEL ^${other.label}
+    KERNEL chain.c32
+    APPEND boot ${otherPartition.partNumber}
+""")
+
+        /* Original code allowing to specify a 'kernel' and 'append' options */
 //        if [ -n "${component_kernel}" ]
 //        then
 //            echo "    KERNEL ${component_kernel}" >> "${confFile}"
@@ -181,7 +158,87 @@ class SyslinuxInstall(
 //            echo "    KERNEL chain.c32
 //    APPEND boot ${partnb}${component_append}" >> "${confFile}"
 //        fi
-//        echo >> "${confFile}"
+      }
+
+      sb.append(
+s"""
+
+MENU SEPARATOR
+
+MENU BEGIN
+MENU TITLE Misc tools
+""")
+
+      for {
+        component <- Settings.core.syslinuxExtraComponents if (component.kind == SyslinuxComponentKind.Image)
+        image <- component.image
+      } {
+        val label = component.label
+        val entry = label.replaceAll("[^a-zA-Z0-9_]", "_")
+        val imageName = image.getFileName()
+
+      sb.append(
+s"""
+LABEL ${entry}
+    MENU LABEL ^${label}
+    KERNEL modules/memdisk
+    INITRD /bootdisk/${imageName}
+""")
+
+        if (imageName.toString.toLowerCase().endsWith(".iso")) {
+          sb.append(
+"""    APPEND iso
+""")
+        }
+        else if (imageName.toString.toLowerCase().endsWith(".img")) {
+          sb.append(
+"""    APPEND floppy
+""")
+        }
+      }
+
+      sb.append(
+"""
+
+MENU SEPARATOR
+
+LABEL return
+  MENU LABEL Return to main menu
+  MENU EXIT
+
+
+MENU END
+""")
+
+      syslinuxFile.toFile.write(sb.toString)
+    }
+    /* XXX - TODO */
+  }
+
+}
+
+/* Original code allowing to use an OS as an image directly from syslinux (kind
+ * of like misc images, but allowing to select the ISO at runtime)
+ */
+//    local component_idx=0
+//    for ((component_idx=0; component_idx<${#install_component[@]}; component_idx++))
+//    do
+//        component=${install_component[${component_idx}]}
+//        component_label=${install_component_syslinux_label[${component_idx}]}
+//        component_iso=${install_component_iso[${component_idx}]}
+//        component_partpath=${install_component_partition[${component_idx}]}
+//
+//        if [ "${component}" = "syslinux" ] || [ -z "${component_label}" ] \
+//        || [ -z "${component_iso}" ] || [ -n "${component_partpath}" ]
+//        then
+//            continue
+//        fi
+//
+//        component_iso_name=$(basename "${component_iso}")
+//        cp "${component_iso}" "${dirPartMount}"/bootdisk/ \
+//            && sync \
+//            && chmod 444 "${dirPartMount}"/bootdisk/"${component_iso_name}"
+//        checkReturnCode "Failed to copy ${component}" 2
 //    done
 //
 //    echo "MENU SEPARATOR
@@ -220,56 +277,6 @@ class SyslinuxInstall(
 //        fi
 //        echo >> "${confFile}"
 //    done
-//
-//    echo "MENU SEPARATOR
-//
-//MENU BEGIN
-//MENU TITLE Misc tools
-//" >> "${confFile}"
-//
-//    while read line
-//    do
-//        component=${line%%=*}
-//        line=${line#*=}
-//        component_entry=${line%%=*}
-//        line=${line#*=}
-//        component_label=${line%%=*}
-//
-//        if [ -z "${component}" ]
-//        then
-//            continue
-//        fi
-//
-//        echo "LABEL ${component_entry}
-//    MENU LABEL ^${component_label}
-//    KERNEL modules/memdisk
-//    INITRD /bootdisk/${component}" >> "${confFile}"
-//
-//        component_ext=${component##*.}
-//        if [ "${component_ext}" = "iso" ]
-//        then
-//            echo "    APPEND iso
-//" >> "${confFile}"
-//        elif [ "${component_ext}" = "img" ]
-//        then
-//            echo "    APPEND floppy
-//" >> "${confFile}"
-//        fi
-//    done < <(cat "${dirSyslinuxBootdisk}"/menu.txt)
-//
-//    echo "MENU SEPARATOR
-//
-//LABEL return
-//  MENU LABEL Return to main menu
-//  MENU EXIT
-//
-//MENU END
-//" >> "${confFile}"
-//
-//    sync
-//    checkReturnCode "Failed to sync filesystem" 2
-//}
-
 
 object SyslinuxInstall {
 
