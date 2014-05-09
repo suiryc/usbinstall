@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import scalafx.application.JFXApp
 import suiryc.scala.io.RichFile._
 import suiryc.scala.misc.MessageWriter
-import usbinstall.settings.InstallSettings
+import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.ProxyAppender
 import usbinstall.util.DebugStage
 
@@ -19,6 +19,8 @@ object USBInstall extends JFXApp {
   addAppender(appender)
 
   Stages.chooseDevice()
+  /* Explicitely loads the settings */
+  Settings.load()
 
   override def stopApp() {
     InstallSettings.pathTemp.delete(true)

@@ -2,7 +2,8 @@ package usbinstall.os
 
 import grizzled.slf4j.Logging
 import java.io.File
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
+import java.nio.file.attribute.PosixFilePermission
 import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
@@ -50,7 +51,6 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
           logger.warn(s"Path[$pathRelative] already processed, skipping")
         else {
           ui.activity(s"Copying file[$pathRelative]")
-          /* XXX - can a 'copy' fail ? */
           FilesEx.copy(
             sourceRoot,
             pathRelative,
@@ -60,6 +60,25 @@ class OSInstall(val settings: OSSettings, val ui: InstallUI)
         }
       }
     }
+  }
+
+  protected def copy(sources: List[Path], sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+    for (source <- sources) {
+      copy(source, sourceRoot, targetRoot, mode)
+    }
+  }
+
+  protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+    val target = targetRoot.resolve(source.getFileName())
+
+    if (target.exists)
+      logger.warn(s"Path[${sourceRoot.relativize(source)}] already processed, skipping")
+    else {
+      ui.activity(s"Copying file[${sourceRoot.relativize(source)}]")
+      Files.copy(source, target,
+        StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
+    }
+    mode foreach(target.toFile.changeMode(_))
   }
 
   protected def renameSyslinux(targetRoot: Path) {

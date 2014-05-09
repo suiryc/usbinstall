@@ -32,6 +32,17 @@ class SyslinuxEntry(
   val label: String
 )
 
+object SyslinuxComponentKind extends EnumerationEx {
+  val Image = Value
+  val Grub4DOS = Value
+}
+
+class SyslinuxComponent(
+  val kind: SyslinuxComponentKind.Value,
+  val label: String,
+  val image: Option[Path]
+)
+
 object PartitionFormat extends EnumerationEx {
 
   trait extX

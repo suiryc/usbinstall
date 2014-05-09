@@ -11,8 +11,15 @@ import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.settings.{BaseSettings, PersistentSetting}
 import suiryc.scala.misc.{EnumerationEx, Units}
+import usbinstall.Stages
+import usbinstall.os.{
+  OSKind,
+  OSSettings,
+  PartitionFormat,
+  SyslinuxComponent,
+  SyslinuxComponentKind
+}
 import usbinstall.util.Util
-import usbinstall.os.{OSKind, OSSettings, PartitionFormat}
 
 
 object Settings {
@@ -27,6 +34,12 @@ object Settings {
 
     val componentInstallError = ErrorAction.Ask
 
+  }
+
+  def load() {
+    /* Settings are automatically loaded by accessing this object for the
+     * first time.
+     */
   }
 
 }
@@ -80,6 +93,34 @@ class Settings(
 
   val toolsPath = config.getStringList("tools.path").toList map { path =>
     makePath(path)
+  }
+
+  protected val syslinuxExtra = config.getConfig("syslinux.extra")
+
+  val syslinuxExtraImagesPath = syslinuxExtra.getStringList("images.path").toList map { path =>
+    makePath(path)
+  }
+
+  val syslinuxExtraComponents = syslinuxExtra.getConfigList("components").toList map { config =>
+    val kind = option(config, "kind") getOrElse("image")
+    val label = option(config, "label") getOrElse(kind)
+    val image = option(config, "image") flatMap { name =>
+      val r = syslinuxExtraImagesPath map { path =>
+        path.resolve(name)
+      } find(_.toFile.exists)
+
+      if (!r.isDefined) {
+        Stages.errorStage("Missing component image", Some(label), s"Image[$name] not found in configured path")
+      }
+
+      r
+    }
+
+    new SyslinuxComponent(
+      SyslinuxComponentKind(kind),
+      label,
+      image
+    )
   }
 
   val componentInstallError =
