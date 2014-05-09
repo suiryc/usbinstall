@@ -1,0 +1,22 @@
+Maximum fat32 label length: 11
+Works better if padded/truncated.
+
+Maximum ext2 label length: 16
+
+ext2 fs (extlinux) may seem more natural for linux systems, as is NTFS (bootmgr) for Windows, *but*
+1. at least for ubuntu, persistence file is only searched on vfat fs
+2. automatic (U)EFI boot uses FAT32 fs
+*However* rEFInd is able to boot ext2 and NTFS EFI bootloaders
+
+Win7/8 only accesses the first partition (whatever its type) for removable USB disks, so either
+ * the install files must be on this partition
+ * a virtual drive has to be set
+ * partition table must be altered (e.g. from a LiveCD) to have the wanted partition as first
+
+GParted Live uses:
+ * syslinux 4.x in versions prior to 0.16.2
+ * syslinux 5.x since version 0.16.2
+ * syslinux 6.x since version 0.16.2-11
+   - 6.02 at first, and 6.03-preX (which appears not to be able to load 6.02 modules) in recent versions
+
+ 

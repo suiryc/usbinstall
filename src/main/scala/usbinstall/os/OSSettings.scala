@@ -41,7 +41,11 @@ class SyslinuxComponent(
   val kind: SyslinuxComponentKind.Value,
   val label: String,
   val image: Option[Path]
-)
+) {
+
+  def syslinuxLabel = label.replaceAll("[^a-zA-Z0-9_]", "_")
+
+}
 
 object PartitionFormat extends EnumerationEx {
 

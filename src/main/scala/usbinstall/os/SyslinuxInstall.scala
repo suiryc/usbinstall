@@ -3,6 +3,7 @@ package usbinstall.os
 import java.nio.file.{Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
 import scala.collection.mutable
+import scala.util.matching.Regex
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
@@ -27,6 +28,7 @@ class SyslinuxInstall(
     val targetRoot = partMount.get.to.toAbsolutePath
 
     val others = Settings.core.oses filter(other => ((other ne settings) && other.enabled && other.syslinuxLabel.isDefined))
+    val components = Settings.core.syslinuxExtraComponents
 
     Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
       skipResult = false)
@@ -50,7 +52,7 @@ class SyslinuxInstall(
       copy(syslinuxRoot.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinuxRoot, pathImages, None)
 
       for {
-        component <- Settings.core.syslinuxExtraComponents if (component.kind == SyslinuxComponentKind.Image)
+        component <- components if (component.kind == SyslinuxComponentKind.Image)
         image <- component.image
       } {
         copy(image, image.getParent, pathBootdisk, Some(PosixFilePermissions.fromString("rw-rw-rw-")))
@@ -79,8 +81,13 @@ class SyslinuxInstall(
         skipResult = false)
     }
 
+    /* Note: Win7/8 only accesses the first partition (whatever its type) for
+     * removable USB disks: so the install files must be on this partition,
+     *  or a virtual drive has to be set, or partition table must be altered
+     * (e.g. from a LiveCD) to have the wanted partition as first
+     */
     for {
-      other <- others
+      other <- others if (other.kind == OSKind.Win7_8)
       _ <- other.syslinuxLabel
       otherPartition <- other.partition() if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
     } {
@@ -160,6 +167,19 @@ LABEL ${syslinuxLabel}
 //        fi
       }
 
+      components find(_.kind == SyslinuxComponentKind.Grub4DOS) foreach { component =>
+        sb.append(
+s"""
+
+MENU SEPARATOR
+
+LABEL ${component.syslinuxLabel}
+    MENU LABEL ^${component.label}
+    KERNEL chain.c32
+    APPEND boot ${partition.partNumber} ntldr=/grldr
+""")
+      }
+
       sb.append(
 s"""
 
@@ -170,17 +190,15 @@ MENU TITLE Misc tools
 """)
 
       for {
-        component <- Settings.core.syslinuxExtraComponents if (component.kind == SyslinuxComponentKind.Image)
+        component <- components if (component.kind == SyslinuxComponentKind.Image)
         image <- component.image
       } {
-        val label = component.label
-        val entry = label.replaceAll("[^a-zA-Z0-9_]", "_")
         val imageName = image.getFileName()
 
       sb.append(
 s"""
-LABEL ${entry}
-    MENU LABEL ^${label}
+LABEL ${component.syslinuxLabel}
+    MENU LABEL ^${component.label}
     KERNEL modules/memdisk
     INITRD /bootdisk/${imageName}
 """)
@@ -212,7 +230,33 @@ MENU END
 
       syslinuxFile.toFile.write(sb.toString)
     }
+
+    installGrub4DOS(partMount.get)
+
     /* XXX - TODO */
+  }
+
+  protected def installGrub4DOS(partMount: PartitionMount): Unit = {
+    val grub4dosRoot = ui.action(s"Search Grub4DOS") {
+      SyslinuxInstall.getGrub4DOS()
+    }
+    val targetRoot = partMount.to.toAbsolutePath
+
+    ui.action("Copy Grub4DOS files") {
+      copy(grub4dosRoot.resolve("grldr"), grub4dosRoot, targetRoot, None)
+    }
+
+    ui.action("Configure Grub4DOS") {
+      val grub4dosFile = targetRoot.resolve("menu.lst")
+      val sb = new StringBuilder
+
+      sb.append(
+"""title Reboot
+    reboot
+""")
+
+      grub4dosFile.toFile.write(sb.toString)
+    }
   }
 
 }
@@ -286,7 +330,7 @@ object SyslinuxInstall {
     versions.getOrElseUpdate(version, find(version))
 
   protected def find(version: Int): Option[Path] = {
-    findArchive(version).fold[Option[Path]] {
+    findSyslinuxArchive(version).fold[Option[Path]] {
       /* XXX - log error */
       None
     } { path =>
@@ -300,14 +344,17 @@ object SyslinuxInstall {
     }
   }
 
-  protected def findArchive(version: Int): Option[Path] = {
+  protected def findArchive(regex: Regex): Option[Path] = {
     val files = Settings.core.toolsPath flatMap { path =>
-      val finder = PathFinder(path) ** (s"""syslinux.*-${version}.*""".r & RegularFileFilter)
+      val finder = PathFinder(path) ** (regex & RegularFileFilter)
 
       finder.get map(_.toPath)
     }
     files.sorted.reverse.headOption
   }
+
+  protected def findSyslinuxArchive(version: Int): Option[Path] =
+    findArchive(s"""(?i)syslinux.*-${version}.*""".r)
 
   protected def uncompress(path: Path): Path = {
     val isZip = path.getFileName.toString.endsWith(".zip")
@@ -344,6 +391,23 @@ object SyslinuxInstall {
     if ((result == 0) && (arch != "i386")) {
       Command.execute(Seq("make"), workingDirectory = Some(base.toFile), envf = Some(commandEnvf _))
     }*/
+  }
+
+  protected def findGrub4DOSArchive(): Option[Path] =
+    findArchive("""(?i)grub4dos.*""".r)
+
+  def getGrub4DOS(): Path = {
+    findGrub4DOSArchive.fold[Path] {
+      throw new Exception("Could not find Grub4DOS archive")
+    } { path =>
+      val root = uncompress(path)
+      val finder = PathFinder(root) ** "grldr"
+      finder.get.toList.sorted.headOption.fold {
+        throw new Exception(s"Could not find Grub4DOS files in its archive[${path.getFileName()}]")
+      } { path =>
+        path.toPath.getParent
+      }
+    }
   }
 
 }

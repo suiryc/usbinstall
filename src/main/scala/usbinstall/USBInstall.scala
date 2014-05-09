@@ -18,6 +18,9 @@ object USBInstall extends JFXApp {
   val appender = newAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
   addAppender(appender)
 
+  /* XXX - check we are root */
+  /* XXX - check external tools are present */
+
   Stages.chooseDevice()
   /* Explicitely loads the settings */
   Settings.load()
