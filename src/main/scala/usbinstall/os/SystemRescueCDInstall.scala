@@ -1,8 +1,9 @@
 package usbinstall.os
 
 import scala.language.postfixOps
+import scala.util.matching.Regex
+import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
-import suiryc.scala.io.RichFile._
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 
@@ -22,11 +23,21 @@ class SystemRescueCDInstall(
 
     copy(finder, sourceRoot, targetRoot, "Copy ISO content")
 
-    val syslinuxFile = getSyslinuxFile(targetRoot)
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      regexReplace(targetRoot, syslinuxFile, RegexReplacer("(?i)scandelay=1", "scandelay=5"))
+      val grubBoot = targetRoot / "boot" / "grub"
+      val confs = (grubBoot ++ (targetRoot / "syslinux")) * (".*\\.cfg".r | ".*\\.conf".r)
+      val regexReplacers = List(
+        RegexReplacer("(?i)scandelay=1", "scandelay=2"),
+        RegexReplacer(
+          new Regex("(?i)([ \t]+(?:linux|initrd)[ \t]+)/isolinux/", "pre"),
+          (m: Regex.Match) => s"${m.group("pre")}/syslinux/"
+        )
+      )
+      for (conf <- confs.get()) {
+        regexReplace(targetRoot, conf, regexReplacers:_*)
+      }
     }
   }
 
