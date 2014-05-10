@@ -4,6 +4,7 @@ import grizzled.slf4j.Logging
 import java.io.File
 import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermission
+import scala.language.postfixOps
 import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
@@ -144,7 +145,9 @@ class OSInstall(
 
 }
 
-object OSInstall {
+object OSInstall
+  extends Logging
+{
 
   def apply(settings: OSSettings, ui: InstallUI, checkCancelled: () => Unit): OSInstall =
     settings.kind match {
@@ -313,6 +316,23 @@ w
     }
   }
 
+  private def deleteContent(root: Path) {
+    if (!root.toFile.delete(true, true)) {
+      /* Some files may have the 'immutable' attribute */
+      val finder = PathFinder(root) ***
+
+      finder.get.map(_.toPath) foreach { path =>
+        Command.execute(Seq("chattr", "-i", path.toString))
+      }
+
+      if (!root.toFile.delete(true, true)) {
+        val msg = "Some content could not be deleted"
+        error(s"$msg: ${finder.get.mkString(", ")}")
+        throw new Exception(msg)
+      }
+    }
+  }
+
   def install(os: OSInstall): Unit = {
     os.ui.none()
 
@@ -355,8 +375,9 @@ w
         /* erase content */
         if (os.settings.erasable) {
           os.checkCancelled()
-          os.ui.activity("Erasing partition content")
-          partMount.get.to.toFile.delete(true, true)
+          os.ui.action("Erasing partition content") {
+            deleteContent(partMount.get.to)
+          }
         }
 
         if (os.settings.install) {
