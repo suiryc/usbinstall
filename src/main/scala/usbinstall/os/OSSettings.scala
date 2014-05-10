@@ -80,7 +80,7 @@ class OSSettings(
   val partitionLabel: String,
   val partitionFormat: PartitionFormat.Value,
   val syslinuxLabel: Option[String],
-  val syslinuxVersion: Option[Int]
+  val syslinuxVersion: Option[String]
 )(implicit settings: BaseSettings)
 {
 

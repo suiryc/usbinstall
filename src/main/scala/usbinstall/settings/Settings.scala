@@ -79,7 +79,7 @@ class Settings(
       config.getString("partition.label"),
       PartitionFormat(config.getString("partition.format")),
       option(config, "syslinux.label"),
-      option(config, "syslinux.version") map { _.toInt }
+      option(config, "syslinux.version")
     )
   }
 

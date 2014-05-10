@@ -1,7 +1,9 @@
 package usbinstall.os
 
+import grizzled.slf4j.Logging
 import java.nio.file.{Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
+import java.util.regex.Pattern
 import scala.collection.mutable
 import scala.language.postfixOps
 import scala.util.matching.Regex
@@ -382,24 +384,34 @@ menuentry \"${os.label}\" {
 //        echo >> "${confFile}"
 //    done
 
-object SyslinuxInstall {
+object SyslinuxInstall
+  extends Logging
+{
 
-  private val versions = mutable.Map[Int, Option[Path]]()
+  protected case class SyslinuxArchive(archive: Path, uncompressed: Path)
 
-  def get(version: Int) =
-    versions.getOrElseUpdate(version, find(version))
+  private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
-  protected def find(version: Int): Option[Path] = {
-    findSyslinuxArchive(version).fold[Option[Path]] {
-      /* XXX - log error */
+  def get(version: String): Option[Path] =
+    versions getOrElseUpdate(version, find(version)) map(_.uncompressed)
+
+  protected def find(version: String): Option[SyslinuxArchive] = {
+    findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
+      error(s"No archive found for syslinux version[${version}]")
       None
-    } { path =>
-      findBase(uncompress(path)).fold[Option[Path]] {
-        /* XXX - log error */
+    } { archive =>
+      /* First check whether the matching archive is already associated to
+       * another (more precise/generic) version number.
+       */
+      versions collectFirst {
+        case (_, Some(SyslinuxArchive(a, u))) if (archive.compareTo(a) == 0) =>
+          SyslinuxArchive(a, u)
+      } orElse findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
+        error(s"Could not find syslinux version[${version}] files in archive[${archive}]")
         None
-      } { path =>
-        build(path)
-        Some(path)
+      } { uncompressed =>
+        build(uncompressed)
+        Some(SyslinuxArchive(archive, uncompressed))
       }
     }
   }
@@ -413,8 +425,8 @@ object SyslinuxInstall {
     files.sorted.reverse.headOption
   }
 
-  protected def findSyslinuxArchive(version: Int): Option[Path] =
-    findPath(Settings.core.toolsPath, s"""(?i)syslinux.*-${version}.*""".r)
+  protected def findSyslinuxArchive(version: String): Option[Path] =
+    findPath(Settings.core.toolsPath, s"""(?i)syslinux.*-${Pattern.quote(version)}.*""".r)
 
   protected def uncompress(path: Path): Path = {
     val isZip = path.getFileName.toString.endsWith(".zip")
@@ -426,7 +438,7 @@ object SyslinuxInstall {
       else Command.execute(Seq("tar", "xf", path.toString, "-C", uncompressPath.toString))
 
       if (result != 0) {
-        /* XXX - log error; missing file will be apparent later */
+        error(s"Failed to uncompress archive[${path}] to[${uncompressPath}]: $stderr")
       }
 
     uncompressPath
