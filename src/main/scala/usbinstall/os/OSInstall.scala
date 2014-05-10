@@ -73,9 +73,7 @@ class OSInstall(
     }
   }
 
-  protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
-    val target = targetRoot.resolve(source.getFileName())
-
+  protected def duplicate(source: Path, sourceRoot: Path, target: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
     if (target.exists)
       logger.warn(s"Path[${sourceRoot.relativize(source)}] already processed, skipping")
     else {
@@ -84,6 +82,11 @@ class OSInstall(
         StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     }
     mode foreach(target.toFile.changeMode(_))
+  }
+
+  protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+    val target = targetRoot.resolve(source.getFileName())
+    duplicate(source, sourceRoot, target, mode)
   }
 
   protected def renameSyslinux(targetRoot: Path) {
