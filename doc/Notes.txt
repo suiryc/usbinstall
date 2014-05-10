@@ -1,22 +1,71 @@
+FileSystems
+-----------
 Maximum fat32 label length: 11
 Works better if padded/truncated.
 
 Maximum ext2 label length: 16
 
 ext2 fs (extlinux) may seem more natural for linux systems, as is NTFS (bootmgr) for Windows, *but*
-1. at least for ubuntu, persistence file is only searched on vfat fs
-2. automatic (U)EFI boot uses FAT32 fs
+ 1. at least for ubuntu, persistence file is only searched on vfat fs
+ 2. automatic (U)EFI boot uses FAT32 fs
 *However* rEFInd is able to boot ext2 and NTFS EFI bootloaders
 
+
+Syslinux
+--------
+syslinux 6.02 and 6.03-preX do not seem to be compatible:
+ - 6.02 cannot load 6.03 modules: error message floods the screen
+ - 6.03 cannot load 6.02 modules: nothing happens
+
+
+Windows
+-------
 Win7/8 only accesses the first partition (whatever its type) for removable USB disks, so either
- * the install files must be on this partition
- * a virtual drive has to be set
- * partition table must be altered (e.g. from a LiveCD) to have the wanted partition as first
+ - the install files must be on this partition
+ - a virtual drive has to be set
+ - partition table must be altered (e.g. from a LiveCD) to have the wanted partition as first
 
-GParted Live uses:
- * syslinux 4.x in versions prior to 0.16.2
- * syslinux 5.x since version 0.16.2
- * syslinux 6.x since version 0.16.2-11
-   - 6.02 at first, and 6.03-preX (which appears not to be able to load 6.02 modules) in recent versions
 
- 
+GParted Live
+------------
+Uses syslinux:
+ - 4.x in versions prior to 0.16.2
+ - 5.x since version 0.16.2
+ - 6.x since version 0.16.2-11
+   * 6.02 at first, and 6.03-preX in recent versions
+
+EFI booting does not work: ends in grub bash, and root seems to be Ubuntu.
+
+
+SystemRescueCD
+--------------
+Recent versions (since 4.0.x ?) may not work correctly for some graphic cards in graphic (startx) mode.
+See:
+ - http://www.sysresccd.org/forums/viewtopic.php?f=14&t=5266
+ - http://www.sysresccd.org/forums/viewtopic.php?f=4&t=5276
+Booting with the alternate kernel, or using wizard instead of startx may help.
+
+
+Ubuntu
+------
+EFI boot may show an error message:
+Could not open "\EFI\BOOT\fallback.efi"
+
+And then either do nothing, or show a text menu to either 'test' or 'install' Ubuntu.
+See: https://bugs.launchpad.net/ubuntu/+bug/1241824
+To prevent the error message, which is not an issue if the text menu appears right after, one could copy 'grubx64.efi' to 'fallback.efi'
+
+
+CentOS
+------
+Boot does not end if there is LUKS partition visible: CentOS boot asks for the password, but nothing happens.
+
+
+Arch Linux
+----------
+Uses syslinux 6.02
+
+
+Kali
+----
+Seems to search and find the Ubuntu partition as the one to boot ...

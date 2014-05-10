@@ -44,6 +44,7 @@ class InstallController(
     case Success(_) =>
       info(s"Task succeeded")
       USBInstall.detachAppender(appender)
+      /* XXX - detach 'cancellable' rename button to 'Done' to exit application */
   }
 
   private def installTask(cancellable: Cancellable) {
