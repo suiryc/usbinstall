@@ -4,7 +4,7 @@ name := "usbinstall"
 
 version := "0.0.2-SNAPSHOT"
 
-scalaVersion := "2.11.1"
+scalaVersion := versions("scala")
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-optimize", "-unchecked", "-Yinline-warnings")
 
@@ -14,6 +14,7 @@ fork in run := true
 
 val versions = Map[String, String](
   "java" -> "1.8",
+  "scala" -> "2.11.1",
   "akka" -> "2.3.3",
   "config" -> "1.2.1",
   "controlsfx" -> "8.0.6",
@@ -37,6 +38,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % versions("akka"),
   "org.scalafx" %% "scalafx" % versions("scalafx"),
   "org.scalafx" %% "scalafxml-core" % versions("scalafxml"),
+  /* Note: just so that it is retrieved by Eclipse */
+  "org.scalamacros" % s"paradise_${versions("scala")}" % versions("paradise") % "compile",
   "org.controlsfx" % "controlsfx" % versions("controlsfx"),
   "suiryc" %% "suiryc-scala-core" % versions("suiryc-scala"),
   "suiryc" %% "suiryc-scala-log" % versions("suiryc-scala"),
@@ -79,7 +82,7 @@ pomExtra := (
           <compilerPlugins>
             <compilerPlugin>
               <groupId>org.scalamacros</groupId>
-              <artifactId>paradise_2.10.3</artifactId>
+              <artifactId>paradise_{ versions("scala") }</artifactId>
               <version>{ versions("paradise") }</version>
             </compilerPlugin>
           </compilerPlugins>

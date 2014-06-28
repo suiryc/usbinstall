@@ -32,7 +32,7 @@
                     <compilerPlugins>
                         <compilerPlugin>
                             <groupId>org.scalamacros</groupId>
-                            <artifactId>paradise_2.10.3</artifactId>
+                            <artifactId>paradise_2.11.1</artifactId>
                             <version>2.0.1</version>
                         </compilerPlugin>
                     </compilerPlugins>
@@ -107,6 +107,11 @@
             <groupId>org.scalafx</groupId>
             <artifactId>scalafxml-core_2.11</artifactId>
             <version>0.2.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalamacros</groupId>
+            <artifactId>paradise_2.11.1</artifactId>
+            <version>2.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.controlsfx</groupId>
