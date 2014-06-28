@@ -3,7 +3,7 @@ package usbinstall
 import grizzled.slf4j.Logging
 import javafx.beans.property.{DoubleProperty, ReadOnlyDoubleProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import org.controlsfx.dialog.Dialogs
+import org.controlsfx.dialog.{Dialogs, DialogStyle}
 import scala.language.postfixOps
 import scalafx.Includes._
 import scalafx.application.{JFXApp, Platform}
@@ -99,7 +99,7 @@ object Stages
 
     val dialog = Dialogs.create()
       .owner(USBInstall.stage:javafx.stage.Window)
-      .nativeTitleBar()
+      .style(DialogStyle.NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
 
