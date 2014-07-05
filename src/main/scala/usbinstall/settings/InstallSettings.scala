@@ -1,14 +1,14 @@
 package usbinstall.settings
 
 import java.nio.file.{Files, Path}
-import scalafx.beans.property.ObjectProperty
+import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import suiryc.scala.sys.linux.Device
 
 
 object InstallSettings {
 
   val device: ObjectProperty[Option[Device]] =
-    ObjectProperty(None)
+    new SimpleObjectProperty(None)
 
   protected def tempDirectory(root: Option[Path], prefix: String, deleteOnExit: Boolean): Path = {
     val path = root.fold {

@@ -1,12 +1,14 @@
 package usbinstall
 
 import grizzled.slf4j.Logging
+import java.net.URL
+import java.util.ResourceBundle
+import javafx.fxml.{FXML, Initializable}
+import javafx.geometry.Insets
+import javafx.scene.control.Label
+import javafx.scene.layout.{GridPane, Priority, VBox}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
-import scalafx.geometry.Insets
-import scalafx.scene.control.Label
-import scalafx.scene.layout.{GridPane, Priority, VBox}
-import scalafxml.core.macros.sfxml
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
@@ -15,36 +17,57 @@ import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.DebugStage
 
 
-@sfxml
-class InstallController(
-  private val vbox: VBox,
-  private val grid: GridPane,
-  private val step: Label,
-  private val action: Label,
-  private val stepPane: StepPane
-) extends HasCancel with Logging
+class InstallController
+  extends Initializable
+  with UseStepPane
+  with HasCancel
+  with Logging
 {
 
-  val activityArea = new LogArea {
-    margin = Insets(0, 10, 10, 10)
-    vgrow = Priority.ALWAYS
+  @FXML
+  protected var vbox: VBox = _
+
+  @FXML
+  protected var grid: GridPane = _
+
+  @FXML
+  protected var step: Label = _
+
+  @FXML
+  protected var action: Label = _
+
+  @FXML
+  protected var activityArea: LogArea = _
+
+  protected var stepPane: StepPane = _
+
+  /* Note: we need to wait for 'initialize' to get the JavaFX controls. */
+
+  protected var ui: InstallUI = _
+
+  protected var cancellableFuture: CancellableFuture[Unit] = _
+
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    val appender = USBInstall.newAppender(List(DebugStage.logAreaWriter(activityArea)))
+    USBInstall.addAppender(appender)
+
+    ui = new InstallUI(step, action, activityArea)
+
+    cancellableFuture = CancellableFuture(installTask(_))
+    cancellableFuture.future.onComplete {
+      case Failure(e) =>
+        error(s"Task failed", e)
+        USBInstall.detachAppender(appender)
+
+      case Success(_) =>
+        info(s"Task succeeded")
+        USBInstall.detachAppender(appender)
+        /* XXX - detach 'cancellable' rename button to 'Done' to exit application */
+    }
   }
-  vbox.content.add(activityArea)
 
-  val appender = USBInstall.newAppender(List(DebugStage.logAreaWriter(activityArea)))
-  USBInstall.addAppender(appender)
-  val ui = new InstallUI(step, action, activityArea)
-
-  val cancellableFuture = CancellableFuture(installTask(_))
-  cancellableFuture.future.onComplete {
-    case Failure(e) =>
-      error(s"Task failed", e)
-      USBInstall.detachAppender(appender)
-
-    case Success(_) =>
-      info(s"Task succeeded")
-      USBInstall.detachAppender(appender)
-      /* XXX - detach 'cancellable' rename button to 'Done' to exit application */
+  override def setStepPane(stepPane: StepPane) {
+    this.stepPane = stepPane
   }
 
   private def installTask(cancellable: Cancellable) {
@@ -86,7 +109,7 @@ class InstallController(
   override def onCancel() {
     /* Note: we are in the JavaFX thread */
     ui.activity("Cancelling ...")
-    stepPane.next.disable.value = true
+    stepPane.next.disable.set(true)
     cancellableFuture.cancel()
   }
 

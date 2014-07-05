@@ -1,26 +1,24 @@
 package usbinstall
 
 import grizzled.slf4j.Logging
+import javafx.application.Platform
 import javafx.beans.property.{DoubleProperty, ReadOnlyDoubleProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import org.controlsfx.dialog.{Dialogs, DialogStyle}
-import scala.language.postfixOps
-import scalafx.Includes._
-import scalafx.application.{JFXApp, Platform}
-import scalafx.event.ActionEvent
-import scalafx.geometry.{Insets, Pos}
-import scalafx.scene.Scene
-import scalafx.scene.control.Button
-import scalafx.scene.layout.{
+import javafx.fxml.FXMLLoader
+import javafx.geometry.{Insets, Pos}
+import javafx.scene.{Parent, Scene}
+import javafx.scene.control.Button
+import javafx.scene.layout.{
   ColumnConstraints,
   GridPane,
   Priority,
   RowConstraints,
   VBox
 }
-import scalafx.stage.WindowEvent
-import scalafxml.core.{ExplicitDependencies, FXMLView}
+import javafx.stage.{Stage, WindowEvent}
+import org.controlsfx.dialog.{Dialogs, DialogStyle}
 import suiryc.scala.javafx.concurrent.JFXSystem
+import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.RichOptional
 
 
@@ -29,31 +27,32 @@ object Stages
 {
 
   protected def changeScene(title: String, scene: Scene) {
-    val (stage, pos) =
-      Option(USBInstall.stage) map { stage =>
-        val x = stage.x()
-        val y = stage.y()
-        stage.minWidth = 0
-        stage.minHeight = 0
+    val stage = USBInstall.stage
+    val pos =
+      if (!USBInstall.firstScene) {
+        val x = stage.getX()
+        val y = stage.getY()
+        stage.setMinWidth(0)
+        stage.setMinHeight(0)
         stage.hide()
-        (stage, Some(x, y))
-      } getOrElse {
-        USBInstall.stage = new JFXApp.PrimaryStage {
-          onCloseRequest = { (event: WindowEvent) =>
-            close()
-            Platform.exit()
-          }
+        Some(x, y)
+      }
+      else {
+        stage.setOnCloseRequest { (event: WindowEvent) =>
+          stage.close()
+          Platform.exit()
         }
-        (USBInstall.stage, None)
+        None
       }
 
-    stage.title = title
-    stage.scene = scene
+    stage.setTitle(title)
+    stage.setScene(scene)
     pos foreach { pos =>
-      stage.x = pos._1
-      stage.y = pos._2
+      stage.setX(pos._1)
+      stage.setY(pos._2)
     }
     stage.show()
+    USBInstall.firstScene = false
 
     /* After show(), the stage dimension returned by JavaFX does not seem to
      * include the platform decorations (at least under Linux). Somehow those
@@ -90,15 +89,15 @@ object Stages
       }
     }
 
-    trackMinimumDimension("width", stage.minWidthProperty(), stage.widthProperty(), stage.scene().widthProperty())
-    trackMinimumDimension("height", stage.minHeightProperty(), stage.heightProperty(), stage.scene().heightProperty())
+    trackMinimumDimension("width", stage.minWidthProperty, stage.widthProperty, stage.getScene().widthProperty)
+    trackMinimumDimension("height", stage.minHeightProperty, stage.heightProperty, stage.getScene().heightProperty)
   }
 
   protected def errorStage(title: String, masthead: Option[String], error: Either[Throwable, String]) {
     import RichOptional._
 
     val dialog = Dialogs.create()
-      .owner(USBInstall.stage:javafx.stage.Window)
+      .owner(USBInstall.stage)
       .style(DialogStyle.NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
@@ -126,26 +125,34 @@ object Stages
     errorStage(title, masthead, Right(error))
   }
 
-  protected def toolBar(pane: StepPane) =
-    FXMLView(getClass.getResource("toolBar.fxml"),
-      new ExplicitDependencies(Map("stepPane" -> pane)))
+  protected def toolBar(pane: StepPane) = {
+    val loader = new FXMLLoader(getClass.getResource("toolBar.fxml"))
+    val root = loader.load[Parent]()
+    val controller = loader.getController[ToolBarController]()
+    controller.setStepPane(pane)
 
-  protected def stepChange(pane: StepPane) =
-    FXMLView(getClass.getResource("stepChange.fxml"),
-      new ExplicitDependencies(Map("stepPane" -> pane)))
+    root
+  }
 
-  def step(pane: StepPane) =
-    new Scene {
-      root = new GridPane {
-        alignment = Pos.TOP_CENTER
+  protected def stepChange(pane: StepPane) = {
+    val loader = new FXMLLoader(getClass.getResource("stepChange.fxml"))
+    val root = loader.load[Parent]()
+    val controller = loader.getController[StepChangeController]()
+    controller.setStepPane(pane)
 
-        columnConstraints.add(new ColumnConstraints() { hgrow = Priority.ALWAYS } delegate)
-        rowConstraints.add(new RowConstraints() { vgrow = Priority.NEVER } delegate)
-        rowConstraints.add(new RowConstraints() { vgrow = Priority.ALWAYS } delegate)
+    root
+  }
 
-        addColumn(0, toolBar(pane), pane, stepChange(pane))
-      }
-    }
+  def step(pane: StepPane) = {
+    val grid = new GridPane
+    grid.setAlignment(Pos.TOP_CENTER)
+    grid.getColumnConstraints().add(new ColumnConstraints() { setHgrow(Priority.ALWAYS) })
+    grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.NEVER) })
+    grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.ALWAYS) })
+    grid.addColumn(0, toolBar(pane), pane, stepChange(pane))
+
+    new Scene(grid)
+  }
 
   def chooseDevice() {
     changeScene("Choose device", step(Panes.chooseDevice))

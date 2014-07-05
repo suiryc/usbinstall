@@ -1,22 +1,23 @@
 package usbinstall
 
 import grizzled.slf4j.Logging
-import scala.language.postfixOps
-import scalafx.Includes._
-import scalafx.beans.property.ObjectProperty
-import scalafx.collections.ObservableBuffer
-import scalafx.event.ActionEvent
-import scalafx.event.subscriptions.Subscription
-import scalafx.geometry.{HPos, Insets, VPos}
-import scalafx.scene.Node
-import scalafx.scene.control.{Button, CheckBox, ComboBox, Hyperlink, Label}
-import scalafx.scene.layout.{
+import java.net.URL
+import java.util.ResourceBundle
+import javafx.beans.property.SimpleObjectProperty
+import javafx.event.ActionEvent
+import javafx.fxml.{FXML, Initializable}
+import javafx.geometry.{HPos, Insets, VPos}
+import javafx.scene.Node
+import javafx.scene.control.{Button, CheckBox, ComboBox, Hyperlink, Label}
+import javafx.scene.layout.{
   AnchorPane,
   ColumnConstraints,
   GridPane,
   RowConstraints
 }
-import scalafxml.core.macros.sfxml
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.event.Subscription
+import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
@@ -24,188 +25,187 @@ import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-@sfxml
-class ChoosePartitionsController(
-  private val elements: GridPane,
-  private val formatAll: CheckBox,
-  private val installAll: CheckBox,
-  private val autoSelectPartitions: Hyperlink,
-  private val partitionsPane: AnchorPane
-) extends HasEventSubscriptions with Logging
+class ChoosePartitionsController
+  extends Initializable
+  with HasEventSubscriptions
+  with Logging
 {
+
+  @FXML
+  protected var elements: GridPane = _
+
+  @FXML
+  protected var formatAll: CheckBox = _
+
+  @FXML
+  protected var installAll: CheckBox = _
+
+  @FXML
+  protected var autoSelectPartitions: Hyperlink = _
+
+  @FXML
+  protected var partitionsPane: AnchorPane = _
 
   /* Note: subscriptions on external object need to be cancelled for
    * pane/scene to be GCed. */
-  var subscriptions: List[Subscription] = Nil
+  protected var subscriptions: List[Subscription] = Nil
 
-  def getSubscriptions(): List[Subscription] = subscriptions
+  override def getSubscriptions(): List[Subscription] = subscriptions
 
-  val device = InstallSettings.device().get
-  val devicePartitions = device.partitions.toList sortBy(_.partNumber)
-  var partitions = List[DevicePartition]()
-  val partitionsStringProp = ObjectProperty(ObservableBuffer[String]())
+  protected val device = InstallSettings.device.get.get
+  protected val devicePartitions = device.partitions.toList sortBy(_.partNumber)
+  protected var partitions = List[DevicePartition]()
+  protected val partitionsStringProp = new SimpleObjectProperty(List[String]())
   updateAvailablePartitions()
 
-  formatAll.onAction = { event: ActionEvent =>
-    Settings.core.oses foreach { settings =>
-      settings.format() = formatAll.selected.value
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    formatAll.setOnAction { event: ActionEvent =>
+      Settings.core.oses foreach { settings =>
+        settings.format() = formatAll.isSelected
+      }
     }
-  }
 
-  installAll.onAction = { event: ActionEvent =>
-    val status = if (installAll.indeterminate.value) OSInstallStatus.Installed
-      else if (installAll.selected.value) OSInstallStatus.Install
-      else OSInstallStatus.NotInstalled
-    Settings.core.oses foreach { settings =>
-      settings.installStatus() = status
+    installAll.setOnAction { event: ActionEvent =>
+      val status = if (installAll.isIndeterminate) OSInstallStatus.Installed
+        else if (installAll.isSelected) OSInstallStatus.Install
+        else OSInstallStatus.NotInstalled
+      Settings.core.oses foreach { settings =>
+        settings.installStatus() = status
+      }
     }
-  }
 
-  /* Initial partitions selection */
-  selectPartitions(false)
+    /* Initial partitions selection */
+    selectPartitions(false)
 
-  /* Note: rows 1 (labels) and 2 (checkboxes) already used */
-  Settings.core.oses.foldLeft(2) { (idx, partition) =>
-    elements.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 30) { valignment = VPos.CENTER } delegate)
-    elements.addRow(idx, osRow(partition) map { n => n:javafx.scene.Node } : _*)
-    idx + 1
+    /* Note: rows 1 (labels) and 2 (checkboxes) already used */
+    Settings.core.oses.foldLeft(2) { (idx, partition) =>
+      elements.getRowConstraints().add(new RowConstraints(30) { setValignment(VPos.CENTER) })
+      elements.addRow(idx, osRow(partition) : _*)
+      idx + 1
+    }
+
+    updatePartitionsPane()
   }
 
   private def updatePartitionsPane() {
-    val partitions = new GridPane {
-      padding = Insets(10)
-      hgap = 5
-      vgap = 3
-
-      for (alignement <- List(HPos.RIGHT, HPos.LEFT, HPos.LEFT, HPos.LEFT))
-        columnConstraints.add(new ColumnConstraints() { halignment = alignement } delegate)
-    }
+    val partitions = new GridPane
+    partitions.setPadding(new Insets(10))
+    partitions.setHgap(5)
+    partitions.setVgap(3)
+    for (alignement <- List(HPos.RIGHT, HPos.LEFT, HPos.LEFT, HPos.LEFT))
+      partitions.getColumnConstraints.add(new ColumnConstraints { setHalignment(alignement) })
 
     devicePartitions.foldLeft(0) { (idx, partition) =>
       if (partition.mounted) {
-        val button = new Button {
-          text = "Unmount"
-          onAction = { event: ActionEvent =>
-            val CommandResult(result, stdout, stderr) = partition.umount
+        val button = new Button("Unmount")
+        button.setOnAction { event: ActionEvent =>
+          val CommandResult(result, stdout, stderr) = partition.umount
 
-            if (result != 0) {
-              error(s"Cannot unmount partition[${partition.dev}]: $stderr")
-              Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
-            }
-            updateAvailablePartitions()
-            updatePartitionsPane()
+          if (result != 0) {
+            error(s"Cannot unmount partition[${partition.dev}]: $stderr")
+            Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
           }
+          updateAvailablePartitions()
+          updatePartitionsPane()
         }
         partitions.add(button, 0, idx)
       }
 
-      val name = new Label {
-        text = partition.dev.toString
-        style = "-fx-font-weight:bold"
-      }
+      val name = new Label(partition.dev.toString)
+      name.setStyle("-fx-font-weight:bold")
       partitions.add(name, 1, idx)
 
-      val size = new Label {
-        text = Units.storage.toHumanReadable(partition.size())
-      }
+      val size = new Label(Units.storage.toHumanReadable(partition.size()))
       partitions.add(size, 2, idx)
 
-      val label = new Label {
-        text = partition.label.fold(_ => "", label => if (label == "") label else s"($label)")
-      }
+      val label = new Label(partition.label.fold(_ => "", label => if (label == "") label else s"($label)"))
       partitions.add(label, 3, idx)
 
-      partitions.rowConstraints.add(new RowConstraints(minHeight = 30, prefHeight = 30, maxHeight = 40) { valignment = VPos.CENTER } delegate)
+      partitions.getRowConstraints.add(new RowConstraints(30, 30, 40) { setValignment(VPos.CENTER) })
 
       idx + 1
     }
-    partitionsPane.content = partitions
+    partitionsPane.getChildren.setAll(partitions)
   }
-  updatePartitionsPane()
 
   private def osRow(settings: OSSettings): List[Node] = {
-    val osLabel = new Label {
-      text = settings.label
-      style = "-fx-font-weight:bold"
-    }
+    val osLabel = new Label(settings.label)
+    osLabel.setStyle("-fx-font-weight:bold")
 
-    val osFormat = new CheckBox {
-      selected = settings.format()
-    }
-    osFormat.selected.onChange { (_, _, selected) =>
+    val osFormat = new CheckBox
+    osFormat.setSelected(settings.format())
+    osFormat.selectedProperty.listen { selected =>
       settings.format() = selected
     }
-    subscriptions ::= settings.format.onChange { (_, _, newValue) =>
-      osFormat.selected = newValue
+    subscriptions ::= settings.format.listen { newValue =>
+      osFormat.setSelected(newValue)
     }
 
-    val osInstall = new CheckBox {
-      allowIndeterminate = true
-      onAction = { event: ActionEvent =>
-        settings.installStatus() = if (indeterminate.value) OSInstallStatus.Installed
-          else if (selected.value) OSInstallStatus.Install
-          else OSInstallStatus.NotInstalled
-      }
+    val osInstall = new CheckBox
+    osInstall.setAllowIndeterminate(true)
+    osInstall.setOnAction { event: ActionEvent =>
+      settings.installStatus() = if (osInstall.isIndeterminate) OSInstallStatus.Installed
+        else if (osInstall.isSelected) OSInstallStatus.Install
+        else OSInstallStatus.NotInstalled
     }
 
     def installStatusToUI(v: OSInstallStatus.Value) {
       v match {
         case OSInstallStatus.Installed =>
-          osInstall.selected = true
-          osInstall.indeterminate = true
+          osInstall.setSelected(true)
+          osInstall.setIndeterminate(true)
 
         case OSInstallStatus.Install =>
-          osInstall.selected = true
-          osInstall.indeterminate = false
+          osInstall.setSelected(true)
+          osInstall.setIndeterminate(false)
 
         case OSInstallStatus.NotInstalled =>
-          osInstall.selected = false
-          osInstall.indeterminate = false
+          osInstall.setSelected(false)
+          osInstall.setIndeterminate(false)
       }
-      osFormat.disable = (v != OSInstallStatus.Install)
+      osFormat.setDisable(v != OSInstallStatus.Install)
     }
 
-    subscriptions ::= settings.installStatus.onChange { (_, _, newValue) =>
+    subscriptions ::= settings.installStatus.listen { newValue =>
       installStatusToUI(newValue)
     }
     installStatusToUI(settings.installStatus())
 
-    val osPartition = new ComboBox[String] {
-      promptText = "Partition"
-      items = partitionsStringProp()
-    }
+    val osPartition = new ComboBox[String]
+    osPartition.setPromptText("Partition")
+    osPartition.getItems().setAll(partitionsStringProp.get:_*)
     def selectPartition() {
-      settings.partition() foreach { partition =>
-        osPartition.selectionModel().select(partition.dev.toString())
+      settings.partition.get foreach { partition =>
+        osPartition.getSelectionModel().select(partition.dev.toString())
       }
     }
     selectPartition()
-    partitionsStringProp.onChange { (_, _, newValue) =>
-      osPartition.items = newValue
+    partitionsStringProp.listen { newValue =>
+      osPartition.getItems().setAll(newValue:_*)
       selectPartition()
     }
-    settings.partition() foreach { partition =>
-      osPartition.selectionModel().select(partition.dev.toString())
+    settings.partition.get foreach { partition =>
+      osPartition.getSelectionModel().select(partition.dev.toString())
     }
-    osPartition.selectionModel().selectedItem.onChange { (_, _, selected) =>
+    osPartition.getSelectionModel().selectedItemProperty.listen { selected =>
       /* Note: first change those settings, to shorten change cyclic
        * propagation when swapping partition with another OS.
        */
       partitions.find(_.dev.toString == selected) foreach { partition =>
-        val current = settings.partition()
-        settings.partition() = Some(partition)
+        val current = settings.partition.get
+        settings.partition.set(Some(partition))
 
         /* Swap partitions if previously selected for other OS */
-        Settings.core.oses.filterNot(_ == settings).find(_.partition() == Some(partition)) foreach { os =>
-          os.partition() = current
+        Settings.core.oses.filterNot(_ == settings).find(_.partition.get == Some(partition)) foreach { os =>
+          os.partition.set(current)
         }
       }
     }
-    subscriptions ::= settings.partition.onChange { (_, _, newValue) =>
-      settings.partition().fold(osPartition.selectionModel().select(-1)) { partition =>
-        osPartition.selectionModel().select(partition.dev.toString)
+    subscriptions ::= settings.partition.listen { newValue =>
+      settings.partition.get.fold(osPartition.getSelectionModel().select(-1)) { partition =>
+        osPartition.getSelectionModel().select(partition.dev.toString)
       }
-      settings.partition() = newValue
+      settings.partition.set(newValue)
     }
 
     val osISO = settings.isoPattern map { regex =>
@@ -213,14 +213,13 @@ class ChoosePartitionsController(
         regex.pattern.matcher(path.getFileName.toString).find()
       }
 
-      val osISO = new ComboBox[String] {
-        items = ObservableBuffer(available.map(_.getFileName.toString))
-      }
-      osISO.selectionModel().selectedIndex.onChange { (_, _, selected) =>
-        settings.iso() = Some(available(selected.intValue()))
+      val osISO = new ComboBox[String]
+      osISO.getItems().setAll(available.map(_.getFileName.toString):_*)
+      osISO.getSelectionModel().selectedIndexProperty.listen { selected =>
+        settings.iso.set(Some(available(selected.intValue())))
       }
       /* Select outside ctor to trigger settings assignation */
-      osISO.selectionModel().select(0)
+      osISO.getSelectionModel().select(0)
 
       osISO
     }
@@ -236,14 +235,14 @@ class ChoosePartitionsController(
 
   private def updateAvailablePartitions() {
     partitions = availablePartitions()
-    partitionsStringProp() = ObservableBuffer(partitions.map(_.dev.toString))
+    partitionsStringProp.set(partitions.map(_.dev.toString))
   }
 
   private def selectPartitions(redo: Boolean) {
     Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
       /* First reset settings for other devices */
-      if (os.partition().exists(_.device != device))
-        os.partition() = None
+      if (os.partition.get.exists(_.device != device))
+        os.partition.set(None)
 
       /* What we want is to the select the best fitting partition when either:
        *   - we are redoing the selection
@@ -258,8 +257,8 @@ class ChoosePartitionsController(
        * earlier in the list needs to select a partition and finds this one as
        * fitting.
        */
-      if (redo || !os.partition().find(devicePartitions.contains(_)).isDefined)
-        os.partition() =
+      if (redo || !os.partition.get.find(devicePartitions.contains(_)).isDefined)
+        os.partition.set {
           if (devicePartitions.isEmpty || (os.installStatus() == OSInstallStatus.NotInstalled))
             None
           else Some(
@@ -270,14 +269,15 @@ class ChoosePartitionsController(
               devicePartitions.reverse.sortBy(_.size()).reverse.head
             )
           )
+        }
 
       import RichOptional._
-      devicePartitions.optional[DevicePartition](os.partition(), (parts, part) => parts.filterNot(_ == part))
+      devicePartitions.optional[DevicePartition](os.partition.get, (parts, part) => parts.filterNot(_ == part))
     }
   }
 
   def onAutoSelectPartitions(event: ActionEvent) {
-    autoSelectPartitions.parent().requestFocus()
+    autoSelectPartitions.getParent().requestFocus()
     selectPartitions(true)
   }
 

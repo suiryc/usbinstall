@@ -3,7 +3,6 @@ package usbinstall.settings
 import com.typesafe.config.{Config, ConfigFactory}
 import java.util.prefs.Preferences
 import scala.collection.JavaConversions._
-import scala.language.postfixOps
 import scala.reflect.ClassTag
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
@@ -76,9 +75,9 @@ class Settings(
     PathsEx.get(path)
   }
 
-  val isos = isoPath flatMap { path =>
+  val isos = isoPath.flatMap { path =>
     ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get map(_.toPath)
-  } sortBy { _.toString } reverse
+  }.sortBy { _.toString }.reverse
 
   val toolsPath = config.getStringList("tools.path").toList map { path =>
     PathsEx.get(path)

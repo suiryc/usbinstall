@@ -1,7 +1,7 @@
 package usbinstall
 
-import scalafx.event.subscriptions.Subscription
-import scalafx.scene.layout.Pane
+import javafx.scene.layout.Pane
+import suiryc.scala.javafx.event.Subscription
 
 
 trait StepPane extends Pane {
@@ -11,7 +11,7 @@ trait StepPane extends Pane {
   var subscriptions: List[Subscription] = Nil
 
   def cancelSubscriptions {
-    subscriptions foreach { _.cancel }
+    subscriptions foreach { _.unsubscribe }
     subscriptions = Nil
   }
 
@@ -19,6 +19,10 @@ trait StepPane extends Pane {
 
   val next: AbstractStepButton
 
+}
+
+trait UseStepPane {
+  def setStepPane(stepPane: StepPane)
 }
 
 trait HasEventSubscriptions {

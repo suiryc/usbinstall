@@ -4,7 +4,6 @@ import grizzled.slf4j.Logging
 import java.io.File
 import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermission
-import scala.language.postfixOps
 import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
@@ -178,17 +177,16 @@ object OSInstall
       case OSKind.Kali =>
         new KaliInstall(settings, ui, checkCancelled)
 
-      /* XXX */
       case kind =>
         val msg = s"Unhandled OS type: $kind"
         throw new Exception(msg)
     }
 
   private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
-    val iso = os.settings.iso() map { pathISO =>
+    val iso = os.settings.iso.get map { pathISO =>
       new PartitionMount(pathISO, InstallSettings.pathMountISO)
     }
-    val part = os.settings.partition() map { partition =>
+    val part = os.settings.partition.get map { partition =>
       new PartitionMount(partition.dev, InstallSettings.pathMountPartition)
     }
 
@@ -292,7 +290,7 @@ w
   private def installBootloader(os: OSInstall, mount: Option[PartitionMount]): Unit = {
     for {
       syslinuxVersion <- os.settings.syslinuxVersion
-      part <- os.settings.partition()
+      part <- os.settings.partition.get
       mount <- mount
     } {
       SyslinuxInstall.get(syslinuxVersion).fold {
@@ -319,7 +317,7 @@ w
   private def deleteContent(root: Path) {
     if (!root.toFile.delete(true, true)) {
       /* Some files may have the 'immutable' attribute */
-      val finder = PathFinder(root) ***
+      val finder = PathFinder(root).***
 
       finder.get.map(_.toPath) foreach { path =>
         Command.execute(Seq("chattr", "-i", path.toString))
@@ -362,7 +360,7 @@ w
 
       /* format partition */
       if (os.settings.formatable) {
-        os.settings.partition() foreach { part =>
+        os.settings.partition.get foreach { part =>
           os.checkCancelled()
           preparePartition(os, part).orThrow
         }

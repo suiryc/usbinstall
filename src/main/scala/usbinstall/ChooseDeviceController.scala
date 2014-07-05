@@ -1,59 +1,59 @@
 package usbinstall
 
-import scalafx.Includes._
-import scalafx.collections.ObservableBuffer
-import scalafx.scene.control.{
-  Label,
-  ListView,
-  SelectionMode
-}
-import scalafxml.core.macros.sfxml
-import usbinstall.settings.{InstallSettings, Settings}
+import java.net.URL
+import java.util.ResourceBundle
+import javafx.fxml.{FXML, Initializable}
+import javafx.scene.control.{Label, ListView}
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.misc.Units
+import usbinstall.settings.{InstallSettings, Settings}
 
 
-@sfxml
-class ChooseDeviceController(
-  private val devices: ListView[String],
-  private val vendor: Label,
-  private val model: Label,
-  private val size: Label
-) {
+class ChooseDeviceController extends Initializable {
 
-  /* Note: ScalaFXML macro does not work if class has parentheses-less methods,
-   * unless private (excluded from macro processing). Error otherwise:
-   *   exception during macro expansion: Multiple parameter lists are not supported
-   */
-  private def resetDeviceInfo() = {
-    vendor.text = ""
-    model.text = ""
-    size.text = ""
+  @FXML
+  protected var devices: ListView[String] = _
+
+  @FXML
+  protected var vendor: Label = _
+
+  @FXML
+  protected var model: Label = _
+
+  @FXML
+  protected var size: Label = _
+
+  def resetDeviceInfo() {
+    vendor.setText("")
+    model.setText("")
+    size.setText("")
   }
 
-  devices.items = ObservableBuffer(Panes.devices.keys.toList.map(_.toString).sorted)
-  devices.selectionModel().selectionMode = SelectionMode.SINGLE
-  /* Note: we need to reset the setting, because assigning the same value
-   * is not seen as a value change. */
-  InstallSettings.device() = None
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    devices.getItems().setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
+    /* Note: we need to reset the setting, because assigning the same value
+     * is not seen as a value change. */
+    InstallSettings.device.set(None)
 
-  devices.selectionModel().selectedItem.onChange { (_, _, newValue) =>
-    Panes.devices.get(newValue) match {
-      case oDevice @ Some(device) =>
-        InstallSettings.device() = oDevice
-        vendor.text = device.vendor
-        model.text = device.model
-        device.size.either match {
-          case Right(v) =>
-            size.text = Units.storage.toHumanReadable(v)
+    devices.getSelectionModel().selectedItemProperty.listen { newValue =>
+      Panes.devices.get(newValue) match {
+        case oDevice @ Some(device) =>
+          InstallSettings.device.set(oDevice)
+          vendor.setText(device.vendor)
+          model.setText(device.model)
+          device.size.either match {
+            case Right(v) =>
+              size.setText(Units.storage.toHumanReadable(v))
 
-          case Left(e) =>
-            size.text = "<unknown>"
-            Stages.errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
-        }
+            case Left(e) =>
+              size.setText("<unknown>")
+              Stages.errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
+          }
 
-      case _ =>
-        devices.selectionModel().select(-1)
-        resetDeviceInfo()
+        case _ =>
+          devices.getSelectionModel().select(-1)
+          resetDeviceInfo()
+      }
     }
   }
 

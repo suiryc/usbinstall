@@ -20,9 +20,6 @@ val versions = Map[String, String](
   "controlsfx" -> "8.0.6",
   "grizzled" -> "1.0.2",
   "logback" -> "1.1.2",
-  "paradise" -> "2.0.1",
-  "scalafx" -> "8.0.5-R5",
-  "scalafxml" -> "0.2.1-SNAPSHOT",
   "slf4j" -> "1.7.7",
   "suiryc-scala" -> "0.0.2-SNAPSHOT",
   "maven-compiler-plugin" -> "3.1",
@@ -36,10 +33,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % versions("logback"),
   "com.typesafe" % "config" % versions("config"),
   "com.typesafe.akka" %% "akka-actor" % versions("akka"),
-  "org.scalafx" %% "scalafx" % versions("scalafx"),
-  "org.scalafx" %% "scalafxml-core" % versions("scalafxml"),
-  /* Note: just so that it is retrieved by Eclipse */
-  "org.scalamacros" % s"paradise_${versions("scala")}" % versions("paradise") % "compile",
   "org.controlsfx" % "controlsfx" % versions("controlsfx"),
   "suiryc" %% "suiryc-scala-core" % versions("suiryc-scala"),
   "suiryc" %% "suiryc-scala-log" % versions("suiryc-scala"),
@@ -51,8 +44,6 @@ val localMavenPath = Path.userHome.absolutePath + "/.m2/repository"
 resolvers += "Local Maven Repository" at "file://" + localMavenPath
 
 seq(Revolver.settings: _*)
-
-addCompilerPlugin("org.scalamacros" % "paradise" % versions("paradise") cross CrossVersion.full)
 
 
 publishMavenStyle := true
@@ -79,13 +70,6 @@ pomExtra := (
             <arg>-optimize</arg>
             <arg>-unchecked</arg>
           </args>
-          <compilerPlugins>
-            <compilerPlugin>
-              <groupId>org.scalamacros</groupId>
-              <artifactId>paradise_{ versions("scala") }</artifactId>
-              <version>{ versions("paradise") }</version>
-            </compilerPlugin>
-          </compilerPlugins>
         </configuration>
         <executions>
           <execution>

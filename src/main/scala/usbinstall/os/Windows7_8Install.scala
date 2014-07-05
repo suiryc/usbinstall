@@ -1,7 +1,6 @@
 package usbinstall.os
 
 import java.nio.file.{Files, Paths}
-import scala.language.postfixOps
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.Command
@@ -19,7 +18,7 @@ class Windows7_8Install(
     val source = isoMount.get.to
     val sourceRoot = source.toAbsolutePath
     val targetRoot = partMount.get.to.toAbsolutePath
-    val finder = source ***
+    val finder = source.***
 
     copy(finder, sourceRoot, targetRoot, "Copy ISO content")
 

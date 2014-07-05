@@ -1,16 +1,16 @@
 package usbinstall.util
 
-import javafx.scene.control.ListCell
-import scalafx.Includes._
-import scalafx.collections.ObservableBuffer
-import scalafx.geometry.{Insets, Pos}
-import scalafx.scene.Scene
-import scalafx.scene.control.{Label, ListView}
-import scalafx.scene.layout.{HBox, Priority, VBox}
-import scalafx.stage.{Stage, WindowEvent}
+import javafx.collections.FXCollections
+import javafx.geometry.{Insets, Pos}
+import javafx.scene.Scene
+import javafx.scene.control.{Label, ListCell, ListView}
+import javafx.scene.layout.{HBox, Priority, VBox}
+import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.io.LineSplitterOutputStream
 import suiryc.scala.javafx.concurrent.JFXSystem
+import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.scene.control.LogArea
+import suiryc.scala.javafx.util.Callback._
 import suiryc.scala.misc.{MessageLevel, MessageLineWriter, MessageWriter}
 import suiryc.scala.sys.Command
 
@@ -22,9 +22,7 @@ object DebugStage {
   private var pos: Option[(Double, Double)] = None
   private var size: Option[(Double, Double)] = None
 
-  private val area = new LogArea {
-    vgrow = Priority.ALWAYS
-  }
+  private val area = new LogArea
 
   def logAreaWriter(area: LogArea) =
     new MessageLineWriter {
@@ -60,23 +58,22 @@ object DebugStage {
         val (txtType, txtMsg) = Option(item) map { msg =>
           (msg.level.shortName, msg.msg)
         } getOrElse(("UNK", "No Message"))
-        labelType.text = txtType
-        labelMsg.text = txtMsg
+        labelType.setText(txtType)
+        labelMsg.setText(txtMsg)
         setGraphic(hbox)
       }
     }
   }
 
-  private val listViewItems = ObservableBuffer[MessageCellData]()
-  private val listView = new ListView[MessageCellData] {
-    items = listViewItems
-    cellFactory = { lv =>
-      new MessageCell
-    }
+  private val listViewItems = FXCollections.observableArrayList[MessageCellData]()
+  private val listView = new ListView[MessageCellData]
+  listView.setItems(listViewItems)
+  listView.setCellFactory { (lv: ListView[MessageCellData]) =>
+    new MessageCell
   }
 
   protected def scrollListViewToEnd() {
-    listView.scrollTo(listView.items().length)
+    listView.scrollTo(listView.getItems().size)
   }
 
   val listViewWriter = new MessageWriter {
@@ -89,45 +86,42 @@ object DebugStage {
 
   }
 
-  private val dpane = new VBox {
-    padding = Insets(5)
-    spacing = 5
-    alignment = Pos.TOP_CENTER
-    content = List(area, listView)
-  }
-  private val dscene = new Scene {
-    root = dpane
-  }
-  private val stage = new Stage {
-    scene = dscene
-    onCloseRequest = { (event: WindowEvent) =>
-      event.consume()
-      DebugStage.hide()
-    }
+  private val dpane = new VBox
+  dpane.setPadding(new Insets(5))
+  dpane.setSpacing(5)
+  dpane.setAlignment(Pos.TOP_CENTER)
+  VBox.setVgrow(area, Priority.ALWAYS)
+  dpane.getChildren().setAll(area, listView)
+  private val dscene = new Scene(dpane)
+  private val stage = new Stage
+  stage.setScene(dscene)
+  stage.setOnCloseRequest { (event: WindowEvent) =>
+    event.consume()
+    DebugStage.hide()
   }
 
   def show() {
-    pos foreach { pos =>
-      stage.x = pos._1
-      stage.y = pos._2
+    pos foreach { t =>
+      stage.setX(t._1)
+      stage.setY(t._2)
     }
-    size foreach { pos =>
-      stage.width = pos._1
-      stage.height = pos._2
+    size foreach { t =>
+      stage.setWidth(t._1)
+      stage.setHeight(t._2)
     }
     stage.show
-    listView.items = listViewItems
+    listView.setItems(listViewItems)
     scrollListViewToEnd()
   }
 
   def hide() {
-    pos = Some(stage.x(), stage.y())
-    size = Some(stage.width(), stage.height())
+    pos = Some(stage.getX(), stage.getY())
+    size = Some(stage.getWidth(), stage.getHeight())
     /* Note: updating the list view when not visible generates warnings */
-    listView.items = ObservableBuffer[MessageCellData]()
+    listView.setItems(FXCollections.observableArrayList[MessageCellData]())
     stage.hide
   }
 
-  def showing = stage.showing
+  def showing = stage.showingProperty
 
 }

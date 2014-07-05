@@ -1,15 +1,10 @@
 package usbinstall
 
 import grizzled.slf4j.Logging
-import javafx.{scene => jfxs}
-import scalafx.Includes._
-import scalafx.scene.layout.AnchorPane
-import scalafxml.core.{
-  ExplicitDependencies,
-  NoDependencyResolver,
-  FXMLLoader,
-  FXMLView
-}
+import javafx.fxml.FXMLLoader
+import javafx.scene.Parent
+import javafx.scene.layout.AnchorPane
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
 import usbinstall.settings.{InstallSettings, Settings}
@@ -36,48 +31,50 @@ object Panes
     devices + (device.dev.toString() -> device)
   }
 
-  def chooseDevice =
-    new AnchorPane with StepPane {
-      val root = FXMLView(getClass.getResource("chooseDevice.fxml"),
-        NoDependencyResolver)
+  protected def initPane(pane: StepPane, root: Parent) = {
+    pane.getChildren().setAll(root)
+    AnchorPane.setTopAnchor(root, 0)
+    AnchorPane.setRightAnchor(root, 0)
+    AnchorPane.setBottomAnchor(root, 0)
+    AnchorPane.setLeftAnchor(root, 0)
 
-      content = root
-      AnchorPane.setAnchors(root, 0, 0, 0, 0)
+    pane
+  }
 
+  def chooseDevice = {
+    val root = FXMLLoader.load[Parent](getClass.getResource("chooseDevice.fxml"))
+    val pane = new AnchorPane with StepPane {
       override val previous = NoButton
 
       override val next = new NextButton(this, {
-        InstallSettings.device() map { device =>
+        InstallSettings.device.get map { device =>
           Stages.choosePartitions()
           true
         } getOrElse(false)
       }) {
-        disable.value = true
+        disable.set(true)
 
-        subscriptions ::= InstallSettings.device.onChange { (_, _, device) =>
+        subscriptions ::= InstallSettings.device.listen { device =>
           Option(device) match {
             case Some(_) =>
-              disable.value = false
+              disable.set(false)
 
             case _ =>
-              disable.value = true
+              disable.set(true)
           }
         }
       }
     }
 
-  def choosePartitions =
-    new AnchorPane with StepPane {
-      val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"),
-        NoDependencyResolver)
-      loader.load()
+    initPane(pane, root)
+  }
 
-      val root = loader.getRoot[jfxs.Parent]
-      val controller = loader.getController[HasEventSubscriptions]
+  def choosePartitions = {
+    val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"))
+    val root = loader.load[Parent]()
+    val controller = loader.getController[HasEventSubscriptions]()
 
-      content = root
-      AnchorPane.setAnchors(root, 0, 0, 0, 0)
-
+    val pane = new AnchorPane with StepPane {
       subscriptions :::= controller.getSubscriptions()
 
       override val previous = new PreviousButton(this, {
@@ -89,44 +86,40 @@ object Panes
         Stages.install()
         true
       }) {
-        disable.value = true
+        disable.set(true)
 
-        private def updateDisable {
-          disable.value = Settings.core.oses.exists { settings =>
+        private def updateDisable() {
+          disable.set(Settings.core.oses.exists { settings =>
             settings.enabled && !settings.installable
-          }
+          })
         }
         updateDisable
 
         Settings.core.oses foreach { settings =>
-          subscriptions ::= settings.installStatus.onChange(updateDisable)
-          subscriptions ::= settings.partition.onChange(updateDisable)
-          subscriptions ::= settings.iso.onChange(updateDisable)
+          subscriptions ::= settings.installStatus.listen(updateDisable)
+          subscriptions ::= settings.partition.listen(updateDisable)
+          subscriptions ::= settings.iso.listen(updateDisable)
         }
       }
     }
 
+    initPane(pane, root)
+  }
 
-  def install =
-    new AnchorPane with StepPane {
-      /* Note: for some reason we need to tell 'loader' type. Otherwise
-       * compilation fails with 'recursive value loader needs type' message.
-       */
-      val loader: FXMLLoader = new FXMLLoader(getClass.getResource("install.fxml"),
-        new ExplicitDependencies(Map("stepPane" -> this)))
-      loader.load()
 
-      val root = loader.getRoot[jfxs.Parent]
-      val controller = loader.getController[HasCancel]
+  def install() = {
+    val loader = new FXMLLoader(getClass.getResource("install.fxml"))
+    val root = loader.load[Parent]()
+    val controller = loader.getController[InstallController]()
 
-      content = root
-      AnchorPane.setAnchors(root, 0, 0, 0, 0)
+    val pane = new AnchorPane with StepPane {
+      controller.setStepPane(this)
 
       override val previous = new PreviousButton(this, {
         Stages.choosePartitions()
         true
       }) {
-        disable.value = true
+        disable.set(true)
       }
 
       override val next = new CancelButton(this, {
@@ -134,5 +127,8 @@ object Panes
         false
       })
     }
+
+    initPane(pane, root)
+  }
 
 }

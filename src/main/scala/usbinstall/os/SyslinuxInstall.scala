@@ -27,7 +27,7 @@ class SyslinuxInstall(
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
     val syslinuxVersion = settings.syslinuxVersion.get
     val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
-    val partition = settings.partition().get
+    val partition = settings.partition.get.get
     val device = partition.device
     val devicePath = device.dev
     val targetRoot = partMount.get.to.toAbsolutePath
@@ -95,7 +95,7 @@ class SyslinuxInstall(
     for {
       other <- others if (other.kind == OSKind.Win7_8)
       _ <- other.syslinuxLabel
-      otherPartition <- other.partition() if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
+      otherPartition <- other.partition.get if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
     } {
       try {
         ui.action(s"Backup MBR for partition ${otherPartition.partNumber}") {
@@ -148,7 +148,7 @@ MENU DEFAULT ${label}
       for {
         other <- others
         syslinuxLabel <- other.syslinuxLabel
-        otherPartition <- other.partition()
+        otherPartition <- other.partition.get
       } {
         sb.append(
 s"""
@@ -304,7 +304,7 @@ scanfor manual
       searchEFI(Some(partMount))
       for {
         os <- Settings.core.oses if (os.enabled)
-        _ <- os.partition()
+        _ <- os.partition.get
         efiBootloader <- os.efiBootloader
       } {
         sb.append(

@@ -1,6 +1,6 @@
 package usbinstall
 
-import scalafx.scene.control.Label
+import javafx.scene.control.Label
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.LogArea
 
@@ -13,7 +13,7 @@ class InstallUI(
 
   def setStep(value: Option[String]) {
     jfxSchedule {
-      step.text = value.getOrElse("")
+      step.setText(value.getOrElse(""))
       value foreach { value =>
         activity.write(s"**** Step: $value")
       }
@@ -26,7 +26,7 @@ class InstallUI(
 
   def setAction(value: Option[String]) {
     jfxSchedule {
-      action.text = value.getOrElse("")
+      action.setText(value.getOrElse(""))
       value foreach { value =>
         activity.write(s"** Action: $value")
       }

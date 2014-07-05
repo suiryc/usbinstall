@@ -1,6 +1,6 @@
 package usbinstall
 
-import scalafx.beans.property.{BooleanProperty, ReadOnlyBooleanProperty}
+import javafx.beans.property.{ReadOnlyBooleanProperty, SimpleBooleanProperty}
 
 
 abstract class AbstractStepButton(
@@ -11,11 +11,11 @@ abstract class AbstractStepButton(
 
   def triggered: Unit
 
-  val disable = new BooleanProperty()
-  def disable_=(v: Boolean) = disable.value = v
+  val disable = new SimpleBooleanProperty()
+  def disable_=(v: Boolean) = disable.set(v)
   val disabled: ReadOnlyBooleanProperty = disable
 
-  disable.value = xdisabled
+  disable.set(xdisabled)
 
 }
 

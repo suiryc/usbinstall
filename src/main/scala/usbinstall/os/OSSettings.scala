@@ -1,9 +1,10 @@
 package usbinstall.os
 
 import java.nio.file.{Path, Paths}
+import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
-import scalafx.beans.property.ObjectProperty
 import suiryc.scala.javafx.beans.property.PersistentProperty
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.settings.{BaseSettings, PersistentSetting}
 import suiryc.scala.sys.linux.{Device, DevicePartition}
@@ -108,15 +109,15 @@ class OSSettings(
       else None
     }
 
-    ObjectProperty(partition)
+    new SimpleObjectProperty(partition)
   }
 
-  partition.onChange { (_, _, newValue) =>
+  partition.listen { newValue =>
     partitionSetting() = newValue.map(_.dev.toString).orNull
   }
 
   val iso: ObjectProperty[Option[Path]] =
-    ObjectProperty(None)
+    new SimpleObjectProperty(None)
 
   var efiBootloader: Option[Path] =
     None
@@ -125,8 +126,8 @@ class OSSettings(
 
   def install = installStatus() == OSInstallStatus.Install
 
-  def installable = enabled && partition().isDefined &&
-    (!isoPattern.isDefined || iso().isDefined)
+  def installable = enabled && partition.get.isDefined &&
+    (!isoPattern.isDefined || iso.get.isDefined)
 
   def formatable = install && format() && installable
 
@@ -143,6 +144,6 @@ class OSSettings(
   }
 
   override def toString =
-    s"OSSettings(kind=$kind, label=$label, format=${format()}, installStatus=${installStatus()}, partition=${partition().map(_.dev)})"
+    s"OSSettings(kind=$kind, label=$label, format=${format()}, installStatus=${installStatus()}, partition=${partition.get.map(_.dev)})"
 
 }

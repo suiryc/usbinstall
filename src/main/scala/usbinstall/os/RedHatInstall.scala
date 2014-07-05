@@ -1,7 +1,6 @@
 package usbinstall.os
 
 import java.nio.file.Paths
-import scala.language.postfixOps
 import scala.util.matching.Regex
 import suiryc.scala.io.PathFinder
 import suiryc.scala.io.NameFilter._
@@ -21,7 +20,7 @@ class RedHatInstall(
     val source = isoMount.get.to
     val sourceRoot = source.toAbsolutePath
     val targetRoot = partMount.get.to.toAbsolutePath
-    val finder = source ***
+    val finder = source.***
 
     copy(finder, sourceRoot, targetRoot, "Copy ISO content")
 
@@ -29,8 +28,9 @@ class RedHatInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val uuid = settings.partition().get.uuid.fold(throw _, v => v)
-      var fsType = settings.partition().get.fsType.fold(throw _, v => v)
+      val partition = settings.partition.get.get
+      val uuid = partition.uuid.fold(throw _, v => v)
+      var fsType = partition.fsType.fold(throw _, v => v)
       val optuuid = s"UUID=${uuid}"
 
       /* Original code for persistence */

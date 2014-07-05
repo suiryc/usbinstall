@@ -1,40 +1,55 @@
 package usbinstall
 
-import scalafx.Includes._
-import scalafx.event.ActionEvent
-import scalafx.scene.control.Button
-import scalafxml.core.macros.sfxml
+import java.net.URL
+import java.util.ResourceBundle
+import javafx.event.ActionEvent
+import javafx.fxml.{FXML, Initializable}
+import javafx.scene.control.Button
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 
 
-@sfxml
-class StepChangeController(
-  private val previous: Button,
-  private val next: Button,
-  private val stepPane: StepPane
-) {
+class StepChangeController
+  extends Initializable
+  with UseStepPane
+{
+
+  @FXML
+  protected var previous: Button = _
+
+  @FXML
+  protected var next: Button = _
 
   /* Note: subscriptions on tied objects do not need to be cancelled
    * for pane/scene to be GCed. */
 
-  val stepPrevious = stepPane.previous
-  if (stepPrevious.visible) {
-    previous.text = stepPrevious.label
-    previous.disable = stepPrevious.disabled.value
-    stepPrevious.disabled.onChange { (_, _, disabled) =>
-      previous.disable = disabled
-    }
-  }
-  else previous.visible = false
+  protected var stepPrevious: AbstractStepButton = _
 
-  val stepNext = stepPane.next
-  if (stepNext.visible) {
-    next.text = stepNext.label
-    next.disable = stepNext.disabled.value
-    stepNext.disabled.onChange { (_, _, disabled) =>
-      next.disable = disabled
-    }
+  protected var stepNext: AbstractStepButton = _
+
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
   }
-  else next.visible = false
+
+  override def setStepPane(stepPane: StepPane) {
+    stepPrevious = stepPane.previous
+    if (stepPrevious.visible) {
+      previous.setText(stepPrevious.label)
+      previous.setDisable(stepPrevious.disabled.get)
+      stepPrevious.disabled.listen { disabled =>
+        previous.setDisable(disabled)
+      }
+    }
+    else previous.setVisible(false)
+
+    stepNext = stepPane.next
+    if (stepNext.visible) {
+      next.setText(stepNext.label)
+      next.setDisable(stepNext.disabled.get)
+      stepNext.disabled.listen { disabled =>
+        next.setDisable(disabled)
+      }
+    }
+    else next.setVisible(false)
+  }
 
   def onPrevious(event: ActionEvent) {
     stepPrevious.triggered

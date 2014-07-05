@@ -1,36 +1,36 @@
 package usbinstall
 
+import java.net.URL
+import java.util.ResourceBundle
 import java.util.prefs.Preferences
-import scalafx.event.ActionEvent
-import scalafx.scene.control.ComboBox
-import scalafxml.core.macros.sfxml
+import javafx.event.ActionEvent
+import javafx.fxml.{FXML, Initializable}
+import javafx.scene.control.ComboBox
+import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.settings.PersistentSetting._
 import usbinstall.settings.{ErrorAction, Settings}
 
 
-@sfxml
-class OptionsController(
-  private val componentInstallError: ComboBox[ErrorAction.Value]
-) {
+class OptionsController extends Initializable {
 
-  import scalafx.Includes._
+  @FXML
+  protected var componentInstallError: ComboBox[ErrorAction.Value] = _
 
-  /* Note: 'onAction' handler *MUST* be added after setting the default value,
-   * to prevent initialization failure (changing value triggers callback on
-   * object being constructed).
-   */
-  componentInstallError.items.get().setAll(ErrorAction.values.toList:_*)
-  componentInstallError.onAction =
-    onComponentInstallError _
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
+    componentInstallError.setOnAction {
+      onComponentInstallError _
+    }
 
-  update()
+    update()
+  }
 
   def update() {
-    componentInstallError.selectionModel().select(Settings.core.componentInstallError)
+    componentInstallError.getSelectionModel().select(Settings.core.componentInstallError)
   }
 
   def onComponentInstallError(event: ActionEvent) {
-    Settings.core.componentInstallError.update(componentInstallError.value())
+    Settings.core.componentInstallError.update(componentInstallError.getValue())
   }
 
   def onReset(event: ActionEvent) {
