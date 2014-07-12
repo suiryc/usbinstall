@@ -52,6 +52,7 @@ class OSInstall(
         val pathFile = file.toAbsolutePath
         val pathRelative = sourceRoot.relativize(pathFile)
         val pathTarget = targetRoot.resolve(pathRelative)
+        checkCancelled()
         if (pathTarget.exists)
           logger.warn(s"Path[$pathRelative] already processed, skipping")
         else {
@@ -74,6 +75,7 @@ class OSInstall(
   }
 
   protected def duplicate(source: Path, sourceRoot: Path, target: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+    checkCancelled()
     if (target.exists)
       logger.warn(s"Path[${sourceRoot.relativize(source)}] already processed, skipping")
     else {
@@ -90,6 +92,7 @@ class OSInstall(
   }
 
   protected def renameSyslinux(targetRoot: Path) {
+    checkCancelled()
     val syslinuxFile = getSyslinuxFile(targetRoot)
     if (!syslinuxFile.exists) {
       val syslinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "syslinux.cfg")
@@ -108,6 +111,7 @@ class OSInstall(
   }
 
   def regexReplace(root: Path, path: Path, rrs: RegexReplacer*)(implicit codec: Codec): Boolean = {
+    checkCancelled()
     val replaced = RegexReplacer.inplace(path, rrs:_*)
 
     if (replaced)
