@@ -33,9 +33,12 @@ class StepChangeController
     stepPrevious = stepPane.previous
     if (stepPrevious.visible) {
       previous.setText(stepPrevious.label)
-      previous.setDisable(stepPrevious.disabled.get)
-      stepPrevious.disabled.listen { disabled =>
-        previous.setDisable(disabled)
+      stepPrevious.labelProperty.listen { v =>
+        previous.setText(v)
+      }
+      previous.setDisable(stepPrevious.disable)
+      stepPrevious.disableProperty.listen { v =>
+        previous.setDisable(v)
       }
     }
     else previous.setVisible(false)
@@ -43,9 +46,12 @@ class StepChangeController
     stepNext = stepPane.next
     if (stepNext.visible) {
       next.setText(stepNext.label)
-      next.setDisable(stepNext.disabled.get)
-      stepNext.disabled.listen { disabled =>
-        next.setDisable(disabled)
+      stepNext.labelProperty.listen { v =>
+        next.setText(v)
+      }
+      next.setDisable(stepNext.disable)
+      stepNext.disableProperty.listen { v =>
+        next.setDisable(v)
       }
     }
     else next.setVisible(false)

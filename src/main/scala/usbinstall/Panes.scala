@@ -52,15 +52,15 @@ object Panes
           true
         } getOrElse(false)
       }) {
-        disable.set(true)
+        disable = true
 
         subscriptions ::= InstallSettings.device.listen { device =>
           Option(device) match {
             case Some(_) =>
-              disable.set(false)
+              disable = false
 
             case _ =>
-              disable.set(true)
+              disable = true
           }
         }
       }
@@ -86,12 +86,12 @@ object Panes
         Stages.install()
         true
       }) {
-        disable.set(true)
+        disable = true
 
         private def updateDisable() {
-          disable.set(Settings.core.oses.exists { settings =>
+          disable = Settings.core.oses.exists { settings =>
             settings.enabled && !settings.installable
-          })
+          }
         }
         updateDisable
 
@@ -119,7 +119,7 @@ object Panes
         Stages.choosePartitions()
         true
       }) {
-        disable.set(true)
+        disable = true
       }
 
       override val next = new CancelButton(this, {

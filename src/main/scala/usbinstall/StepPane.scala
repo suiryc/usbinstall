@@ -28,7 +28,3 @@ trait UseStepPane {
 trait HasEventSubscriptions {
   def getSubscriptions(): List[Subscription]
 }
-
-trait HasCancel {
-  def onCancel(): Unit
-}

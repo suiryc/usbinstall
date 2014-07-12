@@ -1,37 +1,47 @@
 package usbinstall
 
-import javafx.beans.property.{ReadOnlyBooleanProperty, SimpleBooleanProperty}
+import javafx.beans.property.{
+  ReadOnlyBooleanProperty,
+  ReadOnlyStringProperty,
+  SimpleBooleanProperty,
+  SimpleStringProperty
+}
 
 
 abstract class AbstractStepButton(
   val visible: Boolean,
   xdisabled: Boolean,
-  val label: String
+  xlabel: String,
+  var onTrigger: () => Boolean
 ) {
 
   def triggered: Unit
 
-  val disable = new SimpleBooleanProperty()
-  def disable_=(v: Boolean) = disable.set(v)
-  val disabled: ReadOnlyBooleanProperty = disable
+  val disableProperty = new SimpleBooleanProperty(xdisabled)
+  def disable = disableProperty.get
+  def disable_=(v: Boolean) = disableProperty.set(v)
 
-  disable.set(xdisabled)
+  val labelProperty = new SimpleStringProperty(xlabel)
+  def label = labelProperty.get
+  def label_=(v: String) = labelProperty.set(v)
 
 }
 
-object NoButton extends AbstractStepButton(false, false, "") {
+object NoButton extends AbstractStepButton(false, false, "", () => false) {
   override def triggered = {}
 }
 
 class StepButton(
   pane: StepPane,
   f: => Boolean,
-  override val label: String
-) extends AbstractStepButton(true, false, label)
+  xlabel: String
+) extends AbstractStepButton(true, false, xlabel, () => f)
 {
+
   override def triggered = {
-    if (f) pane.cancelSubscriptions
+    if (onTrigger()) pane.cancelSubscriptions
   }
+
 }
 
 class PreviousButton(pane: StepPane, f: => Boolean)

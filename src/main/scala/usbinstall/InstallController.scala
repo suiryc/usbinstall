@@ -20,7 +20,6 @@ import usbinstall.util.DebugStage
 class InstallController
   extends Initializable
   with UseStepPane
-  with HasCancel
   with Logging
 {
 
@@ -58,11 +57,25 @@ class InstallController
       case Failure(e) =>
         error(s"Task failed", e)
         USBInstall.detachAppender(appender)
+        JFXSystem.schedule(stepPane.previous.disable = false)
 
       case Success(_) =>
         info(s"Task succeeded")
         USBInstall.detachAppender(appender)
-        /* XXX - detach 'cancellable' rename button to 'Done' to exit application */
+        /* First enable 'Previous' and disable 'Cancel' */
+        JFXSystem.schedule {
+          stepPane.previous.disable = false
+          stepPane.next.disable = true
+        }
+        /* Then replace 'Cancel' by 'Done' */
+        JFXSystem.schedule {
+          stepPane.next.label = "Done"
+          stepPane.next.onTrigger = () => {
+            onDone()
+            true
+          }
+          stepPane.next.disable = false
+        }
     }
   }
 
@@ -106,11 +119,17 @@ class InstallController
       JFXSystem.schedule(activityArea.appendLine("Cancelled"))
     }
 
-  override def onCancel() {
+  def onCancel() {
     /* Note: we are in the JavaFX thread */
     ui.activity("Cancelling ...")
-    stepPane.next.disable.set(true)
+    stepPane.next.disable = true
     cancellableFuture.cancel()
+  }
+
+  def onDone() {
+    import javafx.stage.WindowEvent
+    /* Note: we are in the JavaFX thread */
+    USBInstall.stage.fireEvent(new WindowEvent(null, WindowEvent.WINDOW_CLOSE_REQUEST))
   }
 
 }
