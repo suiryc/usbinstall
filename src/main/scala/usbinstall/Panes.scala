@@ -113,6 +113,7 @@ object Panes
     val controller = loader.getController[InstallController]()
 
     val pane = new AnchorPane with StepPane {
+      subscriptionHolders ::= controller
       controller.setStepPane(this)
 
       override val previous = new PreviousButton(this, {
