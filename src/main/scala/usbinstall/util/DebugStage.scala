@@ -35,7 +35,6 @@ object DebugStage {
   val areaWriter = logAreaWriter(area)
 
   private val areaOutputStream = new LineSplitterOutputStream(areaWriter)
-  Command.addExtraOutputSink(areaOutputStream)
 
   case class MessageCellData(val level: MessageLevel.LevelValue, val msg: String)
 
