@@ -129,7 +129,7 @@ object Stages
     val loader = new FXMLLoader(getClass.getResource("toolBar.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ToolBarController]()
-    controller.setStepPane(pane)
+    pane.subscriptionHolders ::= controller
 
     root
   }

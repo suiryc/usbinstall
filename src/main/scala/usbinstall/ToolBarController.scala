@@ -9,12 +9,13 @@ import javafx.scene.control.ToggleButton
 import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
+import suiryc.scala.javafx.event.Subscription
 import usbinstall.util.DebugStage
 
 
 class ToolBarController
   extends Initializable
-  with UseStepPane
+  with HasEventSubscriptions
 {
 
   @FXML
@@ -22,12 +23,9 @@ class ToolBarController
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     showLogs.setSelected(DebugStage.showing.get)
-  }
-
-  override def setStepPane(stepPane: StepPane) {
     /* Note: subscriptions on external object need to be cancelled for
      * pane/scene to be GCed. */
-    stepPane.subscriptions ::= DebugStage.showing.listen { newValue =>
+    subscriptions ::= DebugStage.showing.listen { newValue =>
       showLogs.setSelected(newValue)
     }
   }

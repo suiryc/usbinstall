@@ -48,9 +48,6 @@ class ChoosePartitionsController
 
   /* Note: subscriptions on external object need to be cancelled for
    * pane/scene to be GCed. */
-  protected var subscriptions: List[Subscription] = Nil
-
-  override def getSubscriptions(): List[Subscription] = subscriptions
 
   protected val device = InstallSettings.device.get.get
   protected val devicePartitions = device.partitions.toList sortBy(_.partNumber)

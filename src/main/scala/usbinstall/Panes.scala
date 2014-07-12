@@ -75,7 +75,7 @@ object Panes
     val controller = loader.getController[HasEventSubscriptions]()
 
     val pane = new AnchorPane with StepPane {
-      subscriptions :::= controller.getSubscriptions()
+      subscriptionHolders ::= controller
 
       override val previous = new PreviousButton(this, {
         Stages.chooseDevice()
