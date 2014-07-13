@@ -19,6 +19,11 @@ object DebugStage {
 
   /* XXX - scrollbars sometimes appear when resizing LogArea down */
 
+  /* Note: logger sometimes is already running inside JavaFX thread */
+  protected def jfxSchedule(action: => Unit) {
+    JFXSystem.schedule(action, false)
+  }
+
   private var pos: Option[(Double, Double)] = None
   private var size: Option[(Double, Double)] = None
 
@@ -78,8 +83,10 @@ object DebugStage {
 
     override def write(level: MessageLevel.LevelValue, msg: String, throwable: Option[Throwable]) {
       val item = MessageCellData(level, msg)
-      listViewItems.add(item)
-      scrollListViewToEnd()
+      jfxSchedule {
+        listViewItems.add(item)
+        scrollListViewToEnd()
+      }
     }
 
   }
@@ -99,6 +106,7 @@ object DebugStage {
   }
 
   def show() {
+    /* Note: we are in the JavaFX thread */
     pos foreach { t =>
       stage.setX(t._1)
       stage.setY(t._2)
@@ -107,17 +115,17 @@ object DebugStage {
       stage.setWidth(t._1)
       stage.setHeight(t._2)
     }
-    stage.show
     listView.setItems(listViewItems)
+    stage.show
     scrollListViewToEnd()
   }
 
   def hide() {
+    /* Note: we are in the JavaFX thread */
     pos = Some(stage.getX(), stage.getY())
     size = Some(stage.getWidth(), stage.getHeight())
-    /* Note: updating the list view when not visible generates warnings */
-    listView.setItems(FXCollections.observableArrayList[MessageCellData]())
     stage.hide
+    listView.setItems(FXCollections.observableArrayList[MessageCellData]())
   }
 
   def showing = stage.showingProperty
