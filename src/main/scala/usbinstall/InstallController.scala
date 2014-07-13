@@ -106,7 +106,7 @@ class InstallController
 
     def checkCancelled() =
       cancellable.check {
-        JFXSystem.schedule(activityArea.write("Cancelled"))
+        activityArea.write("Cancelled")
       }
 
     ui.activity(s"Temp path[${InstallSettings.pathTemp}]")

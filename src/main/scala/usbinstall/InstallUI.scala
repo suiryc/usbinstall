@@ -13,16 +13,12 @@ class InstallUI(
 ) {
 
   def setStep(value: Option[String]) {
-    /* Note: we need to determine the value now (deferred call may see an
-     * updated value for the given 'var'.
-     */
-    val osActivity = this.osActivity
     jfxSchedule {
       step.setText(value.getOrElse(""))
-      value foreach { value =>
-        osActivity foreach(_.write(s"**** Step: $value"))
-        globalActivity.write(s"**** Step: $value")
-      }
+    }
+    value foreach { value =>
+      osActivity foreach(_.write(s"**** Step: $value"))
+      globalActivity.write(s"**** Step: $value")
     }
   }
 
@@ -31,13 +27,12 @@ class InstallUI(
   }
 
   def setAction(value: Option[String]) {
-    val osActivity = this.osActivity
     jfxSchedule {
       action.setText(value.getOrElse(""))
-      value foreach { value =>
-        osActivity foreach(_.write(s"** Action: $value"))
-        globalActivity.write(s"** Action: $value")
-      }
+    }
+    value foreach { value =>
+      osActivity foreach(_.write(s"** Action: $value"))
+      globalActivity.write(s"** Action: $value")
     }
   }
 
@@ -65,10 +60,7 @@ class InstallUI(
   }
 
   def activity(value: String) {
-    val osActivity = this.osActivity
-    jfxSchedule {
-      osActivity foreach(_.write(value))
-    }
+    osActivity foreach(_.write(value))
   }
 
   protected def jfxSchedule(action: => Unit) {
