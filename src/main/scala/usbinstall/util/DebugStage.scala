@@ -6,7 +6,6 @@ import javafx.scene.Scene
 import javafx.scene.control.{Label, ListCell, ListView}
 import javafx.scene.layout.{HBox, Priority, VBox}
 import javafx.stage.{Stage, WindowEvent}
-import suiryc.scala.io.LineSplitterOutputStream
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.scene.control.LogArea
@@ -29,15 +28,7 @@ object DebugStage {
 
   private val area = new LogArea
 
-  def logAreaWriter(area: LogArea) =
-    new MessageLineWriter {
-      override def write(line: String) =
-        area.write(line)
-    }
-
-  val areaWriter = logAreaWriter(area)
-
-  private val areaOutputStream = new LineSplitterOutputStream(areaWriter)
+  val areaWriter = area.msgWriter
 
   case class MessageCellData(val level: MessageLevel.LevelValue, val msg: String)
 
@@ -115,8 +106,9 @@ object DebugStage {
       stage.setWidth(t._1)
       stage.setHeight(t._2)
     }
-    listView.setItems(listViewItems)
+    /* Note: populating list view while hidden trigger warnings */
     stage.show
+    listView.setItems(listViewItems)
     scrollListViewToEnd()
   }
 

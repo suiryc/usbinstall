@@ -16,7 +16,7 @@ import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.DebugStage
+import usbinstall.util.ProxyAppender
 
 
 class InstallController
@@ -58,7 +58,12 @@ class InstallController
 
   protected var cancellableFuture: CancellableFuture[Unit] = _
 
+  protected var installAppender: ProxyAppender = _
+
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    installAppender = USBInstall.newAppender(List(activityArea.msgWriter))
+    USBInstall.addAppender(installAppender)
+
     ui = new InstallUI(step, action, activityArea, None)
 
     subscriptions ::= USBInstall.stage.widthProperty().listen { width =>
@@ -72,19 +77,16 @@ class InstallController
     /* Note: since we access stepPane upon completion, we need to set it first
      * and cannot start installing upon 'initialize'.
      */
-    val appender = USBInstall.newAppender(List(DebugStage.logAreaWriter(activityArea)))
-    USBInstall.addAppender(appender)
-
     cancellableFuture = CancellableFuture(installTask(_))
     cancellableFuture.future.onComplete {
       case Failure(e) =>
         error(s"Task failed", e)
-        USBInstall.detachAppender(appender)
+        USBInstall.detachAppender(installAppender)
         JFXSystem.schedule(stepPane.previous.disable = false)
 
       case Success(_) =>
         info(s"Task succeeded")
-        USBInstall.detachAppender(appender)
+        USBInstall.detachAppender(installAppender)
         /* First enable 'Previous' and disable 'Cancel' */
         JFXSystem.schedule {
           stepPane.previous.disable = false
@@ -109,6 +111,13 @@ class InstallController
         activityArea.write("Cancelled")
       }
 
+    def switchAppender(previous: ProxyAppender, next: ProxyAppender) {
+      if (!(next eq previous)) {
+        USBInstall.addAppender(next)
+        USBInstall.detachAppender(previous)
+      }
+    }
+
     ui.activity(s"Temp path[${InstallSettings.pathTemp}]")
     ui.activity(s"ISO mount path[${InstallSettings.pathMountISO}]")
     ui.activity(s"Partition mount path[${InstallSettings.pathMountPartition}]")
@@ -116,12 +125,16 @@ class InstallController
     /* XXX - handle issues (skip/stop) */
     val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
-    val previousTab = oses.foldLeft[Tab](installTab) { (previousTab, settings) =>
-      val tab = if (settings.enabled) {
+    val (previousTab, previousAppender) = oses.foldLeft[(Tab, ProxyAppender)](installTab, installAppender) { (previous, settings) =>
+      val (previousTab, previousAppender) = previous
+      val next = if (settings.enabled) {
         val osActivity = new LogArea()
         ui.osActivity = Some(osActivity)
 
-        val tab = new Tab(settings.label)
+        val osAppender = USBInstall.newAppender(List(osActivity.msgWriter))
+        switchAppender(previousAppender, osAppender)
+
+        val osTab = new Tab(settings.label)
         JFXSystem.schedule {
           val pane = new AnchorPane(osActivity)
           AnchorPane.setTopAnchor(osActivity, 10)
@@ -129,15 +142,20 @@ class InstallController
           AnchorPane.setBottomAnchor(osActivity, 10)
           AnchorPane.setLeftAnchor(osActivity, 10)
 
-          tab.setContent(pane)
-          logPanes.getTabs().add(tab)
+          osTab.setContent(pane)
+          logPanes.getTabs().add(osTab)
           /* Only select new tab if previous one is still selected */
           if (logPanes.getSelectionModel().getSelectedItem() eq previousTab)
-            logPanes.getSelectionModel().select(tab)
+            logPanes.getSelectionModel().select(osTab)
         }
 
-        Some(tab)
+        Some(osTab, osAppender)
       } else None
+
+      def resetAppender() {
+        switchAppender(next map(_._2) getOrElse(previousAppender), installAppender)
+      }
+
       try {
         val os = OSInstall(settings, ui, checkCancelled)
 
@@ -145,18 +163,22 @@ class InstallController
       }
       catch {
         case e @ Cancelled =>
+          resetAppender()
           throw e
 
         case e: Throwable =>
           error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
+          resetAppender()
           throw e
       }
       finally {
         ui.osActivity = None
       }
 
-      tab getOrElse(previousTab)
+      next getOrElse(previous)
     }
+
+    switchAppender(previousAppender, installAppender)
 
     /* Only get back to initial tab if previous one is still selected */
     if (logPanes.getSelectionModel().getSelectedItem() eq previousTab) JFXSystem.schedule {
