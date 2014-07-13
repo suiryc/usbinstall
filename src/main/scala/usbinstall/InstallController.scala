@@ -106,7 +106,7 @@ class InstallController
 
     def checkCancelled() =
       cancellable.check {
-        JFXSystem.schedule(activityArea.appendLine("Cancelled"))
+        JFXSystem.schedule(activityArea.write("Cancelled"))
       }
 
     ui.activity(s"Temp path[${InstallSettings.pathTemp}]")
@@ -163,11 +163,6 @@ class InstallController
       logPanes.getSelectionModel().select(installTab)
     }
   }
-
-  private def checkCancelled(cancellable: Cancellable) =
-    cancellable.check {
-      JFXSystem.schedule(activityArea.appendLine("Cancelled"))
-    }
 
   def onCancel() {
     /* Note: we are in the JavaFX thread */
