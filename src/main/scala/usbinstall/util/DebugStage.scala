@@ -72,7 +72,8 @@ object DebugStage {
   }
 
   protected def scrollListViewToEnd() {
-    listView.scrollTo(listView.getItems().size)
+    if (showing.get)
+      listView.scrollTo(listView.getItems().size)
   }
 
   val listViewWriter = new MessageWriter {
