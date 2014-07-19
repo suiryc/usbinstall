@@ -5,9 +5,9 @@ import javafx.application.Application
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import suiryc.scala.io.RichFile._
+import suiryc.scala.log.ProxyAppender
 import suiryc.scala.misc.MessageWriter
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.ProxyAppender
 import usbinstall.util.DebugStage
 
 
@@ -21,30 +21,40 @@ object USBInstall extends App {
 
   var firstScene = true
 
+  protected var appender: ProxyAppender = _
+
   /* XXX - check we are root */
   /* XXX - check external tools are present */
 
   (new USBInstall).launch()
 
-  def newAppender(writers: Seq[MessageWriter]) = {
+  private def newAppender(writers: Seq[MessageWriter]) = {
     val appender = new ProxyAppender(writers)
     appender.setContext(lc)
     appender.start()
     appender
   }
 
-  def addAppender(appender: ProxyAppender) {
+  private def addAppender(appender: ProxyAppender) {
     loggerNames foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.addAppender(appender)
     }
   }
 
-  def detachAppender(appender: ProxyAppender) {
+  private def detachAppender(appender: ProxyAppender) {
     loggerNames foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.detachAppender(appender)
     }
+  }
+
+  def addLogWriter(writer: MessageWriter) {
+    appender.addWriter(writer)
+  }
+
+  def removeLogWriter(writer: MessageWriter) {
+    appender.removeWriter(writer)
   }
 
 }
@@ -52,8 +62,6 @@ object USBInstall extends App {
 class USBInstall extends Application {
 
   import USBInstall._
-
-  protected var appender: ProxyAppender = _
 
   def launch() {
     Application.launch()

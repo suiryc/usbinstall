@@ -14,9 +14,9 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
+import suiryc.scala.misc.MessageWriter
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.ProxyAppender
 
 
 class InstallController
@@ -58,11 +58,11 @@ class InstallController
 
   protected var cancellableFuture: CancellableFuture[Unit] = _
 
-  protected var installAppender: ProxyAppender = _
+  protected var installLogWriter: MessageWriter = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    installAppender = USBInstall.newAppender(List(activityArea.msgWriter))
-    USBInstall.addAppender(installAppender)
+    installLogWriter = activityArea.msgWriter
+    USBInstall.addLogWriter(installLogWriter)
 
     ui = new InstallUI(step, action, activityArea, None)
 
@@ -81,12 +81,12 @@ class InstallController
     cancellableFuture.future.onComplete {
       case Failure(e) =>
         error(s"Task failed", e)
-        USBInstall.detachAppender(installAppender)
+        USBInstall.removeLogWriter(installLogWriter)
         JFXSystem.schedule(stepPane.previous.disable = false)
 
       case Success(_) =>
         info(s"Task succeeded")
-        USBInstall.detachAppender(installAppender)
+        USBInstall.removeLogWriter(installLogWriter)
         /* First enable 'Previous' and disable 'Cancel' */
         JFXSystem.schedule {
           stepPane.previous.disable = false
@@ -111,10 +111,10 @@ class InstallController
         activityArea.write("Cancelled")
       }
 
-    def switchAppender(previous: ProxyAppender, next: ProxyAppender) {
+    def switchLogWriter(previous: MessageWriter, next: MessageWriter) {
       if (!(next eq previous)) {
-        USBInstall.addAppender(next)
-        USBInstall.detachAppender(previous)
+        USBInstall.addLogWriter(next)
+        USBInstall.removeLogWriter(previous)
       }
     }
 
@@ -125,14 +125,14 @@ class InstallController
     /* XXX - handle issues (skip/stop) */
     val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
-    val (previousTab, previousAppender) = oses.foldLeft[(Tab, ProxyAppender)](installTab, installAppender) { (previous, settings) =>
-      val (previousTab, previousAppender) = previous
+    val (previousTab, previousLogWriter) = oses.foldLeft[(Tab, MessageWriter)](installTab, installLogWriter) { (previous, settings) =>
+      val (previousTab, previousLogWriter) = previous
       val next = if (settings.enabled) {
         val osActivity = new LogArea()
         ui.osActivity = Some(osActivity)
 
-        val osAppender = USBInstall.newAppender(List(osActivity.msgWriter))
-        switchAppender(previousAppender, osAppender)
+        val osLogWriter = osActivity.msgWriter
+        switchLogWriter(previousLogWriter, osLogWriter)
 
         val osTab = new Tab(settings.label)
         JFXSystem.schedule {
@@ -149,11 +149,11 @@ class InstallController
             logPanes.getSelectionModel().select(osTab)
         }
 
-        Some(osTab, osAppender)
+        Some(osTab, osLogWriter)
       } else None
 
       def resetAppender() {
-        switchAppender(next map(_._2) getOrElse(previousAppender), installAppender)
+        switchLogWriter(next map(_._2) getOrElse(previousLogWriter), installLogWriter)
       }
 
       try {
@@ -178,7 +178,7 @@ class InstallController
       next getOrElse(previous)
     }
 
-    switchAppender(previousAppender, installAppender)
+    switchLogWriter(previousLogWriter, installLogWriter)
 
     /* Only get back to initial tab if previous one is still selected */
     if (logPanes.getSelectionModel().getSelectedItem() eq previousTab) JFXSystem.schedule {
