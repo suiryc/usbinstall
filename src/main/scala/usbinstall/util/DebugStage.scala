@@ -6,12 +6,14 @@ import javafx.scene.Scene
 import javafx.scene.control.{Label, ListCell, ListView}
 import javafx.scene.layout.{HBox, Priority, VBox}
 import javafx.stage.{Stage, WindowEvent}
+import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.javafx.util.Callback._
 import suiryc.scala.misc.{MessageLevel, MessageLineWriter, MessageWriter}
 import suiryc.scala.sys.Command
+import usbinstall.settings.Settings
 
 
 object DebugStage {
@@ -29,8 +31,12 @@ object DebugStage {
   private val area = new LogArea
 
   val areaWriter = area.msgWriter
+  areaWriter.setThreshold(Settings.core.logDebugThreshold())
+  Settings.core.logDebugThreshold.listen { v =>
+    areaWriter.setThreshold(v)
+  }
 
-  case class MessageCellData(val level: MessageLevel.LevelValue, val msg: String)
+  case class MessageCellData(val level: MessageLevel.Value, val msg: String)
 
   class MessageCell
     extends ListCell[MessageCellData]
@@ -72,7 +78,7 @@ object DebugStage {
 
   val listViewWriter = new MessageWriter {
 
-    override def write(level: MessageLevel.LevelValue, msg: String, throwable: Option[Throwable]) {
+    override def write(level: MessageLevel.Value, msg: String, throwable: Option[Throwable]) {
       val item = MessageCellData(level, msg)
       jfxSchedule {
         listViewItems.add(item)

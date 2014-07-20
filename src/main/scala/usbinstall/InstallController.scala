@@ -14,7 +14,7 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
-import suiryc.scala.misc.MessageWriter
+import suiryc.scala.misc.ThresholdMessageLineWriter
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{InstallSettings, Settings}
 
@@ -58,11 +58,15 @@ class InstallController
 
   protected var cancellableFuture: CancellableFuture[Unit] = _
 
-  protected var installLogWriter: MessageWriter = _
+  protected var installLogWriter: ThresholdMessageLineWriter = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     installLogWriter = activityArea.msgWriter
     USBInstall.addLogWriter(installLogWriter)
+    installLogWriter.setThreshold(Settings.core.logInstallThreshold())
+    subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
+      installLogWriter.setThreshold(v)
+    }
 
     ui = new InstallUI(step, action, activityArea, None)
 
@@ -111,7 +115,7 @@ class InstallController
         activityArea.write("Cancelled")
       }
 
-    def switchLogWriter(previous: MessageWriter, next: MessageWriter) {
+    def switchLogWriter(previous: ThresholdMessageLineWriter, next: ThresholdMessageLineWriter) {
       if (!(next eq previous)) {
         USBInstall.addLogWriter(next)
         USBInstall.removeLogWriter(previous)
@@ -125,13 +129,17 @@ class InstallController
     /* XXX - handle issues (skip/stop) */
     val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
-    val (previousTab, previousLogWriter) = oses.foldLeft[(Tab, MessageWriter)](installTab, installLogWriter) { (previous, settings) =>
+    val (previousTab, previousLogWriter) = oses.foldLeft[(Tab, ThresholdMessageLineWriter)](installTab, installLogWriter) { (previous, settings) =>
       val (previousTab, previousLogWriter) = previous
       val next = if (settings.enabled) {
         val osActivity = new LogArea()
         ui.osActivity = Some(osActivity)
 
         val osLogWriter = osActivity.msgWriter
+        osLogWriter.setThreshold(Settings.core.logInstallThreshold())
+        subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
+          osLogWriter.setThreshold(v)
+        }
         switchLogWriter(previousLogWriter, osLogWriter)
 
         val osTab = new Tab(settings.label)

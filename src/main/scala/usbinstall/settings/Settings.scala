@@ -7,8 +7,9 @@ import scala.reflect.ClassTag
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
+import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting}
-import suiryc.scala.misc.{EnumerationEx, Units}
+import suiryc.scala.misc.{EnumerationEx, MessageLevel, Units}
 import usbinstall.Stages
 import usbinstall.os.{
   OSKind,
@@ -29,6 +30,10 @@ object Settings {
     Preferences.userRoot.node("suiryc.usbinstall").node(confPath))
 
   object default {
+
+    val logDebugThreshold = MessageLevel.DEBUG
+
+    val logInstallThreshold = MessageLevel.INFO
 
     val componentInstallError = ErrorAction.Ask
 
@@ -52,6 +57,7 @@ class Settings(
 
   implicit private val settings: BaseSettings = this
   implicit private val errorAction: ErrorAction.type = ErrorAction
+  implicit private val logThreshold: MessageLevel.type = MessageLevel
 
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
@@ -112,6 +118,12 @@ class Settings(
   }
 
   val rEFIndPath = PathsEx.get(config.getString("refind.path"))
+
+  val logDebugThreshold =
+    PersistentProperty(PersistentSetting.forSEnumeration("logDebugThreshold", Settings.default.logDebugThreshold))
+
+  val logInstallThreshold =
+    PersistentProperty(PersistentSetting.forSEnumeration("logInstallThreshold", Settings.default.logInstallThreshold))
 
   val componentInstallError =
     PersistentSetting.forEnumerationEx("componentInstallError", Settings.default.componentInstallError)
