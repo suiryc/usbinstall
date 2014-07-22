@@ -11,8 +11,10 @@
   </appender>
 
   <!-- The level of root is set to DEBUG by default -->
-  <root level="INFO">
-    <appender-ref ref="STDOUT" />
+  <!-- Note: we do intercept logs and stdout/stderr programmatically, so set
+       level to minimum and do not configure appenders. -->
+  <root level="TRACE">
+    <!-- <appender-ref ref="STDOUT" /> -->
   </root>
 
 </configuration>

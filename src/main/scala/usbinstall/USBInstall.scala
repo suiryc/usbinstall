@@ -1,12 +1,18 @@
 package usbinstall
 
 import ch.qos.logback.classic.{Logger, LoggerContext}
+import java.io.PrintStream
 import javafx.application.Application
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
+import suiryc.scala.io.{
+  LineSplitterOutputStream,
+  ProxyLineWriter,
+  SystemStreams
+}
 import suiryc.scala.io.RichFile._
 import suiryc.scala.log.ProxyAppender
-import suiryc.scala.misc.MessageWriter
+import suiryc.scala.misc.{MessageLineWriter, MessageWriter}
 import usbinstall.settings.{InstallSettings, Settings}
 import usbinstall.util.DebugStage
 
@@ -22,6 +28,8 @@ object USBInstall extends App {
   var firstScene = true
 
   protected var appender: ProxyAppender = _
+  protected var lineWriter: ProxyLineWriter = _
+  protected var systemStreams: SystemStreams = _
 
   /* XXX - check we are root */
   /* XXX - check external tools are present */
@@ -49,12 +57,14 @@ object USBInstall extends App {
     }
   }
 
-  def addLogWriter(writer: MessageWriter) {
+  def addLogWriter(writer: MessageLineWriter) {
     appender.addWriter(writer)
+    lineWriter.addWriter(writer)
   }
 
-  def removeLogWriter(writer: MessageWriter) {
+  def removeLogWriter(writer: MessageLineWriter) {
     appender.removeWriter(writer)
+    lineWriter.removeWriter(writer)
   }
 
 }
@@ -73,6 +83,9 @@ class USBInstall extends Application {
     appender = newAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
     addAppender(appender)
 
+    lineWriter = new ProxyLineWriter(List(DebugStage.areaWriter))
+    systemStreams = SystemStreams.replace(new PrintStream(new LineSplitterOutputStream(lineWriter)))
+
     Stages.chooseDevice()
     /* Explicitely load the settings */
     Settings.load()
@@ -81,6 +94,7 @@ class USBInstall extends Application {
   override def stop() {
     InstallSettings.pathTemp.delete(true)
     detachAppender(appender)
+    SystemStreams.restore(systemStreams)
   }
 
 }
