@@ -10,6 +10,7 @@ import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 
 
 class ToolBarController
@@ -37,7 +38,12 @@ class ToolBarController
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
     stage.initOwner(event.getSource.asInstanceOf[Node].getScene().getWindow())
+    /* Track dimension as soon as shown, and unlisten once done */
+    val subscription = stage.showingProperty().listen { showing =>
+      if (showing) sfxStages.trackMinimumDimensions(stage)
+    }
     stage.showAndWait()
+    subscription.unsubscribe()
   }
 
   def onShowLogs(event: ActionEvent) {

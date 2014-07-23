@@ -2,23 +2,20 @@ package usbinstall
 
 import grizzled.slf4j.Logging
 import javafx.application.Platform
-import javafx.beans.property.{DoubleProperty, ReadOnlyDoubleProperty}
-import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.fxml.FXMLLoader
-import javafx.geometry.{Insets, Pos}
+import javafx.geometry.Pos
 import javafx.scene.{Parent, Scene}
-import javafx.scene.control.Button
 import javafx.scene.layout.{
   ColumnConstraints,
   GridPane,
   Priority,
-  RowConstraints,
-  VBox
+  RowConstraints
 }
-import javafx.stage.{Stage, WindowEvent}
+import javafx.stage.WindowEvent
 import org.controlsfx.dialog.{Dialogs, DialogStyle}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.misc.RichOptional
 
 
@@ -54,43 +51,7 @@ object Stages
     stage.show()
     USBInstall.firstScene = false
 
-    /* After show(), the stage dimension returned by JavaFX does not seem to
-     * include the platform decorations (at least under Linux). Somehow those
-     * appear to be included later, once we return.
-     * However changes in those dimensions can be tracked, so as a hack we can
-     * still wait a bit to get them.
-     * Note: it appears JavaFX do not go directly to the actual size, but
-     * shrinks down before, so take that into account.
-     */
-    def trackMinimumDimension(label: String, stageMinProp: DoubleProperty,
-      stageProp: ReadOnlyDoubleProperty, sceneProp: ReadOnlyDoubleProperty)
-    {
-      import scala.concurrent.duration._
-
-      val sceneValue = sceneProp.get()
-
-      logger trace(s"Initial minimum $label stage[${stageProp.get()}] scene[${sceneProp.get()}]")
-      stageMinProp.set(stageProp.get())
-      if (stageProp.get() <= sceneValue) {
-        val changeListener = new ChangeListener[Number] {
-          override def changed(arg0: ObservableValue[_ <: Number], arg1: Number, arg2: Number) {
-            if ((sceneProp.get() == sceneValue) && (stageProp.get() > sceneValue)) {
-              logger trace(s"Retained minimum $label stage[${stageProp.get()}] scene[${sceneProp.get()}]")
-              stageProp.removeListener(this)
-              stageMinProp.set(stageProp.get())
-            }
-          }
-        }
-        stageProp.addListener(changeListener)
-        /* Make sure to unregister ourself in any case */
-        JFXSystem.scheduleOnce(1.seconds) {
-          stageProp.removeListener(changeListener)
-        }
-      }
-    }
-
-    trackMinimumDimension("width", stage.minWidthProperty, stage.widthProperty, stage.getScene().widthProperty)
-    trackMinimumDimension("height", stage.minHeightProperty, stage.heightProperty, stage.getScene().heightProperty)
+    sfxStages.trackMinimumDimensions(stage)
   }
 
   protected def errorStage(title: String, masthead: Option[String], error: Either[Throwable, String]) {

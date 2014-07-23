@@ -6,6 +6,7 @@ import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.settings.Settings
 
 
@@ -103,7 +104,14 @@ object LogsStage {
   }
 
   def show() {
-    /* Note: we are in the JavaFX thread */
+    /* Notes:
+     *  - we are in the JavaFX thread
+     *  - when showing again stage after hide, position and size are resetted
+     *  - to prevent artifacts (black areas on top or side of scene), it is
+     *    better to set position and size after showing stage
+     */
+    stage.show
+
     pos foreach { t =>
       stage.setX(t._1)
       stage.setY(t._2)
@@ -112,7 +120,10 @@ object LogsStage {
       stage.setWidth(t._1)
       stage.setHeight(t._2)
     }
-    stage.show
+
+    /* Only track minimum dimensions upon first display */
+    if (!pos.isDefined)
+      sfxStages.trackMinimumDimensions(stage)
   }
 
   def hide() {
