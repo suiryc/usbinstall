@@ -26,19 +26,8 @@ class OptionsController extends Initializable {
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     logDebugThreshold.getItems().setAll(MessageLevel.values.toList:_*)
-    logDebugThreshold.setOnAction {
-      onLogDebugThreshold _
-    }
-
     logInstallThreshold.getItems().setAll(MessageLevel.values.toList:_*)
-    logInstallThreshold.setOnAction {
-      onLogInstallThreshold _
-    }
-
     componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
-    componentInstallError.setOnAction {
-      onComponentInstallError _
-    }
 
     update()
   }
