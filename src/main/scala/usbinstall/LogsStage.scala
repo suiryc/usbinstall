@@ -91,7 +91,7 @@ object LogsStage {
   */
 
   protected val stage = new Stage
-  stage.setTitle("Options")
+  stage.setTitle("Logs")
   stage.setScene(new Scene(root))
   /* Note: stage will disappear if declared owner is hidden.
    * So don't use initOwner.
