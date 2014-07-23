@@ -2,14 +2,11 @@ package usbinstall
 
 import java.net.URL
 import java.util.ResourceBundle
-import java.util.prefs.Preferences
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
 import javafx.stage.Stage
-import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.MessageLevel
-import suiryc.scala.settings.PersistentSetting._
 import usbinstall.settings.{ErrorAction, Settings}
 
 

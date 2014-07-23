@@ -18,7 +18,6 @@ import usbinstall.os.{
   SyslinuxComponent,
   SyslinuxComponentKind
 }
-import usbinstall.util.Util
 
 
 object Settings {
