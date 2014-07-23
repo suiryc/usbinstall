@@ -1,39 +1,39 @@
-package usbinstall.util
+package usbinstall
 
-import javafx.collections.FXCollections
-import javafx.geometry.{Insets, Pos}
-import javafx.scene.Scene
-import javafx.scene.control.{Label, ListCell, ListView}
-import javafx.scene.layout.{HBox, Priority, VBox}
+import javafx.fxml.FXMLLoader
+import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
-import suiryc.scala.javafx.scene.control.LogArea
-import suiryc.scala.javafx.util.Callback._
-import suiryc.scala.misc.{MessageLevel, MessageLineWriter, MessageWriter}
-import suiryc.scala.sys.Command
 import usbinstall.settings.Settings
 
 
-object DebugStage {
+object LogsStage {
 
   /* XXX - scrollbars sometimes appear when resizing LogArea down */
-
-  /* Note: logger sometimes is already running inside JavaFX thread */
-  protected def jfxSchedule(action: => Unit) {
-    JFXSystem.schedule(action, false)
-  }
 
   private var pos: Option[(Double, Double)] = None
   private var size: Option[(Double, Double)] = None
 
-  private val area = new LogArea
+  protected val loader = new FXMLLoader(getClass.getResource("logs.fxml"))
+  protected val root = loader.load[Parent]()
+  protected val controller = loader.getController[LogsController]()
 
-  val areaWriter = area.msgWriter
+  val areaWriter = controller.logArea.msgWriter
   areaWriter.setThreshold(Settings.core.logDebugThreshold())
   Settings.core.logDebugThreshold.listen { v =>
     areaWriter.setThreshold(v)
+    controller.logThreshold.getSelectionModel().select(Settings.core.logDebugThreshold())
+  }
+
+  /*
+   * Example code with basic list view
+   * Note: populating list view while hidden trigger warnings
+
+   * Note: logger sometimes is already running inside JavaFX thread
+  protected def jfxSchedule(action: => Unit) {
+    JFXSystem.schedule(action, false)
   }
 
   case class MessageCellData(val level: MessageLevel.Value, val msg: String)
@@ -88,18 +88,18 @@ object DebugStage {
 
   }
 
-  private val dpane = new VBox
-  dpane.setPadding(new Insets(5))
-  dpane.setSpacing(5)
-  dpane.setAlignment(Pos.TOP_CENTER)
-  VBox.setVgrow(area, Priority.ALWAYS)
-  dpane.getChildren().setAll(area, listView)
-  private val dscene = new Scene(dpane)
-  private val stage = new Stage
-  stage.setScene(dscene)
+  */
+
+  protected val stage = new Stage
+  stage.setTitle("Options")
+  stage.setScene(new Scene(root))
+  /* Note: stage will disappear if declared owner is hidden.
+   * So don't use initOwner.
+   */
+
   stage.setOnCloseRequest { (event: WindowEvent) =>
     event.consume()
-    DebugStage.hide()
+    LogsStage.hide()
   }
 
   def show() {
@@ -112,10 +112,7 @@ object DebugStage {
       stage.setWidth(t._1)
       stage.setHeight(t._2)
     }
-    /* Note: populating list view while hidden trigger warnings */
     stage.show
-    listView.setItems(listViewItems)
-    scrollListViewToEnd()
   }
 
   def hide() {
@@ -123,7 +120,6 @@ object DebugStage {
     pos = Some(stage.getX(), stage.getY())
     size = Some(stage.getWidth(), stage.getHeight())
     stage.hide
-    listView.setItems(FXCollections.observableArrayList[MessageCellData]())
   }
 
   def showing = stage.showingProperty

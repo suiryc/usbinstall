@@ -14,7 +14,6 @@ import suiryc.scala.io.RichFile._
 import suiryc.scala.log.ProxyAppender
 import suiryc.scala.misc.{MessageLineWriter, MessageWriter}
 import usbinstall.settings.{InstallSettings, Settings}
-import usbinstall.util.DebugStage
 
 
 object USBInstall extends App {
@@ -80,10 +79,10 @@ class USBInstall extends Application {
   override def start(primaryStage: Stage) {
     stage = primaryStage
 
-    appender = newAppender(List(DebugStage.areaWriter, DebugStage.listViewWriter))
+    appender = newAppender(List(LogsStage.areaWriter))
     addAppender(appender)
 
-    lineWriter = new ProxyLineWriter(List(DebugStage.areaWriter))
+    lineWriter = new ProxyLineWriter(List(LogsStage.areaWriter))
     systemStreams = SystemStreams.replace(new PrintStream(new LineSplitterOutputStream(lineWriter)))
 
     Stages.chooseDevice()

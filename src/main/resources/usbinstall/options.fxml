@@ -13,29 +13,22 @@
           <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
         </columnConstraints>
         <rowConstraints>
-            <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
           <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
           <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <Label text="Error upon component installation:" GridPane.rowIndex="2">
+            <Label text="Error upon component installation:" GridPane.rowIndex="1">
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </padding>
             </Label>
-            <ComboBox fx:id="componentInstallError" onAction="#onComponentInstallError" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Label text="Installation log threshold:" GridPane.rowIndex="1">
+            <ComboBox fx:id="componentInstallError" onAction="#onComponentInstallError" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label text="Installation log threshold:">
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </padding>
             </Label>
-            <ComboBox fx:id="logInstallThreshold" onAction="#onLogInstallThreshold" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label text="Debug log threshold:">
-               <padding>
-                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-               </padding>
-            </Label>
-            <ComboBox fx:id="logDebugThreshold" onAction="#onLogDebugThreshold" GridPane.columnIndex="1" />
+            <ComboBox fx:id="logInstallThreshold" onAction="#onLogInstallThreshold" GridPane.columnIndex="1" />
          </children>
       </GridPane><GridPane VBox.vgrow="ALWAYS">
   <columnConstraints>

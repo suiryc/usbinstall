@@ -16,16 +16,12 @@ import usbinstall.settings.{ErrorAction, Settings}
 class OptionsController extends Initializable {
 
   @FXML
-  protected var logDebugThreshold: ComboBox[MessageLevel.Value] = _
-
-  @FXML
   protected var logInstallThreshold: ComboBox[MessageLevel.Value] = _
 
   @FXML
   protected var componentInstallError: ComboBox[ErrorAction.Value] = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    logDebugThreshold.getItems().setAll(MessageLevel.values.toList:_*)
     logInstallThreshold.getItems().setAll(MessageLevel.values.toList:_*)
     componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
 
@@ -33,13 +29,8 @@ class OptionsController extends Initializable {
   }
 
   def update() {
-    logDebugThreshold.getSelectionModel().select(Settings.core.logDebugThreshold())
     logInstallThreshold.getSelectionModel().select(Settings.core.logInstallThreshold())
     componentInstallError.getSelectionModel().select(Settings.core.componentInstallError)
-  }
-
-  def onLogDebugThreshold(event: ActionEvent) {
-    Settings.core.logDebugThreshold.update(logDebugThreshold.getValue())
   }
 
   def onLogInstallThreshold(event: ActionEvent) {
@@ -67,7 +58,7 @@ class OptionsController extends Initializable {
   }
 
   def onDone(event: ActionEvent) {
-    logDebugThreshold.getScene().getWindow().asInstanceOf[Stage].close()
+    logInstallThreshold.getScene().getWindow().asInstanceOf[Stage].close()
   }
 
 }

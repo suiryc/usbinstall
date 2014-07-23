@@ -10,7 +10,6 @@ import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
-import usbinstall.util.DebugStage
 
 
 class ToolBarController
@@ -22,10 +21,10 @@ class ToolBarController
   protected var showLogs: ToggleButton = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    showLogs.setSelected(DebugStage.showing.get)
+    showLogs.setSelected(LogsStage.showing.get)
     /* Note: subscriptions on external object need to be cancelled for
      * pane/scene to be GCed. */
-    subscriptions ::= DebugStage.showing.listen { newValue =>
+    subscriptions ::= LogsStage.showing.listen { newValue =>
       showLogs.setSelected(newValue)
     }
   }
@@ -42,8 +41,8 @@ class ToolBarController
   }
 
   def onShowLogs(event: ActionEvent) {
-    if (showLogs.isSelected) DebugStage.show()
-    else DebugStage.hide()
+    if (showLogs.isSelected) LogsStage.show()
+    else LogsStage.hide()
   }
 
 }
