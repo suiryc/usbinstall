@@ -62,6 +62,7 @@ class InstallController
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     installLogWriter = activityArea.msgWriter
+    installLogWriter.setPattern(Settings.core.logInstallPattern)
     USBInstall.addLogWriter(installLogWriter)
     installLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
     subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
@@ -136,6 +137,7 @@ class InstallController
         ui.osActivity = Some(osActivity)
 
         val osLogWriter = osActivity.msgWriter
+        osLogWriter.setPattern(Settings.core.logInstallPattern)
         osLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
         subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
           osLogWriter.setThreshold(v.level)

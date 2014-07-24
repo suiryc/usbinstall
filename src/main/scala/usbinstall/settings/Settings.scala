@@ -59,6 +59,9 @@ class Settings(
   implicit private val errorAction: ErrorAction.type = ErrorAction
   implicit private val logThreshold: LogLevel.type = LogLevel
 
+  val logDebugPattern = config.getString("log.debug.pattern")
+  val logInstallPattern = config.getString("log.install.pattern")
+
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
     val label = option[String]("label", config) getOrElse(kind)
