@@ -8,8 +8,9 @@ import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.PersistentProperty
+import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting}
-import suiryc.scala.misc.{EnumerationEx, MessageLevel, Units}
+import suiryc.scala.misc.{EnumerationEx, Units}
 import usbinstall.Stages
 import usbinstall.os.{
   OSKind,
@@ -30,9 +31,9 @@ object Settings {
 
   object default {
 
-    val logDebugThreshold = MessageLevel.DEBUG
+    val logDebugThreshold = LogLevel.DEBUG
 
-    val logInstallThreshold = MessageLevel.INFO
+    val logInstallThreshold = LogLevel.INFO
 
     val componentInstallError = ErrorAction.Ask
 
@@ -56,7 +57,7 @@ class Settings(
 
   implicit private val settings: BaseSettings = this
   implicit private val errorAction: ErrorAction.type = ErrorAction
-  implicit private val logThreshold: MessageLevel.type = MessageLevel
+  implicit private val logThreshold: LogLevel.type = LogLevel
 
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")

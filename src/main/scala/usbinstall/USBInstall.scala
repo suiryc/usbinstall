@@ -11,16 +11,18 @@ import suiryc.scala.io.{
   SystemStreams
 }
 import suiryc.scala.io.RichFile._
-import suiryc.scala.log.ProxyAppender
-import suiryc.scala.misc.{MessageLineWriter, MessageWriter}
+import suiryc.scala.log.{
+  Loggers,
+  LogLinePatternWriter,
+  LogWriter,
+  ProxyAppender
+}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
 object USBInstall extends App {
 
   protected val loggerNames = List("usbinstall", "suiryc")
-
-  val lc = LoggerFactory.getILoggerFactory().asInstanceOf[LoggerContext]
 
   var stage: Stage = _
 
@@ -35,9 +37,9 @@ object USBInstall extends App {
 
   (new USBInstall).launch()
 
-  private def newAppender(writers: Seq[MessageWriter]) = {
+  private def newAppender(writers: Seq[LogWriter]) = {
     val appender = new ProxyAppender(writers)
-    appender.setContext(lc)
+    appender.setContext(Loggers.loggerContext)
     appender.start()
     appender
   }
@@ -56,12 +58,12 @@ object USBInstall extends App {
     }
   }
 
-  def addLogWriter(writer: MessageLineWriter) {
+  def addLogWriter(writer: LogLinePatternWriter) {
     appender.addWriter(writer)
     lineWriter.addWriter(writer)
   }
 
-  def removeLogWriter(writer: MessageLineWriter) {
+  def removeLogWriter(writer: LogLinePatternWriter) {
     appender.removeWriter(writer)
     lineWriter.removeWriter(writer)
   }

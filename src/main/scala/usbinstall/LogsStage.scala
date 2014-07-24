@@ -22,9 +22,9 @@ object LogsStage {
   protected val controller = loader.getController[LogsController]()
 
   val areaWriter = controller.logArea.msgWriter
-  areaWriter.setThreshold(Settings.core.logDebugThreshold())
+  areaWriter.setThreshold(Settings.core.logDebugThreshold().level)
   Settings.core.logDebugThreshold.listen { v =>
-    areaWriter.setThreshold(v)
+    areaWriter.setThreshold(v.level)
     controller.logThreshold.getSelectionModel().select(Settings.core.logDebugThreshold())
   }
 

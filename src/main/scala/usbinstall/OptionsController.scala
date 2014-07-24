@@ -6,20 +6,20 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
 import javafx.stage.Stage
-import suiryc.scala.misc.MessageLevel
+import suiryc.scala.log.LogLevel
 import usbinstall.settings.{ErrorAction, Settings}
 
 
 class OptionsController extends Initializable {
 
   @FXML
-  protected var logInstallThreshold: ComboBox[MessageLevel.Value] = _
+  protected var logInstallThreshold: ComboBox[LogLevel.Value] = _
 
   @FXML
   protected var componentInstallError: ComboBox[ErrorAction.Value] = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    logInstallThreshold.getItems().setAll(MessageLevel.values.toList:_*)
+    logInstallThreshold.getItems().setAll(LogLevel.values.toList:_*)
     componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
 
     update()
