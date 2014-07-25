@@ -31,7 +31,6 @@ class ToolBarController
   }
 
   def onOptions(event: ActionEvent) {
-    /* XXX - track minimum width to apply */
     val options = FXMLLoader.load[Parent](getClass.getResource("options.fxml"))
     val stage = new Stage
     stage.setTitle("Options")

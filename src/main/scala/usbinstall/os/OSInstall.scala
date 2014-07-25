@@ -15,8 +15,7 @@ import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
 
-/* XXX - checkCancelled before each file to copy ? */
-/* XXX - checkCancelled between some actions in each implementation ? */
+
 class OSInstall(
   val settings: OSSettings,
   val ui: InstallUI,
