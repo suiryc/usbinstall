@@ -72,7 +72,7 @@ object Panes
   def choosePartitions = {
     val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"))
     val root = loader.load[Parent]()
-    val controller = loader.getController[HasEventSubscriptions]()
+    val controller = loader.getController[ChoosePartitionsController]()
 
     val pane = new AnchorPane with StepPane {
       subscriptionHolders ::= controller
@@ -87,21 +87,9 @@ object Panes
         true
       }) {
         disable = true
-
-        private def updateDisable() {
-          disable = Settings.core.oses.exists { settings =>
-            settings.enabled && !settings.installable
-          }
-        }
-        updateDisable
-
-        Settings.core.oses foreach { settings =>
-          subscriptions ::= settings.installStatus.listen(updateDisable)
-          subscriptions ::= settings.partition.listen(updateDisable)
-          subscriptions ::= settings.iso.listen(updateDisable)
-        }
       }
     }
+    controller.setStepPane(pane)
 
     initPane(pane, root)
   }
@@ -114,7 +102,6 @@ object Panes
 
     val pane = new AnchorPane with StepPane {
       subscriptionHolders ::= controller
-      controller.setStepPane(this)
 
       override val previous = new PreviousButton(this, {
         Stages.choosePartitions()
@@ -128,6 +115,7 @@ object Panes
         false
       })
     }
+    controller.setStepPane(pane)
 
     initPane(pane, root)
   }

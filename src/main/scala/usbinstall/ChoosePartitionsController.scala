@@ -27,6 +27,7 @@ import usbinstall.settings.{InstallSettings, Settings}
 
 class ChoosePartitionsController
   extends Initializable
+  with UseStepPane
   with HasEventSubscriptions
   with Logging
 {
@@ -45,6 +46,8 @@ class ChoosePartitionsController
 
   @FXML
   protected var partitionsPane: AnchorPane = _
+
+  protected var stepPane: StepPane = _
 
   /* Note: subscriptions on external object need to be cancelled for
    * pane/scene to be GCed. */
@@ -84,6 +87,24 @@ class ChoosePartitionsController
     }
 
     updatePartitionsPane()
+  }
+
+  private def updateDisable() {
+    stepPane.next.disable = Settings.core.oses.exists { settings =>
+      settings.enabled && !settings.installable
+    }
+  }
+
+  override def setStepPane(stepPane: StepPane) {
+    this.stepPane = stepPane
+
+    updateDisable
+
+    Settings.core.oses foreach { settings =>
+      subscriptions ::= settings.installStatus.listen(updateDisable)
+      subscriptions ::= settings.partition.listen(updateDisable)
+      subscriptions ::= settings.iso.listen(updateDisable)
+    }
   }
 
   private def updatePartitionsPane() {

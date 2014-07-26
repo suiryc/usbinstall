@@ -230,7 +230,7 @@ object OSInstall
           Seq(s"mkfs.${kind}", part.dev.toString)
 
         case PartitionFormat.fat32 =>
-          Seq(s"mkfs.vfat", "-F", "32", part.dev.toString)
+          Seq("mkfs.vfat", "-F", "32", part.dev.toString)
 
         case PartitionFormat.ntfs =>
           Seq(s"mkfs.${kind}", "--fast", part.dev.toString)
@@ -275,7 +275,7 @@ w
           /* Max FAT32 label length: 11
            * To work correctly, it is better to truncate/pad it.
            */
-          (Seq(s"mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
+          (Seq("mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
 
         case PartitionFormat.ntfs =>
           (Seq("ntfslabel", "--force", part.dev.toString, label), None)
