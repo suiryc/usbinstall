@@ -39,12 +39,11 @@ class OptionsController extends Initializable {
   }
 
   def onReset(event: ActionEvent) {
-    Settings.core.logDebugThreshold.update(Settings.default.logDebugThreshold)
     Settings.core.logInstallThreshold.update(Settings.default.logInstallThreshold)
     Settings.core.componentInstallError.update(Settings.default.componentInstallError)
-    /* Note: we need to update the pane; alternatively we could make a
-     * PersistentProperty out of this PersistentSetting and update the control
-     * upon value changing.
+    /* Note: we need to update the pane; alternatively we could make persistent
+     * properties out of those persistent settings and update the control upon
+     * value changing.
      */
     update()
   }
