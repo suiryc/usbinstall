@@ -107,7 +107,7 @@ class Settings(
       } find(_.toFile.exists)
 
       if (!r.isDefined) {
-        Stages.errorStage("Missing component image", Some(label), s"Image[$name] not found in configured path")
+        Stages.errorStage(None, "Missing component image", Some(label), s"Image[$name] not found in configured path")
       }
 
       r

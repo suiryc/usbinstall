@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
 import javafx.stage.Stage
+import org.controlsfx.dialog.Dialog
 import suiryc.scala.log.LogLevel
 import usbinstall.settings.{ErrorAction, Settings}
 
@@ -49,12 +50,21 @@ class OptionsController extends Initializable {
   }
 
   def onClear(event: ActionEvent) {
-    Settings.core.prefs.removeNode()
-    Settings.core.reset()
+    val action = Stages.confirmStage(Some(window), "Clear settings", Some("Are you sure?"),
+      "You are about to clear all settings and get back to initial or default values",
+      Stages.DialogActions.Ok_Cancel)
+
+    if (action == Dialog.Actions.OK) {
+      Settings.core.prefs.removeNode()
+      Settings.core.reset()
+    }
   }
 
   def onDone(event: ActionEvent) {
-    logInstallThreshold.getScene().getWindow().asInstanceOf[Stage].close()
+    window.asInstanceOf[Stage].close()
   }
+
+  protected def window =
+    logInstallThreshold.getScene().getWindow()
 
 }

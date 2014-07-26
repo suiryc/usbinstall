@@ -47,7 +47,7 @@ class ChooseDeviceController extends Initializable {
 
             case Left(e) =>
               size.setText("<unknown>")
-              Stages.errorStage("Cannot get device info", Some(s"Device: ${device.dev}"), e)
+              Stages.errorStage(None, "Cannot get device info", Some(s"Device: ${device.dev}"), e)
           }
 
         case _ =>

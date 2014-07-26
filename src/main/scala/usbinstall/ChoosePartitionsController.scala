@@ -100,7 +100,7 @@ class ChoosePartitionsController
 
           if (result != 0) {
             error(s"Cannot unmount partition[${partition.dev}]: $stderr")
-            Stages.errorStage("Cannot unmount partition", Some(partition.dev.toString()), stderr)
+            Stages.errorStage(None, "Cannot unmount partition", Some(partition.dev.toString()), stderr)
           }
           updateAvailablePartitions()
           updatePartitionsPane()

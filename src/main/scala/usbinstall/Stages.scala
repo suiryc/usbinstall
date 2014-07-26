@@ -11,9 +11,9 @@ import javafx.scene.layout.{
   Priority,
   RowConstraints
 }
-import javafx.stage.WindowEvent
+import javafx.stage.{Window, WindowEvent}
 import org.controlsfx.control.action.Action
-import org.controlsfx.dialog.{Dialogs, DialogStyle}
+import org.controlsfx.dialog.{Dialog, Dialogs, DialogStyle}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
@@ -23,6 +23,10 @@ import suiryc.scala.misc.RichOptional
 object Stages
   extends Logging
 {
+
+  object DialogActions {
+    val Ok_Cancel = List(Dialog.Actions.OK, Dialog.Actions.CANCEL)
+  }
 
   protected def changeScene(title: String, scene: Scene) {
     val stage = USBInstall.stage
@@ -61,36 +65,43 @@ object Stages
     else
       JFXSystem.await(show)
 
-  protected def makeDialogStage(title: String, masthead: Option[String], message: Option[String] = None): Dialogs = {
+  protected def makeDialogStage(owner: Option[Window], title: String, masthead: Option[String], message: Option[String]): Dialogs = {
     import RichOptional._
 
     Dialogs.create()
-      .owner(USBInstall.stage)
+      .owner(owner getOrElse(USBInstall.stage))
       .style(DialogStyle.NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
       .optional[String](message, _.message(_))
   }
 
-  protected def dialogStage[T](title: String, masthead: Option[String], message: String, show: Dialogs => T): T = {
+  protected def dialogStage[T](owner: Option[Window], title: String, masthead: Option[String], message: String, actions: List[Action], show: Dialogs => T): T = {
     val msg = if (message != "") Some(message) else None
-    val dialog = makeDialogStage(title, masthead, msg)
+    val dialog = makeDialogStage(owner, title, masthead, msg)
+
+    if (!actions.isEmpty)
+      dialog.actions(actions:_*)
+
     showDialogStage {
       show(dialog)
     }
   }
 
-  def infoStage(title: String, masthead: Option[String], message: String): Unit =
-    dialogStage(title, masthead, message, _.showInformation)
+  def confirmStage(owner: Option[Window], title: String, masthead: Option[String], message: String, actions: List[Action] = Nil): Action =
+    dialogStage(owner, title, masthead, message, actions, _.showConfirm)
 
-  def warningStage(title: String, masthead: Option[String], message: String): Action =
-    dialogStage(title, masthead, message, _.showWarning)
+  def infoStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Unit =
+    dialogStage(owner, title, masthead, message, Nil, _.showInformation)
 
-  def errorStage(title: String, masthead: Option[String], message: String): Action =
-    dialogStage(title, masthead, message, _.showError)
+  def warningStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Action =
+    dialogStage(owner, title, masthead, message, Nil, _.showWarning)
 
-  def errorStage(title: String, masthead: Option[String], ex: Throwable): Action = {
-    val dialog = makeDialogStage(title, masthead)
+  def errorStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Action =
+    dialogStage(owner, title, masthead, message, Nil, _.showError)
+
+  def errorStage(owner: Option[Window], title: String, masthead: Option[String], ex: Throwable): Action = {
+    val dialog = makeDialogStage(owner, title, masthead, None)
     showDialogStage {
       dialog.showException(ex)
     }

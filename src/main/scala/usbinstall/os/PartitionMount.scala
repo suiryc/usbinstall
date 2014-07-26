@@ -20,7 +20,7 @@ class PartitionMount(
     val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString(), to.toString()))
 
     if (result != 0) {
-      Stages.errorStage("Cannot mount partition", Some(s"From $from to $to"), stderr)
+      Stages.errorStage(None, "Cannot mount partition", Some(s"From $from to $to"), stderr)
       throw new Exception(s"Cannot mount partition[$from]: $stderr")
     }
 
@@ -34,7 +34,7 @@ class PartitionMount(
       val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", "-lf", to.toString()))
 
       if (result != 0) {
-        Stages.errorStage("Cannot unmount partition", Some(to.toString()), stderr)
+        Stages.errorStage(None, "Cannot unmount partition", Some(to.toString()), stderr)
       }
     }
 

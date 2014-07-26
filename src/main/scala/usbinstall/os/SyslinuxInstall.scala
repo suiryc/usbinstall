@@ -77,7 +77,7 @@ class SyslinuxInstall(
         val CommandResult(result, stdout, stderr) =
           Command.execute(Seq("dd", "bs=440", "count=1", s"if=${mbrBin}", s"of=${devicePath}"))
         if (result != 0) {
-          Stages.errorStage("MBR failure", Some("Could not install syslinux MBR.\nYou may have to do it manually."), stderr)
+          Stages.errorStage(None, "MBR failure", Some("Could not install syslinux MBR.\nYou may have to do it manually."), stderr)
         }
       }
     }

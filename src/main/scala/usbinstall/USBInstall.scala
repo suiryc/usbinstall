@@ -110,7 +110,7 @@ class USBInstall extends Application {
 
     val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
     if (stdout != "0") Future {
-      Stages.warningStage("Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+      Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
     }
   }
 
