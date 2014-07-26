@@ -12,6 +12,7 @@ import javafx.scene.layout.{
   RowConstraints
 }
 import javafx.stage.WindowEvent
+import org.controlsfx.control.action.Action
 import org.controlsfx.dialog.{Dialogs, DialogStyle}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
@@ -54,36 +55,45 @@ object Stages
     sfxStages.trackMinimumDimensions(stage)
   }
 
-  protected def errorStage(title: String, masthead: Option[String], error: Either[Throwable, String]) {
+  protected def showDialogStage[T](show: => T): T =
+    if (Platform.isFxApplicationThread)
+      show
+    else
+      JFXSystem.await(show)
+
+  protected def makeDialogStage(title: String, masthead: Option[String], message: Option[String] = None): Dialogs = {
     import RichOptional._
 
-    val dialog = Dialogs.create()
+    Dialogs.create()
       .owner(USBInstall.stage)
       .style(DialogStyle.NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
+      .optional[String](message, _.message(_))
+  }
 
-    val show = () => error match {
-      case Left(ex) =>
-        dialog.showException(ex)
-
-      case Right(error) =>
-        dialog.optional(error != "", _.message(error))
-          .showError()
+  protected def dialogStage[T](title: String, masthead: Option[String], message: String, show: Dialogs => T): T = {
+    val msg = if (message != "") Some(message) else None
+    val dialog = makeDialogStage(title, masthead, msg)
+    showDialogStage {
+      show(dialog)
     }
-
-    if (Platform.isFxApplicationThread)
-      show()
-    else
-      JFXSystem.await(show())
   }
 
-  def errorStage(title: String, masthead: Option[String], ex: Throwable) {
-    errorStage(title, masthead, Left(ex))
-  }
+  def infoStage(title: String, masthead: Option[String], message: String): Unit =
+    dialogStage(title, masthead, message, _.showInformation)
 
-  def errorStage(title: String, masthead: Option[String], error: String) {
-    errorStage(title, masthead, Right(error))
+  def warningStage(title: String, masthead: Option[String], message: String): Action =
+    dialogStage(title, masthead, message, _.showWarning)
+
+  def errorStage(title: String, masthead: Option[String], message: String): Action =
+    dialogStage(title, masthead, message, _.showError)
+
+  def errorStage(title: String, masthead: Option[String], ex: Throwable): Action = {
+    val dialog = makeDialogStage(title, masthead)
+    showDialogStage {
+      dialog.showException(ex)
+    }
   }
 
   protected def toolBar(pane: StepPane) = {
