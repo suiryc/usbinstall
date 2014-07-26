@@ -8,13 +8,21 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.geometry.{HPos, Insets, VPos}
 import javafx.scene.Node
-import javafx.scene.control.{Button, CheckBox, ComboBox, Hyperlink, Label}
+import javafx.scene.control.{
+  Button,
+  CheckBox,
+  ComboBox,
+  Hyperlink,
+  Label,
+  Tooltip
+}
 import javafx.scene.layout.{
   AnchorPane,
   ColumnConstraints,
   GridPane,
   RowConstraints
 }
+import javafx.scene.paint.Color
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.event.EventHandler._
@@ -52,7 +60,7 @@ class ChoosePartitionsController
   /* Note: subscriptions on external object need to be cancelled for
    * pane/scene to be GCed. */
 
-  /* XXX - check requirements (update according to OS settings) and display popup if not met */
+  protected var osLabels = Map[OSSettings, Label]()
 
   protected val device = InstallSettings.device.get.get
   protected val devicePartitions = device.partitions.toList sortBy(_.partNumber)
@@ -80,30 +88,60 @@ class ChoosePartitionsController
     selectPartitions(false)
 
     /* Note: rows 1 (labels) and 2 (checkboxes) already used */
-    Settings.core.oses.foldLeft(2) { (idx, partition) =>
+    Settings.core.oses.foldLeft(2) { (idx, settings) =>
       elements.getRowConstraints().add(new RowConstraints(30) { setValignment(VPos.CENTER) })
-      elements.addRow(idx, osRow(partition) : _*)
+      elements.addRow(idx, osRow(settings) : _*)
       idx + 1
     }
 
     updatePartitionsPane()
   }
 
-  private def updateDisable() {
-    stepPane.next.disable = Settings.core.oses.exists { settings =>
-      settings.enabled && !settings.installable
+  private def updateRequirements() {
+    val nok = Settings.core.oses.foldLeft(false) { (nok, settings) =>
+      /* We just need to create an instance to check its requirements */
+      val osInstall = OSInstall(settings, null, () => {})
+      val unmet = USBInstall.checkRequirements(osInstall.requirements())
+      val osNok = (settings.enabled && !settings.installable) || !unmet.isEmpty
+
+      var missingRequirements = List[String]()
+
+      if (settings.enabled) {
+        if (!settings.partition.get.isDefined)
+          missingRequirements :+= "Installation partition no set"
+        if (settings.isoPattern.isDefined && !settings.iso.get.isDefined)
+          missingRequirements :+= "ISO source not specified"
+      }
+      if (!unmet.isEmpty)
+        missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
+
+      osLabels.get(settings) foreach { label =>
+        if (osNok) {
+          val tooltip = new Tooltip(missingRequirements.mkString("\n"))
+          label.setTooltip(tooltip)
+          label.setTextFill(Color.RED)
+        }
+        else {
+          label.setTooltip(null)
+          label.setTextFill(Color.BLACK)
+        }
+      }
+
+      nok || osNok
     }
+
+    stepPane.next.disable = nok
   }
 
   override def setStepPane(stepPane: StepPane) {
     this.stepPane = stepPane
 
-    updateDisable
+    updateRequirements
 
     Settings.core.oses foreach { settings =>
-      subscriptions ::= settings.installStatus.listen(updateDisable)
-      subscriptions ::= settings.partition.listen(updateDisable)
-      subscriptions ::= settings.iso.listen(updateDisable)
+      subscriptions ::= settings.installStatus.listen(updateRequirements)
+      subscriptions ::= settings.partition.listen(updateRequirements)
+      subscriptions ::= settings.iso.listen(updateRequirements)
     }
   }
 
@@ -151,6 +189,8 @@ class ChoosePartitionsController
   private def osRow(settings: OSSettings): List[Node] = {
     val osLabel = new Label(settings.label)
     osLabel.setStyle("-fx-font-weight:bold")
+
+    osLabels += settings -> osLabel
 
     val osFormat = new CheckBox
     osFormat.setSelected(settings.format())

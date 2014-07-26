@@ -136,7 +136,7 @@ class USBInstall extends Application {
       val unmet = USBInstall.checkRequirements(requirements)
       if (!unmet.isEmpty)
         Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
-          unmet.mkString("Missing executables: ", ", ", ""))
+          unmet.mkString("Missing executable(s): ", ", ", ""))
     }
   }
 

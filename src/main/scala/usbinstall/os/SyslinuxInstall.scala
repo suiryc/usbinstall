@@ -24,6 +24,9 @@ class SyslinuxInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
+  override def installRequirements() =
+    Set("parted", "dd")
+
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
     val syslinuxVersion = settings.syslinuxVersion.get
     val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get

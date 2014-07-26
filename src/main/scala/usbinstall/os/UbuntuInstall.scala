@@ -17,6 +17,9 @@ class UbuntuInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
+  //override def installRequirements() =
+  //  Set("cpio", "lzma")
+
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
     val source = isoMount.get.to
     val sourceRoot = source.toAbsolutePath

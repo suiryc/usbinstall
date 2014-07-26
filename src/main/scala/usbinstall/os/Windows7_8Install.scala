@@ -14,6 +14,9 @@ class Windows7_8Install(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
+  override def installRequirements() =
+    Set("7z")
+
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
     val source = isoMount.get.to
     val sourceRoot = source.toAbsolutePath

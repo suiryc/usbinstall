@@ -24,6 +24,11 @@ class OSInstall(
 {
 
   /**
+   * Lists the requirements for installing this OS.
+   */
+  def installRequirements(): Set[String] = Set.empty
+
+  /**
    * Prepares OS installation.
    *
    * XXX - reword ?
@@ -41,6 +46,24 @@ class OSInstall(
    * EFI setup and syslinux bootloader install are performed right after.
    */
   def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = { }
+
+  def requirements(): Set[String] = {
+    val formatRequirements = if (settings.install && settings.formatable) {
+      val kind = settings.partitionFormat
+      (kind match {
+        case PartitionFormat.ext2 =>
+          Set(s"mkfs.${kind}", "e2label")
+
+        case PartitionFormat.fat32 =>
+          Set("mkfs.vfat", "mlabel")
+
+        case PartitionFormat.ntfs =>
+          Set(s"mkfs.${kind}", "ntfslabel")
+      }) ++ Set("fdisk", "partprobe")
+    } else Set.empty
+
+    installRequirements() ++ formatRequirements
+  }
 
   protected def getSyslinuxFile(targetRoot: Path) =
     Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
