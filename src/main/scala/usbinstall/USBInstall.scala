@@ -17,6 +17,7 @@ import suiryc.scala.log.{
   LogWriter,
   ProxyAppender
 }
+import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -32,7 +33,6 @@ object USBInstall extends App {
   protected var lineWriter: ProxyLineWriter = _
   protected var systemStreams: SystemStreams = _
 
-  /* XXX - check we are root */
   /* XXX - check external tools are present */
 
   (new USBInstall).launch()
@@ -90,6 +90,28 @@ class USBInstall extends Application {
     Stages.chooseDevice()
     /* Explicitely load the settings */
     Settings.load()
+
+    checkUser()
+  }
+
+  def checkUser() {
+    /* Notes on ControlsFX dialog:
+     *  - dialog is displayed relatively to owner; which is upper-left corner if
+     *    it is not yet shown
+     *  - using dialog while stage is being built (in JavaFX thread) appears to
+     *    have some side effects: primary stage remains resizable while dialog
+     *    is being displayed, and switches to non-resizable once done
+     *
+     * Easy solution is to display the dialog after the primary stage has been
+     * shown, in a separate thread (Future).
+     */
+    import scala.concurrent.Future
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
+    if (stdout != "0") Future {
+      Stages.warningStage("Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+    }
   }
 
   override def stop() {
