@@ -21,7 +21,7 @@ import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-object USBInstall extends App {
+object USBInstall {
 
   protected val loggerNames = List("usbinstall", "suiryc")
 
@@ -33,9 +33,10 @@ object USBInstall extends App {
   protected var lineWriter: ProxyLineWriter = _
   protected var systemStreams: SystemStreams = _
 
-  /* XXX - check external tools are present */
 
-  (new USBInstall).launch()
+  def main(args: Array[String]) {
+    (new USBInstall).launch()
+  }
 
   private def newAppender(writers: Seq[LogWriter]) = {
     val appender = new ProxyAppender(writers)
@@ -68,6 +69,25 @@ object USBInstall extends App {
     lineWriter.removeWriter(writer)
   }
 
+  val requirements =
+    Set("blkid", "blockdev")
+
+  protected var checkedRequirements: Set[String] = Set.empty
+
+  def checkRequirements(requirements: Set[String]): Set[String] = {
+    var unmet: Set[String] = Set.empty
+
+    for (requirement <- requirements if (!checkedRequirements.contains(requirement))) {
+      val CommandResult(result, stdout, _) = Command.execute(Seq("which", requirement))
+      if ((result != 0) || (stdout == ""))
+        unmet += requirement
+      else
+        checkedRequirements += requirement
+    }
+
+    unmet
+  }
+
 }
 
 class USBInstall extends Application {
@@ -91,10 +111,10 @@ class USBInstall extends Application {
     /* Explicitely load the settings */
     Settings.load()
 
-    checkUser()
+    checkRequirements()
   }
 
-  def checkUser() {
+  def checkRequirements() {
     /* Notes on ControlsFX dialog:
      *  - dialog is displayed relatively to owner; which is upper-left corner if
      *    it is not yet shown
@@ -108,9 +128,15 @@ class USBInstall extends Application {
     import scala.concurrent.Future
     import scala.concurrent.ExecutionContext.Implicits.global
 
-    val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
-    if (stdout != "0") Future {
-      Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+    Future {
+      val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
+      if (stdout != "0")
+        Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+
+      val unmet = USBInstall.checkRequirements(requirements)
+      if (!unmet.isEmpty)
+        Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
+          unmet.mkString("Missing executables: ", ", ", ""))
     }
   }
 

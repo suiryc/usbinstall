@@ -49,6 +49,8 @@ class ChoosePartitionsController
   /* Note: subscriptions on external object need to be cancelled for
    * pane/scene to be GCed. */
 
+  /* XXX - check requirements (update according to OS settings) and display popup if not met */
+
   protected val device = InstallSettings.device.get.get
   protected val devicePartitions = device.partitions.toList sortBy(_.partNumber)
   protected var partitions = List[DevicePartition]()
