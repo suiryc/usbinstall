@@ -21,6 +21,8 @@ class ToolBarController
   @FXML
   protected var showLogs: ToggleButton = _
 
+  protected var paneController: Option[Any] = None
+
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     showLogs.setSelected(LogsStage.showing.get)
     /* Note: subscriptions on external object need to be cancelled for
@@ -30,8 +32,20 @@ class ToolBarController
     }
   }
 
+  def setPaneController(controller: Option[Any]) {
+    paneController = controller
+  }
+
   def onOptions(event: ActionEvent) {
-    val options = FXMLLoader.load[Parent](getClass.getResource("options.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("options.fxml"))
+    val options = loader.load[Parent]()
+    val controller = loader.getController[OptionsController]()
+
+    paneController foreach { paneController =>
+      if (paneController.isInstanceOf[SettingsClearedListener])
+        controller.setListener(paneController.asInstanceOf[SettingsClearedListener])
+    }
+
     val stage = new Stage
     stage.setTitle("Options")
     stage.setScene(new Scene(options))

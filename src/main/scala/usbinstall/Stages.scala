@@ -107,11 +107,12 @@ object Stages
     }
   }
 
-  protected def toolBar(pane: StepPane) = {
+  protected def toolBar(pane: StepPane, paneController: Option[Any]) = {
     val loader = new FXMLLoader(getClass.getResource("toolBar.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ToolBarController]()
     pane.subscriptionHolders ::= controller
+    controller.setPaneController(paneController)
 
     root
   }
@@ -125,27 +126,28 @@ object Stages
     root
   }
 
-  def step(pane: StepPane) = {
+  def step(tuple: (StepPane, Option[Any])) = {
+    val (pane, controller) = tuple
     val grid = new GridPane
     grid.setAlignment(Pos.TOP_CENTER)
     grid.getColumnConstraints().add(new ColumnConstraints() { setHgrow(Priority.ALWAYS) })
     grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.NEVER) })
     grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.ALWAYS) })
-    grid.addColumn(0, toolBar(pane), pane, stepChange(pane))
+    grid.addColumn(0, toolBar(pane, controller), pane, stepChange(pane))
 
     new Scene(grid)
   }
 
   def chooseDevice() {
-    changeScene("Choose device", step(Panes.chooseDevice))
+    changeScene("Choose device", step(Panes.chooseDevice()))
   }
 
   def choosePartitions() {
-    changeScene("Choose partitions", step(Panes.choosePartitions))
+    changeScene("Choose partitions", step(Panes.choosePartitions()))
   }
 
   def install() {
-    changeScene("Install", step(Panes.install))
+    changeScene("Install", step(Panes.install()))
   }
 
 }

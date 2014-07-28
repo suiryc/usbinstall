@@ -36,6 +36,7 @@ import usbinstall.settings.{InstallSettings, Settings}
 class ChoosePartitionsController
   extends Initializable
   with UseStepPane
+  with SettingsClearedListener
   with HasEventSubscriptions
   with Logging
 {
@@ -95,6 +96,10 @@ class ChoosePartitionsController
     }
 
     updatePartitionsPane()
+  }
+
+  override def settingsCleared() {
+    selectPartitions(true)
   }
 
   private def updateRequirements() {

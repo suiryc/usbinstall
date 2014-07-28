@@ -19,11 +19,17 @@ class OptionsController extends Initializable {
   @FXML
   protected var componentInstallError: ComboBox[ErrorAction.Value] = _
 
+  protected var listener: SettingsClearedListener = _
+
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     logInstallThreshold.getItems().setAll(LogLevel.values.toList:_*)
     componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
 
     update()
+  }
+
+  def setListener(listener: SettingsClearedListener) {
+    this.listener = listener
   }
 
   def update() {
@@ -58,6 +64,7 @@ class OptionsController extends Initializable {
       Settings.core.prefs.removeNode()
       Settings.core.reset()
       update()
+      Option(listener).foreach(_.settingsCleared())
     }
   }
 
@@ -67,5 +74,12 @@ class OptionsController extends Initializable {
 
   protected def window =
     logInstallThreshold.getScene().getWindow()
+
+}
+
+
+trait SettingsClearedListener {
+
+  def settingsCleared(): Unit
 
 }

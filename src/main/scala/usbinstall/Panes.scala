@@ -31,17 +31,17 @@ object Panes
     devices + (device.dev.toString() -> device)
   }
 
-  protected def initPane(pane: StepPane, root: Parent) = {
+  protected def initPane(pane: StepPane, root: Parent, controller: Option[Any] = None): (StepPane, Option[Any]) = {
     pane.getChildren().setAll(root)
     AnchorPane.setTopAnchor(root, 0)
     AnchorPane.setRightAnchor(root, 0)
     AnchorPane.setBottomAnchor(root, 0)
     AnchorPane.setLeftAnchor(root, 0)
 
-    pane
+    (pane, controller)
   }
 
-  def chooseDevice = {
+  def chooseDevice() = {
     val root = FXMLLoader.load[Parent](getClass.getResource("chooseDevice.fxml"))
     val pane = new AnchorPane with StepPane {
       override val previous = NoButton
@@ -69,7 +69,7 @@ object Panes
     initPane(pane, root)
   }
 
-  def choosePartitions = {
+  def choosePartitions() = {
     val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ChoosePartitionsController]()
@@ -91,7 +91,7 @@ object Panes
     }
     controller.setStepPane(pane)
 
-    initPane(pane, root)
+    initPane(pane, root, Some(controller))
   }
 
 
