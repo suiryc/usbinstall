@@ -7,6 +7,7 @@ import javafx.fxml.{FXML, Initializable}
 import javafx.geometry.Insets
 import javafx.scene.control.{Label, Tab, TabPane}
 import javafx.scene.layout.{AnchorPane, GridPane, Priority, VBox}
+import javafx.stage.Window
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
@@ -21,8 +22,9 @@ import usbinstall.settings.{InstallSettings, Settings}
 
 class InstallController
   extends Initializable
-  with HasEventSubscriptions
   with UseStepPane
+  with SettingsClearedListener
+  with HasEventSubscriptions
   with Logging
 {
 
@@ -74,6 +76,13 @@ class InstallController
     subscriptions ::= USBInstall.stage.widthProperty().listen { width =>
       logPanes.setMaxWidth(width.asInstanceOf[Double])
     }
+  }
+
+  override def canClearSettings() = false
+
+  override def settingsCleared(source: Window) {
+    Stages.errorStage(Option(source), "Settings cleared", Some("Something unexpected happened"),
+      "Settings have been cleared while it should not be possible.")
   }
 
   override def setStepPane(stepPane: StepPane) {

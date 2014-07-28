@@ -39,7 +39,7 @@
   <rowConstraints>
     <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="BOTTOM" vgrow="SOMETIMES" />
   </rowConstraints>
-<children><Button mnemonicParsing="false" onAction="#onReset" text="Reset" /><Button mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1" />
+<children><Button mnemonicParsing="false" onAction="#onReset" text="Reset" /><Button fx:id="clearButton" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1" />
             <Button mnemonicParsing="false" onAction="#onDone" text="Done" GridPane.columnIndex="2" />
 </children>
 <padding>

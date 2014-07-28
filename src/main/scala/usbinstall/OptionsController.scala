@@ -4,8 +4,8 @@ import java.net.URL
 import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
-import javafx.scene.control.ComboBox
-import javafx.stage.Stage
+import javafx.scene.control.{Button, ComboBox}
+import javafx.stage.{Stage, Window}
 import org.controlsfx.dialog.Dialog
 import suiryc.scala.log.LogLevel
 import usbinstall.settings.{ErrorAction, Settings}
@@ -19,6 +19,9 @@ class OptionsController extends Initializable {
   @FXML
   protected var componentInstallError: ComboBox[ErrorAction.Value] = _
 
+  @FXML
+  protected var clearButton: Button = _
+
   protected var listener: SettingsClearedListener = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
@@ -30,6 +33,9 @@ class OptionsController extends Initializable {
 
   def setListener(listener: SettingsClearedListener) {
     this.listener = listener
+
+    /* Note: tooltip are not shown for disabled controls */
+    clearButton.setDisable(!listener.canClearSettings())
   }
 
   def update() {
@@ -64,7 +70,7 @@ class OptionsController extends Initializable {
       Settings.core.prefs.removeNode()
       Settings.core.reset()
       update()
-      Option(listener).foreach(_.settingsCleared())
+      Option(listener).foreach(_.settingsCleared(window))
     }
   }
 
@@ -80,6 +86,8 @@ class OptionsController extends Initializable {
 
 trait SettingsClearedListener {
 
-  def settingsCleared(): Unit
+  def canClearSettings() = true
+
+  def settingsCleared(source: Window): Unit
 
 }

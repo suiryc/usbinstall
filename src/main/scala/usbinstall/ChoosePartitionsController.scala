@@ -23,6 +23,7 @@ import javafx.scene.layout.{
   RowConstraints
 }
 import javafx.scene.paint.Color
+import javafx.stage.Window
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.event.EventHandler._
@@ -98,7 +99,7 @@ class ChoosePartitionsController
     updatePartitionsPane()
   }
 
-  override def settingsCleared() {
+  override def settingsCleared(source: Window) {
     selectPartitions(true)
   }
 

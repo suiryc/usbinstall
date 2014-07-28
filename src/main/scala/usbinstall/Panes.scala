@@ -117,7 +117,7 @@ object Panes
     }
     controller.setStepPane(pane)
 
-    initPane(pane, root)
+    initPane(pane, root, Some(controller))
   }
 
 }
