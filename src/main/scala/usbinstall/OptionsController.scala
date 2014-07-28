@@ -57,6 +57,7 @@ class OptionsController extends Initializable {
     if (action == Dialog.Actions.OK) {
       Settings.core.prefs.removeNode()
       Settings.core.reset()
+      update()
     }
   }
 
