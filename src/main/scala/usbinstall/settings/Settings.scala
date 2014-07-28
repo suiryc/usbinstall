@@ -88,7 +88,7 @@ class Settings(
     PathsEx.get(path)
   }
 
-  val syslinuxExtraComponents = syslinuxExtra.getConfigList("components").toList map { config =>
+  lazy val syslinuxExtraComponents = syslinuxExtra.getConfigList("components").toList map { config =>
     val kind = option[String]("kind", config) getOrElse("image")
     val label = option[String]("label", config) getOrElse(kind)
     val image = option[String]("image", config) flatMap { name =>

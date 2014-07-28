@@ -137,6 +137,11 @@ class USBInstall extends Application {
       if (!unmet.isEmpty)
         Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
           unmet.mkString("Missing executable(s): ", ", ", ""))
+
+      /* Accessing this lazy val now will trigger exceptions (error stage) for
+       * unexisting paths.
+       */
+      Settings.core.syslinuxExtraComponents
     }
   }
 
