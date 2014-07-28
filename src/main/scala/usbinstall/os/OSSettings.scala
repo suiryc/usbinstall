@@ -96,8 +96,11 @@ class OSSettings(
   protected val partitionSetting: PersistentProperty[String] =
     PersistentProperty(PersistentSetting.forString("settings.partition", null))
 
-  val partition: ObjectProperty[Option[DevicePartition]] = {
-    val partition = partitionSetting.setting.option flatMap { dev =>
+  val partition: ObjectProperty[Option[DevicePartition]] =
+    new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))
+
+  protected def getDevicePartition(v: Option[String]) =
+    v flatMap { dev =>
       val path = Paths.get(dev)
       if (path.toFile.exists) {
         DevicePartition.option(path) flatMap { initial =>
@@ -108,9 +111,6 @@ class OSSettings(
       }
       else None
     }
-
-    new SimpleObjectProperty(partition)
-  }
 
   partition.listen { newValue =>
     partitionSetting() = newValue.map(_.dev.toString).orNull
@@ -141,6 +141,7 @@ class OSSettings(
   def reset() {
     format.reset()
     installStatus.reset()
+    partition.setValue(getDevicePartition(Option(partitionSetting.setting())))
   }
 
   override def toString =

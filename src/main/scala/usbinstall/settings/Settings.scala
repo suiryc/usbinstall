@@ -121,10 +121,15 @@ class Settings(
   val componentInstallError =
     PersistentProperty(PersistentSetting.forEnumerationEx("componentInstallError", ErrorAction.Ask))
 
-  def reset() =
+  def reset() {
+    logDebugThreshold.reset()
+    logInstallThreshold.reset()
+    componentInstallError.reset()
+
     for (os <- oses) {
       os.reset()
     }
+  }
 
 }
 
