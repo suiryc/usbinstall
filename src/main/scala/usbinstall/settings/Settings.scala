@@ -29,16 +29,6 @@ object Settings {
   val core = new Settings(ConfigFactory.load().getConfig(confPath),
     Preferences.userRoot.node("suiryc.usbinstall").node(confPath))
 
-  object default {
-
-    val logDebugThreshold = LogLevel.DEBUG
-
-    val logInstallThreshold = LogLevel.INFO
-
-    val componentInstallError = ErrorAction.Ask
-
-  }
-
   def load() {
     /* Settings are automatically loaded by accessing this object for the
      * first time.
@@ -123,13 +113,13 @@ class Settings(
   val rEFIndPath = PathsEx.get(config.getString("refind.path"))
 
   val logDebugThreshold =
-    PersistentProperty(PersistentSetting.forSEnumeration("logDebugThreshold", Settings.default.logDebugThreshold))
+    PersistentProperty(PersistentSetting.forSEnumeration("logDebugThreshold", LogLevel.DEBUG))
 
   val logInstallThreshold =
-    PersistentProperty(PersistentSetting.forSEnumeration("logInstallThreshold", Settings.default.logInstallThreshold))
+    PersistentProperty(PersistentSetting.forSEnumeration("logInstallThreshold", LogLevel.INFO))
 
   val componentInstallError =
-    PersistentSetting.forEnumerationEx("componentInstallError", Settings.default.componentInstallError)
+    PersistentProperty(PersistentSetting.forEnumerationEx("componentInstallError", ErrorAction.Ask))
 
   def reset() =
     for (os <- oses) {

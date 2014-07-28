@@ -28,7 +28,7 @@ class OptionsController extends Initializable {
 
   def update() {
     logInstallThreshold.getSelectionModel().select(Settings.core.logInstallThreshold())
-    componentInstallError.getSelectionModel().select(Settings.core.componentInstallError)
+    componentInstallError.getSelectionModel().select(Settings.core.componentInstallError())
   }
 
   def onLogInstallThreshold(event: ActionEvent) {
@@ -40,8 +40,8 @@ class OptionsController extends Initializable {
   }
 
   def onReset(event: ActionEvent) {
-    Settings.core.logInstallThreshold.update(Settings.default.logInstallThreshold)
-    Settings.core.componentInstallError.update(Settings.default.componentInstallError)
+    Settings.core.logInstallThreshold.resetDefault()
+    Settings.core.componentInstallError.resetDefault()
     /* Note: we need to update the pane; alternatively we could make persistent
      * properties out of those persistent settings and update the control upon
      * value changing.
