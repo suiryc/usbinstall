@@ -8,6 +8,7 @@ import javafx.scene.control.{Button, ComboBox}
 import javafx.stage.{Stage, Window}
 import org.controlsfx.dialog.Dialog
 import suiryc.scala.log.LogLevel
+import suiryc.scala.settings.SettingsSnapshot
 import usbinstall.settings.{ErrorAction, Settings}
 
 
@@ -22,11 +23,18 @@ class OptionsController extends Initializable {
   @FXML
   protected var clearButton: Button = _
 
+  @FXML
+  protected var cancelButton: Button = _
+
   protected var listener: SettingsClearedListener = _
+
+  protected val snapshot = new SettingsSnapshot()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     logInstallThreshold.getItems().setAll(LogLevel.values.toList:_*)
     componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
+
+    Settings.core.snapshot(snapshot)
 
     update()
   }
@@ -41,6 +49,7 @@ class OptionsController extends Initializable {
   def update() {
     logInstallThreshold.getSelectionModel().select(Settings.core.logInstallThreshold())
     componentInstallError.getSelectionModel().select(Settings.core.componentInstallError())
+    cancelButton.setDisable(!snapshot.changed())
   }
 
   def onLogInstallThreshold(event: ActionEvent) {
@@ -72,6 +81,11 @@ class OptionsController extends Initializable {
       update()
       Option(listener).foreach(_.settingsCleared(window))
     }
+  }
+
+  def onCancel(event: ActionEvent) {
+    snapshot.reset()
+    update()
   }
 
   def onDone(event: ActionEvent) {

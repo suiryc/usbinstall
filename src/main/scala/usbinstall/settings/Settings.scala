@@ -9,7 +9,13 @@ import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.log.LogLevel
-import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting}
+import suiryc.scala.settings.{
+  BaseConfig,
+  BaseSettings,
+  PersistentSetting,
+  SettingSnapshot,
+  SettingsSnapshot
+}
 import suiryc.scala.misc.{EnumerationEx, Units}
 import usbinstall.Stages
 import usbinstall.os.{
@@ -128,6 +134,18 @@ class Settings(
 
     for (os <- oses) {
       os.reset()
+    }
+  }
+
+  def snapshot(snapshot: SettingsSnapshot) {
+    snapshot.add(
+      SettingSnapshot(logDebugThreshold),
+      SettingSnapshot(logInstallThreshold),
+      SettingSnapshot(componentInstallError)
+    )
+
+    for (os <- oses) {
+      os.snapshot(snapshot)
     }
   }
 

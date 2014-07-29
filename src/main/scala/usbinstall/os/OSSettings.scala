@@ -6,7 +6,12 @@ import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.misc.EnumerationEx
-import suiryc.scala.settings.{BaseSettings, PersistentSetting}
+import suiryc.scala.settings.{
+  BaseSettings,
+  PersistentSetting,
+  SettingSnapshot,
+  SettingsSnapshot
+}
 import suiryc.scala.sys.linux.{Device, DevicePartition}
 import usbinstall.Panes
 
@@ -142,6 +147,14 @@ class OSSettings(
     format.reset()
     installStatus.reset()
     partition.setValue(getDevicePartition(Option(partitionSetting.setting())))
+  }
+
+  def snapshot(snapshot: SettingsSnapshot) {
+    snapshot.add(
+      SettingSnapshot(format),
+      SettingSnapshot(installStatus),
+      SettingSnapshot(partition)
+    )
   }
 
   override def toString =

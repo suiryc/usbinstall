@@ -35,12 +35,24 @@
     <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
     <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
             <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
+            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
   </columnConstraints>
   <rowConstraints>
     <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="BOTTOM" vgrow="SOMETIMES" />
   </rowConstraints>
-<children><Button mnemonicParsing="false" onAction="#onReset" text="Reset" /><Button fx:id="clearButton" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1" />
-            <Button mnemonicParsing="false" onAction="#onDone" text="Done" GridPane.columnIndex="2" />
+<children><Button mnemonicParsing="false" onAction="#onReset" text="Reset">
+               <tooltip>
+                  <Tooltip text="Reset shown settings to default values" />
+               </tooltip></Button><Button fx:id="clearButton" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1">
+               <tooltip>
+                  <Tooltip text="Clear all settings" />
+               </tooltip></Button>
+            <Button mnemonicParsing="false" onAction="#onDone" text="Done" GridPane.columnIndex="3" />
+            <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#onCancel" text="Cancel" GridPane.columnIndex="2">
+               <tooltip>
+                  <Tooltip text="Cancel options changes" />
+               </tooltip>
+            </Button>
 </children>
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
