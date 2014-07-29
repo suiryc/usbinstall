@@ -46,18 +46,24 @@ class OptionsController extends Initializable {
     clearButton.setDisable(!listener.canClearSettings())
   }
 
-  def update() {
+  protected def updateCancelButton() {
+    cancelButton.setDisable(!snapshot.changed())
+  }
+
+  protected def update() {
     logInstallThreshold.getSelectionModel().select(Settings.core.logInstallThreshold())
     componentInstallError.getSelectionModel().select(Settings.core.componentInstallError())
-    cancelButton.setDisable(!snapshot.changed())
+    updateCancelButton()
   }
 
   def onLogInstallThreshold(event: ActionEvent) {
     Settings.core.logInstallThreshold.update(logInstallThreshold.getValue())
+    updateCancelButton()
   }
 
   def onComponentInstallError(event: ActionEvent) {
     Settings.core.componentInstallError.update(componentInstallError.getValue())
+    updateCancelButton()
   }
 
   def onReset(event: ActionEvent) {
