@@ -2,6 +2,7 @@ package usbinstall
 
 import ch.qos.logback.classic.{Logger, LoggerContext}
 import java.io.PrintStream
+import java.util.Locale
 import javafx.application.Application
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
@@ -22,6 +23,9 @@ import usbinstall.settings.{InstallSettings, Settings}
 
 
 object USBInstall {
+
+  /* Set locale to english as application is not i18n */
+  Locale.setDefault(Locale.ENGLISH)
 
   protected val loggerNames = List("usbinstall", "suiryc")
 
