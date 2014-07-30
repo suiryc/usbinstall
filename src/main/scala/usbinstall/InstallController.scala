@@ -85,27 +85,32 @@ class InstallController
       "Settings have been cleared while it should not be possible.")
   }
 
+  private def taskDone() {
+    USBInstall.removeLogWriter(installLogWriter)
+
+    /* First enable 'Previous' and disable 'Cancel' */
+    JFXSystem.schedule {
+      stepPane.previous.disable = false
+      stepPane.next.disable = true
+    }
+    /* Then replace 'Cancel' by 'Done' */
+    JFXSystem.schedule {
+      stepPane.next.label = "Done"
+      stepPane.next.onTrigger = () => {
+        onDone()
+        true
+      }
+      stepPane.next.disable = false
+    }
+  }
+
+  private def taskFailed(ex: Throwable) {
+    error(s"Task failed", ex)
+    taskDone()
+  }
+
   override def setStepPane(stepPane: StepPane) {
     this.stepPane = stepPane
-
-    def done() {
-      USBInstall.removeLogWriter(installLogWriter)
-
-      /* First enable 'Previous' and disable 'Cancel' */
-      JFXSystem.schedule {
-        stepPane.previous.disable = false
-        stepPane.next.disable = true
-      }
-      /* Then replace 'Cancel' by 'Done' */
-      JFXSystem.schedule {
-        stepPane.next.label = "Done"
-        stepPane.next.onTrigger = () => {
-          onDone()
-          true
-        }
-        stepPane.next.disable = false
-      }
-    }
 
     /* Note: since we access stepPane upon completion, we need to set it first
      * and cannot start installing upon 'initialize'.
@@ -115,13 +120,12 @@ class InstallController
     def install() {
       cancellableFuture = CancellableFuture(installTask(_))
       cancellableFuture.future.onComplete {
-        case Failure(e) =>
-          error(s"Task failed", e)
-          done()
+        case Failure(ex) =>
+          taskFailed(ex)
 
         case Success(_) =>
           info(s"Task succeeded")
-          done()
+          taskDone()
       }
     }
 
@@ -208,7 +212,7 @@ class InstallController
         OSInstall.install(os)
       }
       catch {
-        case e @ Cancelled =>
+        case e: Cancelled =>
           resetAppender()
           throw e
 
@@ -236,7 +240,11 @@ class InstallController
     /* Note: we are in the JavaFX thread */
     ui.activity("Cancelling ...")
     stepPane.next.disable = true
-    cancellableFuture.cancel()
+    Option(cancellableFuture).fold {
+      taskFailed(Cancelled())
+    } {
+      _.cancel()
+    }
   }
 
   def onDone() {
