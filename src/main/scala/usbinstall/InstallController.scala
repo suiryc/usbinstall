@@ -167,7 +167,7 @@ class InstallController
     ui.activity(s"ISO mount path[${InstallSettings.pathMountISO}]")
     ui.activity(s"Partition mount path[${InstallSettings.pathMountPartition}]")
 
-    /* XXX - handle issues (skip/stop) */
+    /* XXX - handle issues (ask/skip/stop) at a fine level ? */
     val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
     val (previousTab, previousLogWriter) = oses.foldLeft[(Tab, ThresholdLogLinePatternWriter)](installTab, installLogWriter) { (previous, settings) =>
@@ -217,6 +217,7 @@ class InstallController
           throw e
 
         case e: Throwable =>
+          /* XXX - handle ask/skip/stop (only stop is done right now) */
           error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
           resetAppender()
           throw e
