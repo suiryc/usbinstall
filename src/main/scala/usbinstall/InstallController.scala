@@ -88,6 +88,25 @@ class InstallController
   override def setStepPane(stepPane: StepPane) {
     this.stepPane = stepPane
 
+    def done() {
+      USBInstall.removeLogWriter(installLogWriter)
+
+      /* First enable 'Previous' and disable 'Cancel' */
+      JFXSystem.schedule {
+        stepPane.previous.disable = false
+        stepPane.next.disable = true
+      }
+      /* Then replace 'Cancel' by 'Done' */
+      JFXSystem.schedule {
+        stepPane.next.label = "Done"
+        stepPane.next.onTrigger = () => {
+          onDone()
+          true
+        }
+        stepPane.next.disable = false
+      }
+    }
+
     /* Note: since we access stepPane upon completion, we need to set it first
      * and cannot start installing upon 'initialize'.
      */
@@ -95,26 +114,11 @@ class InstallController
     cancellableFuture.future.onComplete {
       case Failure(e) =>
         error(s"Task failed", e)
-        USBInstall.removeLogWriter(installLogWriter)
-        JFXSystem.schedule(stepPane.previous.disable = false)
+        done()
 
       case Success(_) =>
         info(s"Task succeeded")
-        USBInstall.removeLogWriter(installLogWriter)
-        /* First enable 'Previous' and disable 'Cancel' */
-        JFXSystem.schedule {
-          stepPane.previous.disable = false
-          stepPane.next.disable = true
-        }
-        /* Then replace 'Cancel' by 'Done' */
-        JFXSystem.schedule {
-          stepPane.next.label = "Done"
-          stepPane.next.onTrigger = () => {
-            onDone()
-            true
-          }
-          stepPane.next.disable = false
-        }
+        done()
     }
   }
 
