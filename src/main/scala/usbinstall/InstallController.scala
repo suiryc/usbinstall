@@ -109,16 +109,39 @@ class InstallController
 
     /* Note: since we access stepPane upon completion, we need to set it first
      * and cannot start installing upon 'initialize'.
+     * In case an error message needs to be shown immediately, it is best to
+     * wait for this stage to be shown before starting installing.
      */
-    cancellableFuture = CancellableFuture(installTask(_))
-    cancellableFuture.future.onComplete {
-      case Failure(e) =>
-        error(s"Task failed", e)
-        done()
+    def install() {
+      cancellableFuture = CancellableFuture(installTask(_))
+      cancellableFuture.future.onComplete {
+        case Failure(e) =>
+          error(s"Task failed", e)
+          done()
 
-      case Success(_) =>
-        info(s"Task succeeded")
-        done()
+        case Success(_) =>
+          info(s"Task succeeded")
+          done()
+      }
+    }
+
+    USBInstall.stage.showingProperty().listen2 { (subscription, showing) =>
+      /* Note: the stage content is created before hiding the previous one, so
+       * we get hiding first, then showing.
+       */
+      if (showing) {
+        if (USBInstall.stage.getScene() eq vbox.getScene()) {
+          install()
+        }
+        else {
+          /* Will probably never happen, but we don't want to install if the
+           * stage scene is not the expected one.
+           */
+          Stages.warningStage(None, "Unexpected situation", None,
+            "Displayed window does not appear to be the expected one (installation)!")
+        }
+        subscription.unsubscribe()
+      }
     }
   }
 
