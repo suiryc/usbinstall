@@ -227,9 +227,7 @@ object OSInstall
       }
       todo(iso, part)
     }
-    /* XXX - catch and log */
     finally {
-      /* XXX - try/catch ? */
       part foreach { part =>
         os.ui.activity("Unmounting partition")
         part.umount

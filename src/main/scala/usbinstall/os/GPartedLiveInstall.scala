@@ -18,7 +18,7 @@ class GPartedLiveInstall(
     val targetRoot = partMount.get.to.toAbsolutePath
     val finder = source.***
 
-    /* XXX - handle errors */
+    /* XXX - check whether errors trigger exceptions or not */
     copy(finder, sourceRoot, targetRoot, "Copy ISO content")
 
     renameSyslinux(targetRoot)
