@@ -9,7 +9,7 @@ import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.misc.RichEither._
-import suiryc.scala.sys.Command
+import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
@@ -335,7 +335,9 @@ w
             val target = part.dev
             Command.execute(Seq(syslinux.toString, "--install", target.toString))
         }
-        /* XXX - what to do with command result ? */
+      if (result != 0) {
+        error(s"Failed to install syslinux bootloader: $stderr")
+        throw new Exception("Failed to install syslinux bootloader")
       }
     }
   }
