@@ -319,9 +319,9 @@ w
       part <- os.settings.partition.get
       mount <- mount
     } {
-      SyslinuxInstall.get(syslinuxVersion).fold {
-        /* XXX - log error */
-      } { syslinuxRoot =>
+      /* Note: we already ensured this syslinux version was found */
+      val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
+      val CommandResult(result, stdout, stderr) =
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
             val syslinux = syslinuxRoot.resolve(Paths.get("extlinux", "extlinux"))
@@ -378,9 +378,8 @@ w
       /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
         os.ui.action(s"Search syslinux $version") {
-          SyslinuxInstall.get(version)
-          /* XXX - stop right now if problem ? */
-          /* XXX - setting to only set syslinux ? */
+          if (!SyslinuxInstall.get(version).isDefined)
+            throw new Exception(s"Could not find syslinux ${version}")
         }
       }
 
