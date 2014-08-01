@@ -3,11 +3,12 @@ package usbinstall
 import grizzled.slf4j.Logging
 import java.net.URL
 import java.util.ResourceBundle
-import javafx.fxml.{FXML, Initializable}
+import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.geometry.Insets
+import javafx.scene.{Parent, Scene}
 import javafx.scene.control.{Label, Tab, TabPane}
 import javafx.scene.layout.{AnchorPane, GridPane, Priority, VBox}
-import javafx.stage.Window
+import javafx.stage.{Modality, Stage, Window}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
@@ -15,9 +16,10 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.os.{OSInstall, OSKind}
-import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.settings.{ErrorAction, InstallSettings, Settings}
 
 
 class InstallController
@@ -58,7 +60,7 @@ class InstallController
 
   protected var ui: InstallUI = _
 
-  protected var cancellableFuture: CancellableFuture[Unit] = _
+  protected var cancellableFuture: CancellableFuture[List[String]] = _
 
   protected var installLogWriter: ThresholdLogLinePatternWriter = _
 
@@ -105,7 +107,13 @@ class InstallController
   }
 
   private def taskFailed(ex: Throwable) {
-    error(s"Task failed", ex)
+    error(s"Installation failed", ex)
+    val notified = ex match {
+      case InstallationException(_, _, notified) => notified
+      case _ => false
+    }
+    if (!notified)
+      Stages.errorStage(None, "Installation failed", None, ex)
     taskDone()
   }
 
@@ -123,9 +131,17 @@ class InstallController
         case Failure(ex) =>
           taskFailed(ex)
 
-        case Success(_) =>
-          info(s"Task succeeded")
+        case Success(failedOSes) =>
+          info(s"Task ended")
           taskDone()
+
+          if (failedOSes.isEmpty) {
+            Stages.infoStage(None, "Installation done", None, "Installation ended without errors")
+          }
+          else {
+            Stages.warningStage(None, "Installation done", None,
+              s"Installation ended.\n\nThe following elements failed:\n${failedOSes.mkString(", ")}")
+          }
       }
     }
 
@@ -149,7 +165,7 @@ class InstallController
     }
   }
 
-  private def installTask(cancellable: Cancellable) {
+  private def installTask(cancellable: Cancellable): List[String] = {
 
     def checkCancelled() =
       cancellable.check {
@@ -167,12 +183,13 @@ class InstallController
     ui.activity(s"ISO mount path[${InstallSettings.pathMountISO}]")
     ui.activity(s"Partition mount path[${InstallSettings.pathMountPartition}]")
 
-    /* XXX - handle issues (ask/skip/stop) at a fine level ? */
     val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
-    val (previousTab, previousLogWriter) = oses.foldLeft[(Tab, ThresholdLogLinePatternWriter)](installTab, installLogWriter) { (previous, settings) =>
-      val (previousTab, previousLogWriter) = previous
-      val next = if (settings.enabled) {
+    val (previousTab, previousLogWriter, failedOses) =
+      oses.foldLeft[(Tab, ThresholdLogLinePatternWriter, List[String])](installTab, installLogWriter, Nil) { (previous, settings) =>
+      val (previousTab, previousLogWriter, previousFailedOSes) = previous
+
+      if (settings.enabled) {
         val osActivity = new LogArea()
         ui.osActivity = Some(osActivity)
 
@@ -199,34 +216,51 @@ class InstallController
             logPanes.getSelectionModel().select(osTab)
         }
 
-        Some(osTab, osLogWriter)
-      } else None
+        def resetAppender() {
+          switchLogWriter(osLogWriter, installLogWriter)
+        }
 
-      def resetAppender() {
-        switchLogWriter(next map(_._2) getOrElse(previousLogWriter), installLogWriter)
+        val next = try {
+          val os = OSInstall(settings, ui, checkCancelled)
+
+          OSInstall.install(os)
+          (osTab, osLogWriter, previousFailedOSes)
+        }
+        catch {
+          case e: Cancelled =>
+            resetAppender()
+            throw e
+
+          case e: Throwable =>
+            error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
+            resetAppender()
+
+            def doSkip() =
+              (osTab, osLogWriter, previousFailedOSes :+ settings.label)
+
+            Settings.core.componentInstallError() match {
+              case ErrorAction.Ask =>
+                Stages.errorStage(None, "Installation failed", Some(s"Failed to install ${settings.label}"), e)
+                val action = JFXSystem.await(askOnFailure())
+                if (action != ErrorAction.Skip)
+                  throw new InstallationException(s"Failed to install ${settings.label}", e, true)
+                doSkip()
+
+              case ErrorAction.Stop =>
+                throw new InstallationException(s"Failed to install ${settings.label}", e)
+
+              case ErrorAction.Skip =>
+                /* Nothing to do except go to next OS */
+                doSkip()
+            }
+        }
+        finally {
+          ui.osActivity = None
+        }
+
+        next
       }
-
-      try {
-        val os = OSInstall(settings, ui, checkCancelled)
-
-        OSInstall.install(os)
-      }
-      catch {
-        case e: Cancelled =>
-          resetAppender()
-          throw e
-
-        case e: Throwable =>
-          /* XXX - handle ask/skip/stop (only stop is done right now) */
-          error(s"Failed to install ${settings.label}: ${e.getMessage}", e)
-          resetAppender()
-          throw e
-      }
-      finally {
-        ui.osActivity = None
-      }
-
-      next getOrElse(previous)
+      else previous
     }
 
     switchLogWriter(previousLogWriter, installLogWriter)
@@ -235,6 +269,32 @@ class InstallController
     if (logPanes.getSelectionModel().getSelectedItem() eq previousTab) JFXSystem.schedule {
       logPanes.getSelectionModel().select(installTab)
     }
+
+    failedOses
+  }
+
+  private def askOnFailure(): ErrorAction.Value = {
+    val loader = new FXMLLoader(getClass.getResource("installFailure.fxml"))
+    val options = loader.load[Parent]()
+    val controller = loader.getController[InstallFailureController]()
+
+    val stage = new Stage
+    stage.setTitle("Installation failure")
+    stage.setScene(new Scene(options))
+    stage.initModality(Modality.WINDOW_MODAL)
+    stage.initOwner(vbox.getScene().getWindow())
+    /* Track dimension as soon as shown, and unlisten once done */
+    val subscription = stage.showingProperty().listen { showing =>
+      if (showing) sfxStages.trackMinimumDimensions(stage)
+    }
+    stage.showAndWait()
+    subscription.unsubscribe()
+
+    val action = controller.getAction()
+    if (controller.getAsDefault())
+      Settings.core.componentInstallError() = action
+
+    action
   }
 
   def onCancel() {
