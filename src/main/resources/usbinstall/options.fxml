@@ -30,7 +30,7 @@
             </Label>
             <ComboBox fx:id="logInstallThreshold" onAction="#onLogInstallThreshold" GridPane.columnIndex="1" />
          </children>
-      </GridPane><GridPane VBox.vgrow="ALWAYS">
+      </GridPane><GridPane hgap="10.0" VBox.vgrow="ALWAYS">
   <columnConstraints>
     <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
     <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
@@ -38,7 +38,7 @@
             <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
   </columnConstraints>
   <rowConstraints>
-    <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+    <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="SOMETIMES" />
   </rowConstraints>
 <children><Button mnemonicParsing="false" onAction="#onReset" text="Reset">
                <tooltip>
