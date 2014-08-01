@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import java.net.URL
 import java.util.ResourceBundle
@@ -7,6 +7,7 @@ import javafx.scene.control.{Label, ListView}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.misc.Units
 import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.{Panes, Stages}
 
 
 class ChooseDeviceController extends Initializable {

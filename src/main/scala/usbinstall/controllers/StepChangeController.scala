@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import java.net.URL
 import java.util.ResourceBundle
@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.Button
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import usbinstall.{AbstractStepButton, StepPane, UseStepPane}
 
 
 class StepChangeController

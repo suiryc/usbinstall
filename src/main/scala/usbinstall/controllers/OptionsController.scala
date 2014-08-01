@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import java.net.URL
 import java.util.ResourceBundle
@@ -9,6 +9,7 @@ import javafx.stage.{Stage, Window}
 import org.controlsfx.dialog.Dialog
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
+import usbinstall.Stages
 import usbinstall.settings.{ErrorAction, Settings}
 
 

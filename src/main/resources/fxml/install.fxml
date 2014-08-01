@@ -7,7 +7,7 @@
 <?import javafx.scene.text.*?>
 <?import suiryc.scala.javafx.scene.control.*?>
 
-<VBox fx:id="vbox" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.InstallController">
+<VBox fx:id="vbox" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.InstallController">
 <children><GridPane fx:id="grid" hgap="5.0" vgap="5.0">
   <columnConstraints>
     <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="-Infinity" />

@@ -7,6 +7,7 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import usbinstall.controllers.LogsController
 import usbinstall.settings.Settings
 
 
@@ -17,7 +18,7 @@ object LogsStage {
   private var pos: Option[(Double, Double)] = None
   private var size: Option[(Double, Double)] = None
 
-  protected val loader = new FXMLLoader(getClass.getResource("logs.fxml"))
+  protected val loader = new FXMLLoader(getClass.getResource("/fxml/logs.fxml"))
   protected val root = loader.load[Parent]()
   protected val controller = loader.getController[LogsController]()
 

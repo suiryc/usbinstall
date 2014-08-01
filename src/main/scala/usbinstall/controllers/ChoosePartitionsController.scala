@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import grizzled.slf4j.Logging
 import java.net.URL
@@ -30,6 +30,13 @@ import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
+import usbinstall.{
+  HasEventSubscriptions,
+  Stages,
+  StepPane,
+  UseStepPane,
+  USBInstall
+}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 

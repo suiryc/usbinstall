@@ -7,6 +7,7 @@ import javafx.scene.layout.AnchorPane
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
+import usbinstall.controllers.{ChoosePartitionsController, InstallController}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -42,7 +43,7 @@ object Panes
   }
 
   def chooseDevice() = {
-    val root = FXMLLoader.load[Parent](getClass.getResource("chooseDevice.fxml"))
+    val root = FXMLLoader.load[Parent](getClass.getResource("/fxml/chooseDevice.fxml"))
     val pane = new AnchorPane with StepPane {
       override val previous = NoButton
 
@@ -70,7 +71,7 @@ object Panes
   }
 
   def choosePartitions() = {
-    val loader = new FXMLLoader(getClass.getResource("choosePartitions.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ChoosePartitionsController]()
 
@@ -96,7 +97,7 @@ object Panes
 
 
   def install() = {
-    val loader = new FXMLLoader(getClass.getResource("install.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/install.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[InstallController]()
 

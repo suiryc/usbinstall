@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import grizzled.slf4j.Logging
 import java.net.URL
@@ -18,6 +18,15 @@ import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
+import usbinstall.{
+  HasEventSubscriptions,
+  InstallationException,
+  InstallUI,
+  Stages,
+  StepPane,
+  UseStepPane,
+  USBInstall
+}
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{ErrorAction, InstallSettings, Settings}
 
@@ -274,7 +283,7 @@ class InstallController
   }
 
   private def askOnFailure(): ErrorAction.Value = {
-    val loader = new FXMLLoader(getClass.getResource("installFailure.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/installFailure.fxml"))
     val options = loader.load[Parent]()
     val controller = loader.getController[InstallFailureController]()
 

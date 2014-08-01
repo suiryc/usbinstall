@@ -1,4 +1,4 @@
-package usbinstall
+package usbinstall.controllers
 
 import java.net.URL
 import java.util.ResourceBundle
@@ -11,6 +11,7 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import usbinstall.{HasEventSubscriptions, LogsStage}
 
 
 class ToolBarController
@@ -37,7 +38,7 @@ class ToolBarController
   }
 
   def onOptions(event: ActionEvent) {
-    val loader = new FXMLLoader(getClass.getResource("options.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/options.fxml"))
     val options = loader.load[Parent]()
     val controller = loader.getController[OptionsController]()
 

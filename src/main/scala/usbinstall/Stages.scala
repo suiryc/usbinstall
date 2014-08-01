@@ -18,6 +18,7 @@ import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.misc.RichOptional
+import usbinstall.controllers.{StepChangeController, ToolBarController}
 
 
 object Stages
@@ -108,7 +109,7 @@ object Stages
   }
 
   protected def toolBar(pane: StepPane, paneController: Option[Any]) = {
-    val loader = new FXMLLoader(getClass.getResource("toolBar.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/toolBar.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ToolBarController]()
     pane.subscriptionHolders ::= controller
@@ -118,7 +119,7 @@ object Stages
   }
 
   protected def stepChange(pane: StepPane) = {
-    val loader = new FXMLLoader(getClass.getResource("stepChange.fxml"))
+    val loader = new FXMLLoader(getClass.getResource("/fxml/stepChange.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[StepChangeController]()
     controller.setStepPane(pane)

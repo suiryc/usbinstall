@@ -5,7 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<GridPane maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.StepChangeController">
+<GridPane maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.StepChangeController">
   <columnConstraints>
     <ColumnConstraints hgrow="ALWAYS" minWidth="-Infinity" percentWidth="50.0" />
     <ColumnConstraints hgrow="ALWAYS" minWidth="-Infinity" percentWidth="50.0" />
