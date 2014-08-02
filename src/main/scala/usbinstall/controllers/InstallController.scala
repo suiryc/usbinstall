@@ -116,13 +116,24 @@ class InstallController
   }
 
   private def taskFailed(ex: Throwable) {
-    error(s"Installation failed", ex)
-    val notified = ex match {
-      case InstallationException(_, _, notified) => notified
-      case _ => false
+    val (log, notified) = ex match {
+      case _: Cancelled =>
+        /* Activity area already notified */
+        Stages.warningStage(None, "Installation failed", None, "Installation was cancelled")
+        (false, true)
+
+      case InstallationException(_, _, notified) =>
+        (true, notified)
+
+      case _ =>
+        (true, false)
     }
+
+    if (log)
+      error(s"Installation failed", ex)
     if (!notified)
       Stages.errorStage(None, "Installation failed", None, ex)
+
     taskDone()
   }
 
@@ -179,6 +190,7 @@ class InstallController
     def checkCancelled() =
       cancellable.check {
         activityArea.write("Cancelled")
+        ui.activity("Cancelled")
       }
 
     def switchLogWriter(previous: ThresholdLogLinePatternWriter, next: ThresholdLogLinePatternWriter) {
@@ -309,6 +321,7 @@ class InstallController
   def onCancel() {
     /* Note: we are in the JavaFX thread */
     ui.activity("Cancelling ...")
+    activityArea.write("Cancelling ...")
     stepPane.next.disable = true
     Option(cancellableFuture).fold {
       taskFailed(Cancelled())
