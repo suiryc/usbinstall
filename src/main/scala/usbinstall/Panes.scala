@@ -15,22 +15,28 @@ object Panes
   extends Logging
 {
 
-  val devices = (PathFinder("/") / "sys" / "block" * AllPassFileFilter).get().map { block =>
-    Device(block)
-  }.filter { device =>
-    device.ueventProps.get("DRIVER") match {
-      case Some("sd") =>
-        true
+  var devices: Map[String, Device] = Map.empty
 
-      case _ =>
-        if (device.isInstanceOf[NetworkBlockDevice])
-          device.size.either.fold(_ => false, v => (v > 0) && !device.readOnly)
-        else
-          false
+  def refreshDevices() {
+    devices = (PathFinder("/") / "sys" / "block" * AllPassFileFilter).get().map { block =>
+      Device(block)
+    }.filter { device =>
+      device.ueventProps.get("DRIVER") match {
+        case Some("sd") =>
+          true
+
+        case _ =>
+          if (device.isInstanceOf[NetworkBlockDevice])
+            device.size.either.fold(_ => false, v => (v > 0) && !device.readOnly)
+          else
+            false
+      }
+    }.toList.foldLeft(Map.empty[String, Device]) { (devices, device) =>
+      devices + (device.dev.toString() -> device)
     }
-  }.toList.foldLeft(Map.empty[String, Device]) { (devices, device) =>
-    devices + (device.dev.toString() -> device)
   }
+
+  refreshDevices()
 
   protected def initPane(pane: StepPane, root: Parent, controller: Option[Any] = None): (StepPane, Option[Any]) = {
     pane.getChildren().setAll(root)

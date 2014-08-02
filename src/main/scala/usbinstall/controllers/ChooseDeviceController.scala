@@ -2,6 +2,7 @@ package usbinstall.controllers
 
 import java.net.URL
 import java.util.ResourceBundle
+import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Label, ListView}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
@@ -31,10 +32,7 @@ class ChooseDeviceController extends Initializable {
   }
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    devices.getItems().setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
-    /* Note: we need to reset the setting, because assigning the same value
-     * is not seen as a value change. */
-    InstallSettings.device.set(None)
+    refreshDevices()
 
     devices.getSelectionModel().selectedItemProperty.listen { newValue =>
       Panes.devices.get(newValue) match {
@@ -56,6 +54,18 @@ class ChooseDeviceController extends Initializable {
           resetDeviceInfo()
       }
     }
+  }
+
+  def onRefresh(event: ActionEvent) {
+    Panes.refreshDevices()
+    refreshDevices()
+  }
+
+  private def refreshDevices() {
+    devices.getItems().setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
+    /* Note: we need to reset the setting, because assigning the same value
+     * is not seen as a value change. */
+    InstallSettings.device.set(None)
   }
 
 }
