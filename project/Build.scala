@@ -19,7 +19,7 @@ object USBInstallBuild extends Build {
   lazy val root = Project(
     id = "usbinstall",
     base = base,
-    settings = Defaults.defaultSettings ++ Seq(copyPomTask, extCompile)
+    settings = Seq(copyPomTask, extCompile)
   )
 }
 
