@@ -28,7 +28,7 @@
 </GridPane.margin>
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" />
-</padding></Label><Label minHeight="-Infinity" minWidth="-Infinity" rotate="-45.0" text="Install" translateX="10.0" translateY="-10.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM" /><Label text="Image" GridPane.columnIndex="4" GridPane.rowIndex="1" /><Hyperlink fx:id="autoSelectPartitions" onAction="#onAutoSelectPartitions" text="Partition" GridPane.columnIndex="3" GridPane.rowIndex="1">
+</padding></Label><Label minHeight="-Infinity" minWidth="-Infinity" onMouseEntered="#onInstallPopup" onMouseExited="#onInstallPopup" rotate="-45.0" text="Install" translateX="10.0" translateY="-10.0" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.valignment="BOTTOM" /><Label text="Image" GridPane.columnIndex="4" GridPane.rowIndex="1" /><Hyperlink fx:id="autoSelectPartitions" onAction="#onAutoSelectPartitions" text="Partition" GridPane.columnIndex="3" GridPane.rowIndex="1">
 <tooltip><Tooltip text="Click for auto-select" />
 </tooltip></Hyperlink>
 </children>

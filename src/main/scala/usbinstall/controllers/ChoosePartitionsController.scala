@@ -5,9 +5,9 @@ import java.net.URL
 import java.util.ResourceBundle
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.ActionEvent
-import javafx.fxml.{FXML, Initializable}
+import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.geometry.{HPos, Insets, VPos}
-import javafx.scene.Node
+import javafx.scene.{Node, Parent}
 import javafx.scene.control.{
   Button,
   CheckBox,
@@ -16,6 +16,7 @@ import javafx.scene.control.{
   Label,
   Tooltip
 }
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{
   AnchorPane,
   ColumnConstraints,
@@ -24,6 +25,7 @@ import javafx.scene.layout.{
 }
 import javafx.scene.paint.Color
 import javafx.stage.Window
+import org.controlsfx.control.PopOver
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.event.EventHandler._
@@ -65,6 +67,8 @@ class ChoosePartitionsController
 
   @FXML
   protected var partitionsPane: AnchorPane = _
+
+  protected var installPopup: PopOver = _
 
   protected var stepPane: StepPane = _
 
@@ -354,6 +358,45 @@ class ChoosePartitionsController
   def onAutoSelectPartitions(event: ActionEvent) {
     autoSelectPartitions.getParent().requestFocus()
     selectPartitions(true)
+  }
+
+  /* XXX - install popup on checkboxes with activation delay
+   *       -> listen for 'mouse entered'
+   *       -> subscribe on 'mouse entered' to delay 'show'
+   *       -> unsubscribe on 'show' and 'mouse exited'
+   *       -> if 'show', listen for 'mouse exited' to 'hide'
+   *       -> also check 'node.contains' ?
+   */
+
+  private def showInstallPopup(node: Node) {
+    if (!Option(installPopup).isDefined) {
+      val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions-installPopup.fxml"))
+      val node = loader.load[Parent]()
+      installPopup = new PopOver(node)
+    }
+
+    /* Note: if mouse enters the node where the popup arrow is to be displayed,
+     * we switch between mouse entered/exited events continually unless we only
+     * call 'show' while popup is not showing.
+     */
+    if (!installPopup.isShowing())
+      installPopup.show(node)
+  }
+
+  private def hideInstallPopup() {
+    Option(installPopup).foreach(_.hide())
+  }
+
+  def onInstallPopup(event: MouseEvent) {
+    /* Note: sometimes 'mouse exited' is triggered while cursor is still over
+     * node ('mouse entered' is triggered right after), so check whether we need
+     * to show or hide according to cursor position.
+     */
+    val node = event.getSource().asInstanceOf[Node]
+    if (node.contains(node.sceneToLocal(event.getSceneX(), event.getSceneY())))
+      showInstallPopup(node)
+    else
+      hideInstallPopup()
   }
 
 }
