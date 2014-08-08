@@ -24,9 +24,9 @@ import javafx.scene.layout.{
   RowConstraints
 }
 import javafx.scene.paint.Color
-import javafx.stage.Window
-import org.controlsfx.control.PopOver
+import javafx.stage.{Popup, Window}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.{RichOptional, Units}
@@ -68,7 +68,7 @@ class ChoosePartitionsController
   @FXML
   protected var partitionsPane: AnchorPane = _
 
-  protected var installPopup: PopOver = _
+  protected val installPopup = new Popup()
 
   protected var stepPane: StepPane = _
 
@@ -84,6 +84,10 @@ class ChoosePartitionsController
   updateAvailablePartitions()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions-installPopup.fxml"))
+    val node = loader.load[Parent]()
+    installPopup.getContent().add(node)
+
     formatAll.setOnAction { event: ActionEvent =>
       Settings.core.oses foreach { settings =>
         settings.format() = formatAll.isSelected
@@ -98,6 +102,8 @@ class ChoosePartitionsController
         settings.installStatus() = status
       }
     }
+
+    attachDelayedInstallPopup(installAll)
 
     /* Initial partitions selection */
     selectPartitions(false)
@@ -227,6 +233,7 @@ class ChoosePartitionsController
         else if (osInstall.isSelected) OSInstallStatus.Install
         else OSInstallStatus.NotInstalled
     }
+    attachDelayedInstallPopup(osInstall)
 
     def installStatusToUI(v: OSInstallStatus.Value) {
       v match {
@@ -360,43 +367,68 @@ class ChoosePartitionsController
     selectPartitions(true)
   }
 
-  /* XXX - install popup on checkboxes with activation delay
-   *       -> listen for 'mouse entered'
-   *       -> subscribe on 'mouse entered' to delay 'show'
-   *       -> unsubscribe on 'show' and 'mouse exited'
-   *       -> if 'show', listen for 'mouse exited' to 'hide'
-   *       -> also check 'node.contains' ?
-   */
+  private def checkInstallPopup(node: Node): Boolean = {
+    /* Hide current popup if not attached to targeted node */
+    if (Option(installPopup.getOwnerNode()).exists(_ ne node) && installPopup.isShowing()) {
+      installPopup.hide()
+      true
+    }
+    else false
+  }
 
   private def showInstallPopup(node: Node) {
-    if (!Option(installPopup).isDefined) {
-      val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions-installPopup.fxml"))
-      val node = loader.load[Parent]()
-      installPopup = new PopOver(node)
+    /* Show popup if necessary */
+    if (!installPopup.isShowing() || checkInstallPopup(node)) {
+      /* First display the popup right next to the targeted node. This is
+       * necessary to prevent it stealing the mouse (triggering a 'mouse exited'
+       * event on the targeted node while mouse is still over it).
+       * Then adjust the Y position so that the middle of the node and the popup
+       * are aligned.
+       * Note: we need to show the popup before being able to get its height.
+       */
+      val bounds = node.getBoundsInLocal()
+      val pos = node.localToScreen(bounds.getMaxX(), bounds.getMinY() + (bounds.getMaxY() - bounds.getMinY()) / 2)
+
+      installPopup.show(node, pos.getX(), pos.getY())
+      installPopup.setAnchorY(pos.getY() - installPopup.getHeight() / 2)
+    }
+  }
+
+  private def attachDelayedInstallPopup(node: Node) {
+    /* Note: we could use ControlsFX PopOver, but we would face the same kind
+     * of issues with popup (transparent background) stealing the mouse.
+     * It would either require to:
+     *  - move the popup away from the node; but then the arrow pointing to
+     *    the node may seem too far away
+     *  - check mouse position when 'exiting' node and listen to mouse over
+     *    popup to determine when we really need to hide the popup
+     * It may not be worth the benifit for the kind of popup we have here.
+     *
+     * So stick to a simple customized JavaFX popup.
+     * Helpers:
+     *  - '-fx-background-radius' style to have round corners
+     *  - '-fx-background-color' to set background (transparent otherwise)
+     *  - '-fx-effect' to add shadow
+     *  - see http://stackoverflow.com/questions/17551774/javafx-styling-pop-up-windows
+     */
+    @volatile var cancellable: Option[akka.actor.Cancellable] = None
+
+    node.setOnMouseExited { event: MouseEvent =>
+      cancellable.foreach(_.cancel())
+      cancellable = None
+      installPopup.hide()
     }
 
-    /* Note: if mouse enters the node where the popup arrow is to be displayed,
-     * we switch between mouse entered/exited events continually unless we only
-     * call 'show' while popup is not showing.
-     */
-    if (!installPopup.isShowing())
-      installPopup.show(node)
-  }
+    node.setOnMouseEntered { event: MouseEvent =>
+      checkInstallPopup(node)
 
-  private def hideInstallPopup() {
-    Option(installPopup).foreach(_.hide())
-  }
+      import scala.concurrent.duration._
 
-  def onInstallPopup(event: MouseEvent) {
-    /* Note: sometimes 'mouse exited' is triggered while cursor is still over
-     * node ('mouse entered' is triggered right after), so check whether we need
-     * to show or hide according to cursor position.
-     */
-    val node = event.getSource().asInstanceOf[Node]
-    if (node.contains(node.sceneToLocal(event.getSceneX(), event.getSceneY())))
-      showInstallPopup(node)
-    else
-      hideInstallPopup()
+      cancellable = Some(JFXSystem.scheduleOnce(1.seconds) {
+        cancellable = None
+        showInstallPopup(node)
+      })
+    }
   }
 
 }
