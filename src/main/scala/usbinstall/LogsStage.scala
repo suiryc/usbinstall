@@ -6,7 +6,6 @@ import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
-import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.LogsController
 import usbinstall.settings.Settings
@@ -27,7 +26,7 @@ object LogsStage {
   protected val root = loader.load[Parent]()
   protected val controller = loader.getController[LogsController]()
 
-  val areaWriter = LogArea(controller.logArea).msgWriter
+  val areaWriter = controller.logArea.msgWriter
   areaWriter.setPattern(Settings.core.logDebugPattern)
   areaWriter.setThreshold(Settings.core.logDebugThreshold().level)
   Settings.core.logDebugThreshold.listen { v =>
