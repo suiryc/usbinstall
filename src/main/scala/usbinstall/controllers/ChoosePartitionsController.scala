@@ -51,8 +51,6 @@ class ChoosePartitionsController
   with Logging
 {
 
-  /* XXX - create tooltip or legend for installation states (unselected/indeterminate/selected) */
-
   @FXML
   protected var elements: GridPane = _
 

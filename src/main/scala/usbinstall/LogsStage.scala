@@ -13,7 +13,11 @@ import usbinstall.settings.Settings
 
 object LogsStage {
 
-  /* XXX - scrollbars sometimes appear when resizing LogArea down */
+  /* Note: when resizing down the TextArea, vertical scrollbar may appear even
+   * if there is actually nothing to scroll (empty area).
+   * There does not seem to be a correct way to get rid of the scrollbar when
+   * not needed (e.g. listening to visible size/region size changes etc).
+   */
 
   private var pos: Option[(Double, Double)] = None
   private var size: Option[(Double, Double)] = None
