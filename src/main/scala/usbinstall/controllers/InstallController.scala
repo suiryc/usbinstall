@@ -212,6 +212,7 @@ class InstallController
 
       if (settings.enabled) {
         val osActivity = new LogArea()
+        osActivity.setWrapText(true)
         ui.osActivity = Some(osActivity)
 
         val osLogWriter = osActivity.msgWriter
