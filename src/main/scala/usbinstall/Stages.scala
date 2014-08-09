@@ -29,7 +29,7 @@ object Stages
     val Ok_Cancel = List(Dialog.Actions.OK, Dialog.Actions.CANCEL)
   }
 
-  protected def changeScene(title: String, scene: Scene) {
+  protected def changeScene(title: String, scene: Scene, size: Option[(Double, Double)] = None) {
     val stage = USBInstall.stage
     val pos =
       if (!USBInstall.firstScene) {
@@ -57,7 +57,7 @@ object Stages
     stage.show()
     USBInstall.firstScene = false
 
-    sfxStages.trackMinimumDimensions(stage)
+    sfxStages.trackMinimumDimensions(stage, size)
   }
 
   protected def showDialogStage[T](show: => T): T =
@@ -148,7 +148,7 @@ object Stages
   }
 
   def install() {
-    changeScene("Install", step(Panes.install()))
+    changeScene("Install", step(Panes.install()), Some(800, 600))
   }
 
 }

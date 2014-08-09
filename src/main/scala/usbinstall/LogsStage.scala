@@ -130,7 +130,7 @@ object LogsStage {
 
     /* Only track minimum dimensions upon first display */
     if (!pos.isDefined)
-      sfxStages.trackMinimumDimensions(stage, Some(800, 500))
+      sfxStages.trackMinimumDimensions(stage, Some(800, 600))
   }
 
   def hide() {
