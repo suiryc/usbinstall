@@ -6,7 +6,7 @@ import java.util.ResourceBundle
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.geometry.Insets
 import javafx.scene.{Parent, Scene}
-import javafx.scene.control.{Label, Tab, TabPane}
+import javafx.scene.control.{Label, Tab, TabPane, TextArea}
 import javafx.scene.layout.{AnchorPane, GridPane, Priority, VBox}
 import javafx.stage.{Modality, Stage, Window}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,13 +52,15 @@ class InstallController
   protected var action: Label = _
 
   @FXML
-  protected var activityArea: LogArea = _
+  protected var activityArea: TextArea = _
 
   @FXML
   protected var logPanes: TabPane = _
 
   @FXML
   protected var installTab: Tab = _
+
+  protected var activityLogArea: LogArea = _
 
   protected var stepPane: StepPane = _
 
@@ -74,7 +76,8 @@ class InstallController
   protected var installLogWriter: ThresholdLogLinePatternWriter = _
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    installLogWriter = activityArea.msgWriter
+    activityLogArea = LogArea(activityArea)
+    installLogWriter = activityLogArea.msgWriter
     installLogWriter.setPattern(Settings.core.logInstallPattern)
     USBInstall.addLogWriter(installLogWriter)
     installLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
@@ -82,7 +85,7 @@ class InstallController
       installLogWriter.setThreshold(v.level)
     }
 
-    ui = new InstallUI(step, action, activityArea, None)
+    ui = new InstallUI(step, action, activityLogArea, None)
 
     subscriptions ::= USBInstall.stage.widthProperty().listen { width =>
       logPanes.setMaxWidth(width.asInstanceOf[Double])
@@ -189,7 +192,7 @@ class InstallController
 
     def checkCancelled() =
       cancellable.check {
-        activityArea.write("Cancelled")
+        activityLogArea.write("Cancelled")
         ui.activity("Cancelled")
       }
 
@@ -211,11 +214,12 @@ class InstallController
       val (previousTab, previousLogWriter, previousFailedOSes) = previous
 
       if (settings.enabled) {
-        val osActivity = new LogArea()
+        val osActivity = new TextArea()
         osActivity.setWrapText(true)
-        ui.osActivity = Some(osActivity)
+        val osLogArea = LogArea(osActivity)
+        ui.osActivity = Some(osLogArea)
 
-        val osLogWriter = osActivity.msgWriter
+        val osLogWriter = osLogArea.msgWriter
         osLogWriter.setPattern(Settings.core.logInstallPattern)
         osLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
         subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
@@ -322,7 +326,7 @@ class InstallController
   def onCancel() {
     /* Note: we are in the JavaFX thread */
     ui.activity("Cancelling ...")
-    activityArea.write("Cancelling ...")
+    activityLogArea.write("Cancelling ...")
     stepPane.next.disable = true
     Option(cancellableFuture).fold {
       taskFailed(Cancelled())
