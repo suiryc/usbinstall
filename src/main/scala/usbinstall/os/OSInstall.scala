@@ -31,13 +31,12 @@ class OSInstall(
   /**
    * Prepares OS installation.
    *
-   * XXX - reword ?
    * Does anything necessary before partition is formatted (if requested) and
    * actual OS installation.
    * E.g.: find/compile tools files necessary for OS installation.
    * Syslinux prepared separately.
    */
-  def prepare(): Unit = { }
+  def prepare() { }
 
   /**
    * Installs OS.
