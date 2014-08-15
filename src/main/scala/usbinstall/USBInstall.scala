@@ -1,6 +1,6 @@
 package usbinstall
 
-import ch.qos.logback.classic.{Logger, LoggerContext}
+import ch.qos.logback.classic.Logger
 import java.io.PrintStream
 import java.util.Locale
 import javafx.application.Application
@@ -138,7 +138,7 @@ class USBInstall extends Application {
         Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
 
       val unmet = USBInstall.checkRequirements(requirements)
-      if (!unmet.isEmpty)
+      if (unmet.nonEmpty)
         Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
           unmet.mkString("Missing executable(s): ", ", ", ""))
 
@@ -150,7 +150,7 @@ class USBInstall extends Application {
   }
 
   override def stop() {
-    InstallSettings.pathTemp.delete(true)
+    InstallSettings.pathTemp.delete(recursive = true)
     detachAppender(appender)
     SystemStreams.restore(systemStreams)
   }

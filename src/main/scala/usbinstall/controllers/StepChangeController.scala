@@ -59,11 +59,11 @@ class StepChangeController
   }
 
   def onPrevious(event: ActionEvent) {
-    stepPrevious.triggered
+    stepPrevious.triggered()
   }
 
   def onNext(event: ActionEvent) {
-    stepNext.triggered
+    stepNext.triggered()
   }
 
 }

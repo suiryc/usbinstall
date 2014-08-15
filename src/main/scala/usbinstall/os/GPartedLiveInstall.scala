@@ -1,7 +1,6 @@
 package usbinstall.os
 
 import suiryc.scala.io.PathFinder._
-import suiryc.scala.io.RichFile._
 import usbinstall.InstallUI
 
 

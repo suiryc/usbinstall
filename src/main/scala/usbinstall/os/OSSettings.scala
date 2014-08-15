@@ -12,7 +12,7 @@ import suiryc.scala.settings.{
   SettingSnapshot,
   SettingsSnapshot
 }
-import suiryc.scala.sys.linux.{Device, DevicePartition}
+import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.Panes
 
 
@@ -93,7 +93,7 @@ class OSSettings(
   implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
 
   val format: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.forBoolean("settings.format", true))
+    PersistentProperty(PersistentSetting.forBoolean("settings.format", default = true))
 
   val installStatus: PersistentProperty[OSInstallStatus.Value] =
     PersistentProperty(PersistentSetting.forEnumerationEx("settings.status", OSInstallStatus.Install))

@@ -16,9 +16,9 @@ class InstallFailureController extends Initializable {
 
   protected var action = ErrorAction.Ask
 
-  def getAction() = action
+  def getAction = action
 
-  def getAsDefault() = applyDefault.isSelected()
+  def getAsDefault = applyDefault.isSelected
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
   }
@@ -34,6 +34,6 @@ class InstallFailureController extends Initializable {
   }
 
   protected def window =
-    applyDefault.getScene().getWindow()
+    applyDefault.getScene.getWindow
 
 }

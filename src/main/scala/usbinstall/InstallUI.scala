@@ -64,7 +64,7 @@ class InstallUI(
   }
 
   protected def jfxSchedule(action: => Unit) {
-    JFXSystem.schedule(action, false)
+    JFXSystem.schedule(action, logReentrant = false)
   }
 
 }

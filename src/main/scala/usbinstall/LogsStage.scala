@@ -4,7 +4,6 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
-import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.LogsController
@@ -31,7 +30,7 @@ object LogsStage {
   areaWriter.setThreshold(Settings.core.logDebugThreshold().level)
   Settings.core.logDebugThreshold.listen { v =>
     areaWriter.setThreshold(v.level)
-    controller.logThreshold.getSelectionModel().select(Settings.core.logDebugThreshold())
+    controller.logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
   }
 
   /*
@@ -116,7 +115,7 @@ object LogsStage {
      *  - to prevent artifacts (black areas on top or side of scene), it is
      *    better to set position and size after showing stage
      */
-    stage.show
+    stage.show()
 
     pos foreach { t =>
       stage.setX(t._1)
@@ -134,9 +133,9 @@ object LogsStage {
 
   def hide() {
     /* Note: we are in the JavaFX thread */
-    pos = Some(stage.getX(), stage.getY())
-    size = Some(stage.getWidth(), stage.getHeight())
-    stage.hide
+    pos = Some(stage.getX, stage.getY)
+    size = Some(stage.getWidth, stage.getHeight)
+    stage.hide()
   }
 
   def showing = stage.showingProperty

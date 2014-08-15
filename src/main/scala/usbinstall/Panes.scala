@@ -8,7 +8,7 @@ import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
 import usbinstall.controllers.{ChoosePartitionsController, InstallController}
-import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.settings.InstallSettings
 
 
 object Panes
@@ -32,14 +32,14 @@ object Panes
             false
       }
     }.toList.foldLeft(Map.empty[String, Device]) { (devices, device) =>
-      devices + (device.dev.toString() -> device)
+      devices + (device.dev.toString -> device)
     }
   }
 
   refreshDevices()
 
   protected def initPane(pane: StepPane, root: Parent, controller: Option[Any] = None): (StepPane, Option[Any]) = {
-    pane.getChildren().setAll(root)
+    pane.getChildren.setAll(root)
     AnchorPane.setTopAnchor(root, 0)
     AnchorPane.setRightAnchor(root, 0)
     AnchorPane.setBottomAnchor(root, 0)
@@ -54,10 +54,10 @@ object Panes
       override val previous = NoButton
 
       override val next = new NextButton(this, {
-        InstallSettings.device.get map { device =>
+        InstallSettings.device.get.exists { device =>
           Stages.choosePartitions()
           true
-        } getOrElse(false)
+        }
       }) {
         disable = true
 

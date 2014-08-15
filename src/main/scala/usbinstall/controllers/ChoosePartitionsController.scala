@@ -27,7 +27,6 @@ import javafx.scene.paint.Color
 import javafx.stage.{Popup, Window}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
-import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
@@ -39,7 +38,7 @@ import usbinstall.{
   UseStepPane,
   USBInstall
 }
-import usbinstall.os.{OSInstall, OSInstallStatus, OSKind, OSSettings}
+import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -84,7 +83,7 @@ class ChoosePartitionsController
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions-installPopup.fxml"))
     val node = loader.load[Parent]()
-    installPopup.getContent().add(node)
+    installPopup.getContent.add(node)
 
     formatAll.setOnAction { event: ActionEvent =>
       Settings.core.oses foreach { settings =>
@@ -104,11 +103,11 @@ class ChoosePartitionsController
     attachDelayedInstallPopup(installAll)
 
     /* Initial partitions selection */
-    selectPartitions(false)
+    selectPartitions(redo = false)
 
     /* Note: rows 1 (labels) and 2 (checkboxes) already used */
     Settings.core.oses.foldLeft(2) { (idx, settings) =>
-      elements.getRowConstraints().add(new RowConstraints(30) { setValignment(VPos.CENTER) })
+      elements.getRowConstraints.add(new RowConstraints(30) { setValignment(VPos.CENTER) })
       elements.addRow(idx, osRow(settings) : _*)
       idx + 1
     }
@@ -117,7 +116,7 @@ class ChoosePartitionsController
   }
 
   override def settingsCleared(source: Window) {
-    selectPartitions(true)
+    selectPartitions(redo = true)
   }
 
   private def updateRequirements() {
@@ -125,7 +124,7 @@ class ChoosePartitionsController
       /* We just need to create an instance to check its requirements */
       val osInstall = OSInstall(settings, null, () => {})
       val unmet = USBInstall.checkRequirements(osInstall.requirements())
-      val osNok = (settings.enabled && !settings.installable) || !unmet.isEmpty
+      val osNok = (settings.enabled && !settings.installable) || unmet.nonEmpty
 
       var missingRequirements = List[String]()
 
@@ -135,7 +134,7 @@ class ChoosePartitionsController
         if (settings.isoPattern.isDefined && !settings.iso.get.isDefined)
           missingRequirements :+= "ISO source not specified"
       }
-      if (!unmet.isEmpty)
+      if (unmet.nonEmpty)
         missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
 
       osLabels.get(settings) foreach { label =>
@@ -159,12 +158,12 @@ class ChoosePartitionsController
   override def setStepPane(stepPane: StepPane) {
     this.stepPane = stepPane
 
-    updateRequirements
+    updateRequirements()
 
     Settings.core.oses foreach { settings =>
-      subscriptions ::= settings.installStatus.listen(updateRequirements)
-      subscriptions ::= settings.partition.listen(updateRequirements)
-      subscriptions ::= settings.iso.listen(updateRequirements)
+      subscriptions ::= settings.installStatus.listen(updateRequirements())
+      subscriptions ::= settings.partition.listen(updateRequirements())
+      subscriptions ::= settings.iso.listen(updateRequirements())
     }
   }
 
@@ -184,7 +183,7 @@ class ChoosePartitionsController
 
           if (result != 0) {
             error(s"Cannot unmount partition[${partition.dev}]: $stderr")
-            Stages.errorStage(None, "Cannot unmount partition", Some(partition.dev.toString()), stderr)
+            Stages.errorStage(None, "Cannot unmount partition", Some(partition.dev.toString), stderr)
           }
           updateAvailablePartitions()
           updatePartitionsPane()
@@ -257,21 +256,21 @@ class ChoosePartitionsController
 
     val osPartition = new ComboBox[String]
     osPartition.setPromptText("Partition")
-    osPartition.getItems().setAll(partitionsStringProp.get:_*)
+    osPartition.getItems.setAll(partitionsStringProp.get:_*)
     def selectPartition() {
       settings.partition.get foreach { partition =>
-        osPartition.getSelectionModel().select(partition.dev.toString())
+        osPartition.getSelectionModel.select(partition.dev.toString)
       }
     }
     selectPartition()
     partitionsStringProp.listen { newValue =>
-      osPartition.getItems().setAll(newValue:_*)
+      osPartition.getItems.setAll(newValue:_*)
       selectPartition()
     }
     settings.partition.get foreach { partition =>
-      osPartition.getSelectionModel().select(partition.dev.toString())
+      osPartition.getSelectionModel.select(partition.dev.toString)
     }
-    osPartition.getSelectionModel().selectedItemProperty.listen { selected =>
+    osPartition.getSelectionModel.selectedItemProperty.listen { selected =>
       /* Note: first change those settings, to shorten change cyclic
        * propagation when swapping partition with another OS.
        */
@@ -286,8 +285,8 @@ class ChoosePartitionsController
       }
     }
     subscriptions ::= settings.partition.listen { newValue =>
-      settings.partition.get.fold(osPartition.getSelectionModel().select(-1)) { partition =>
-        osPartition.getSelectionModel().select(partition.dev.toString)
+      settings.partition.get.fold(osPartition.getSelectionModel.select(-1)) { partition =>
+        osPartition.getSelectionModel.select(partition.dev.toString)
       }
       settings.partition.set(newValue)
     }
@@ -298,12 +297,12 @@ class ChoosePartitionsController
       }
 
       val osISO = new ComboBox[String]
-      osISO.getItems().setAll(available.map(_.getFileName.toString):_*)
-      osISO.getSelectionModel().selectedIndexProperty.listen { selected =>
+      osISO.getItems.setAll(available.map(_.getFileName.toString):_*)
+      osISO.getSelectionModel.selectedIndexProperty.listen { selected =>
         settings.iso.set(Some(available(selected.intValue())))
       }
       /* Select outside ctor to trigger settings assignation */
-      osISO.getSelectionModel().select(0)
+      osISO.getSelectionModel.select(0)
 
       osISO
     }
@@ -341,12 +340,12 @@ class ChoosePartitionsController
        * earlier in the list needs to select a partition and finds this one as
        * fitting.
        */
-      if (redo || !os.partition.get.find(devicePartitions.contains(_)).isDefined)
+      if (redo || !os.partition.get.exists(devicePartitions.contains(_)))
         os.partition.set {
           if (devicePartitions.isEmpty || (os.installStatus() == OSInstallStatus.NotInstalled))
             None
           else Some(
-            devicePartitions.filter(_.size() >= os.size).headOption.getOrElse(
+            devicePartitions.find(_.size() >= os.size).getOrElse(
               /* Note: double reverse gives us the 'first' partition when more
                * than one have the same size
                */
@@ -361,13 +360,13 @@ class ChoosePartitionsController
   }
 
   def onAutoSelectPartitions(event: ActionEvent) {
-    autoSelectPartitions.getParent().requestFocus()
-    selectPartitions(true)
+    autoSelectPartitions.getParent.requestFocus()
+    selectPartitions(redo = true)
   }
 
   private def checkInstallPopup(node: Node): Boolean = {
     /* Hide current popup if not attached to targeted node */
-    if (Option(installPopup.getOwnerNode()).exists(_ ne node) && installPopup.isShowing()) {
+    if (Option(installPopup.getOwnerNode).exists(_ ne node) && installPopup.isShowing) {
       installPopup.hide()
       true
     }
@@ -376,7 +375,7 @@ class ChoosePartitionsController
 
   private def showInstallPopup(node: Node) {
     /* Show popup if necessary */
-    if (!installPopup.isShowing() || checkInstallPopup(node)) {
+    if (!installPopup.isShowing || checkInstallPopup(node)) {
       /* First display the popup right next to the targeted node. This is
        * necessary to prevent it stealing the mouse (triggering a 'mouse exited'
        * event on the targeted node while mouse is still over it).
@@ -384,11 +383,11 @@ class ChoosePartitionsController
        * are aligned.
        * Note: we need to show the popup before being able to get its height.
        */
-      val bounds = node.getBoundsInLocal()
-      val pos = node.localToScreen(bounds.getMaxX(), bounds.getMinY() + (bounds.getMaxY() - bounds.getMinY()) / 2)
+      val bounds = node.getBoundsInLocal
+      val pos = node.localToScreen(bounds.getMaxX, bounds.getMinY + (bounds.getMaxY - bounds.getMinY) / 2)
 
-      installPopup.show(node, pos.getX(), pos.getY())
-      installPopup.setAnchorY(pos.getY() - installPopup.getHeight() / 2)
+      installPopup.show(node, pos.getX, pos.getY)
+      installPopup.setAnchorY(pos.getY - installPopup.getHeight / 2)
     }
   }
 

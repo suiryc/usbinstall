@@ -8,9 +8,9 @@ import scala.io.Codec
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
-import suiryc.scala.misc.RichEither._
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
+import suiryc.scala.util.RichEither._
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 import usbinstall.settings.InstallSettings
@@ -52,13 +52,13 @@ class OSInstall(
       val kind = settings.partitionFormat
       (kind match {
         case PartitionFormat.ext2 =>
-          Set(s"mkfs.${kind}", "e2label")
+          Set(s"mkfs.$kind", "e2label")
 
         case PartitionFormat.fat32 =>
           Set("mkfs.vfat", "mlabel")
 
         case PartitionFormat.ntfs =>
-          Set(s"mkfs.${kind}", "ntfslabel")
+          Set(s"mkfs.$kind", "ntfslabel")
       }) ++ Set("fdisk", "partprobe")
     } else Set.empty
 
@@ -66,11 +66,11 @@ class OSInstall(
   }
 
   protected def getSyslinuxFile(targetRoot: Path) =
-    Paths.get(targetRoot.toString(), "syslinux", settings.syslinuxFile)
+    Paths.get(targetRoot.toString, "syslinux", settings.syslinuxFile)
 
   protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, label: String) {
     ui.action(label) {
-      finder.get.toList.sortBy(_.getPath) foreach { file =>
+      finder.get().toList.sortBy(_.getPath) foreach { file =>
         val pathFile = file.toAbsolutePath
         val pathRelative = sourceRoot.relativize(pathFile)
         val pathTarget = targetRoot.resolve(pathRelative)
@@ -105,11 +105,11 @@ class OSInstall(
       Files.copy(source, target,
         StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     }
-    mode foreach(target.toFile.changeMode(_))
+    mode.foreach(target.toFile.changeMode)
   }
 
   protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
-    val target = targetRoot.resolve(source.getFileName())
+    val target = targetRoot.resolve(source.getFileName)
     duplicate(source, sourceRoot, target, mode)
   }
 
@@ -117,17 +117,17 @@ class OSInstall(
     checkCancelled()
     val syslinuxFile = getSyslinuxFile(targetRoot)
     if (!syslinuxFile.exists) {
-      val syslinuxCfg = Paths.get(targetRoot.toString(), "syslinux", "syslinux.cfg")
-      val isolinuxCfg = Paths.get(targetRoot.toString(), "isolinux", "isolinux.cfg")
+      val syslinuxCfg = Paths.get(targetRoot.toString, "syslinux", "syslinux.cfg")
+      val isolinuxCfg = Paths.get(targetRoot.toString, "isolinux", "isolinux.cfg")
       if (syslinuxCfg.exists) ui.action("Rename syslinux configuration file") {
         ui.activity(s"Rename source[${targetRoot.relativize(syslinuxCfg)}] target[${targetRoot.relativize(syslinuxFile)}]")
         Files.move(syslinuxCfg, syslinuxFile)
       }
       else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
-        syslinuxFile.getParent().delete(true)
-        ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent()}] target[${targetRoot.relativize(syslinuxFile).getParent()}]")
-        Files.move(isolinuxCfg, isolinuxCfg.getParent().resolve(syslinuxFile.getFileName()))
-        Files.move(isolinuxCfg.getParent(), syslinuxFile.getParent())
+        syslinuxFile.getParent.delete(recursive = true)
+        ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent}] target[${targetRoot.relativize(syslinuxFile).getParent}]")
+        Files.move(isolinuxCfg, isolinuxCfg.getParent.resolve(syslinuxFile.getFileName))
+        Files.move(isolinuxCfg.getParent, syslinuxFile.getParent)
       }
     }
   }
@@ -147,7 +147,7 @@ class OSInstall(
 
   private def findEFI(mount: PartitionMount): Option[Path] = {
     val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
-    finder.get.toList.sorted.headOption foreach { path =>
+    finder.get().toList.sorted.headOption foreach { path =>
       settings.efiBootloader = Some(mount.to.relativize(path.toPath))
     }
     settings.efiBootloader
@@ -218,43 +218,41 @@ object OSInstall
 
     try {
       iso foreach { iso =>
-        os.ui.activity(s"Mounting ISO[${iso.from.getFileName()}]")
-        iso.mount
+        os.ui.activity(s"Mounting ISO[${iso.from.getFileName}]")
+        iso.mount()
       }
       part foreach { part =>
         os.ui.activity(s"Mounting partition[${part.from}]")
-        part.mount
+        part.mount()
       }
       todo(iso, part)
     }
     finally {
       part foreach { part =>
         os.ui.activity("Unmounting partition")
-        part.umount
+        part.umount()
       }
       iso foreach { iso =>
         os.ui.activity("Unmounting ISO")
-        iso.umount
+        iso.umount()
       }
     }
   }
 
   private def preparePartition(os: OSInstall, part: DevicePartition) = {
-    import suiryc.scala.misc.RichEither._
-
     val kind = os.settings.partitionFormat
     val label = os.settings.partitionLabel
 
     def format = {
       val command = kind match {
         case PartitionFormat.ext2 =>
-          Seq(s"mkfs.${kind}", part.dev.toString)
+          Seq(s"mkfs.$kind", part.dev.toString)
 
         case PartitionFormat.fat32 =>
           Seq("mkfs.vfat", "-F", "32", part.dev.toString)
 
         case PartitionFormat.ntfs =>
-          Seq(s"mkfs.${kind}", "--fast", part.dev.toString)
+          Seq(s"mkfs.$kind", "--fast", part.dev.toString)
       }
 
       os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
@@ -262,7 +260,7 @@ object OSInstall
       }
     }
 
-    def setType = {
+    def setType() = {
       val id = kind match {
         case PartitionFormat.ext2 => "83"
         case PartitionFormat.fat32 => "b"
@@ -281,7 +279,7 @@ w
       }
     }
 
-    def setLabel = {
+    def setLabel() = {
       val (command, envf) = kind match {
         case PartitionFormat.ext2 =>
           /* Max ext2 label length: 16 */
@@ -328,7 +326,7 @@ w
 
           case _: PartitionFormat.MS =>
             /* Note: it is safer (and mandatory for NTFS) to unmount partition first */
-            mount.umount
+            mount.umount()
             val syslinux = syslinuxRoot.resolve(Paths.get("linux", "syslinux"))
             val target = part.dev
             Command.execute(Seq(syslinux.toString, "--install", target.toString))
@@ -345,13 +343,13 @@ w
       /* Some files may have the 'immutable' attribute */
       val finder = PathFinder(root).***
 
-      finder.get.map(_.toPath) foreach { path =>
+      finder.get().map(_.toPath) foreach { path =>
         Command.execute(Seq("chattr", "-i", path.toString))
       }
 
       if (!root.toFile.delete(true, true)) {
         val msg = "Some content could not be deleted"
-        error(s"$msg: ${finder.get.mkString(", ")}")
+        error(s"$msg: ${finder.get().mkString(", ")}")
         throw new Exception(msg)
       }
     }
@@ -379,7 +377,7 @@ w
       os.settings.syslinuxVersion foreach { version =>
         os.ui.action(s"Search syslinux $version") {
           if (!SyslinuxInstall.get(version).isDefined)
-            throw new Exception(s"Could not find syslinux ${version}")
+            throw new Exception(s"Could not find syslinux $version")
         }
       }
 

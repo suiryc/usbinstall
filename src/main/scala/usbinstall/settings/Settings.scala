@@ -3,7 +3,6 @@ package usbinstall.settings
 import com.typesafe.config.{Config, ConfigFactory}
 import java.util.prefs.Preferences
 import scala.collection.JavaConversions._
-import scala.reflect.ClassTag
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
@@ -60,7 +59,7 @@ class Settings(
 
   val oses = config.getConfigList("oses").toList map { config =>
     val kind = config.getString("kind")
-    val label = option[String]("label", config) getOrElse(kind)
+    val label = option[String]("label", config).getOrElse(kind)
 
     implicit val settings = new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
 
@@ -95,12 +94,12 @@ class Settings(
   }
 
   lazy val syslinuxExtraComponents = syslinuxExtra.getConfigList("components").toList map { config =>
-    val kind = option[String]("kind", config) getOrElse("image")
-    val label = option[String]("label", config) getOrElse(kind)
-    val image = option[String]("image", config) flatMap { name =>
-      val r = syslinuxExtraImagesPath map { path =>
+    val kind = option[String]("kind", config).getOrElse("image")
+    val label = option[String]("label", config).getOrElse(kind)
+    val image = option[String]("image", config).flatMap { name =>
+      val r = syslinuxExtraImagesPath.map { path =>
         path.resolve(name)
-      } find(_.toFile.exists)
+      }.find(_.toFile.exists)
 
       if (!r.isDefined) {
         Stages.errorStage(None, "Missing component image", Some(label), s"Image[$name] not found in configured path")

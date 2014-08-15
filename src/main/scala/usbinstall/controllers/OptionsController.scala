@@ -32,8 +32,8 @@ class OptionsController extends Initializable {
   protected val snapshot = new SettingsSnapshot()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    logInstallThreshold.getItems().setAll(LogLevel.values.toList:_*)
-    componentInstallError.getItems().setAll(ErrorAction.values.toList:_*)
+    logInstallThreshold.getItems.setAll(LogLevel.values.toList:_*)
+    componentInstallError.getItems.setAll(ErrorAction.values.toList:_*)
 
     Settings.core.snapshot(snapshot)
 
@@ -44,7 +44,7 @@ class OptionsController extends Initializable {
     this.listener = listener
 
     /* Note: tooltip are not shown for disabled controls */
-    clearButton.setDisable(!listener.canClearSettings())
+    clearButton.setDisable(!listener.canClearSettings)
   }
 
   protected def updateCancelButton() {
@@ -52,18 +52,18 @@ class OptionsController extends Initializable {
   }
 
   protected def update() {
-    logInstallThreshold.getSelectionModel().select(Settings.core.logInstallThreshold())
-    componentInstallError.getSelectionModel().select(Settings.core.componentInstallError())
+    logInstallThreshold.getSelectionModel.select(Settings.core.logInstallThreshold())
+    componentInstallError.getSelectionModel.select(Settings.core.componentInstallError())
     updateCancelButton()
   }
 
   def onLogInstallThreshold(event: ActionEvent) {
-    Settings.core.logInstallThreshold.update(logInstallThreshold.getValue())
+    Settings.core.logInstallThreshold.update(logInstallThreshold.getValue)
     updateCancelButton()
   }
 
   def onComponentInstallError(event: ActionEvent) {
-    Settings.core.componentInstallError.update(componentInstallError.getValue())
+    Settings.core.componentInstallError.update(componentInstallError.getValue)
     updateCancelButton()
   }
 
@@ -100,14 +100,14 @@ class OptionsController extends Initializable {
   }
 
   protected def window =
-    logInstallThreshold.getScene().getWindow()
+    logInstallThreshold.getScene.getWindow
 
 }
 
 
 trait SettingsClearedListener {
 
-  def canClearSettings() = true
+  def canClearSettings = true
 
   def settingsCleared(source: Window): Unit
 

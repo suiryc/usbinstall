@@ -1,8 +1,6 @@
 package usbinstall.os
 
-import java.nio.file.Paths
 import scala.util.matching.Regex
-import suiryc.scala.io.PathFinder
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.util.matching.RegexReplacer
@@ -31,7 +29,7 @@ class RedHatInstall(
       val partition = settings.partition.get.get
       val uuid = partition.uuid.fold(throw _, v => v)
       var fsType = partition.fsType.fold(throw _, v => v)
-      val optuuid = s"UUID=${uuid}"
+      val optuuid = s"UUID=$uuid"
 
       /* Original code for persistence */
 //    local parttype=$(blkid -s TYPE -o value "${partpath}")
@@ -58,10 +56,10 @@ class RedHatInstall(
         (m: Regex.Match) => s"${m.group("pre")}/syslinux/"
       ), RegexReplacer(
         new Regex("(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+.*[ \t]+root=live:)[^ \t]+", "pre"),
-        (m: Regex.Match) => s"${m.group("pre")}${optuuid}"
+        (m: Regex.Match) => s"${m.group("pre")}$optuuid"
       ), RegexReplacer(
         new Regex("(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+.*[ \t]+rootfstype=)[^ \t\r\n]+", "pre"),
-        (m: Regex.Match) => s"${m.group("pre")}${fsType}"
+        (m: Regex.Match) => s"${m.group("pre")}$fsType"
       ))
       for (conf <- confs.get()) {
         regexReplace(targetRoot, conf, regexReplacers:_*)

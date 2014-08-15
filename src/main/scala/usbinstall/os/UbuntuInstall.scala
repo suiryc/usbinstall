@@ -34,7 +34,7 @@ class UbuntuInstall(
 
     /* Not always necessary, but without 'fallback.efi' OS may not boot */
     val grubx64EFI = PathFinder(targetRoot) / "(?i)EFI".r / "(?i)BOOT".r / "(?i)grubx64.efi".r
-    grubx64EFI.get.headOption map(_.toPath) foreach { grubx64EFI =>
+    grubx64EFI.get().headOption map(_.toPath) foreach { grubx64EFI =>
       val fallbackEFI = grubx64EFI.getParent.resolve("fallback.efi")
       if (!fallbackEFI.exists) ui.action("Prepare EFI") {
         duplicate(grubx64EFI, targetRoot, fallbackEFI, None)
@@ -57,11 +57,11 @@ class UbuntuInstall(
 //    fi
 
       /* Update 'casper' */
-      targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile().write(s"$uuid\n")
+      targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile.write(s"$uuid\n")
       val confs = PathFinder(targetRoot) / (("boot" / "grub") ++ "syslinux") * (".*\\.cfg".r | ".*\\.conf".r)
       val regex = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*boot=casper)", "pre")
       val regexReplacer = RegexReplacer(regex, (m: Regex.Match) =>
-        s"${m.group("pre")} uuid=${uuid}"
+        s"${m.group("pre")} uuid=$uuid"
       )
       for (conf <- confs.get()) {
         regexReplace(targetRoot, conf, regexReplacer)

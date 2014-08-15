@@ -7,7 +7,7 @@ import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Label, ListView}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.misc.Units
-import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.settings.InstallSettings
 import usbinstall.{Panes, Stages}
 
 
@@ -34,7 +34,7 @@ class ChooseDeviceController extends Initializable {
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     refreshDevices()
 
-    devices.getSelectionModel().selectedItemProperty.listen { newValue =>
+    devices.getSelectionModel.selectedItemProperty.listen { newValue =>
       Panes.devices.get(newValue) match {
         case oDevice @ Some(device) =>
           InstallSettings.device.set(oDevice)
@@ -50,7 +50,7 @@ class ChooseDeviceController extends Initializable {
           }
 
         case _ =>
-          devices.getSelectionModel().select(-1)
+          devices.getSelectionModel.select(-1)
           resetDeviceInfo()
       }
     }
@@ -62,7 +62,7 @@ class ChooseDeviceController extends Initializable {
   }
 
   private def refreshDevices() {
-    devices.getItems().setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
+    devices.getItems.setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
     /* Note: we need to reset the setting, because assigning the same value
      * is not seen as a value change. */
     InstallSettings.device.set(None)

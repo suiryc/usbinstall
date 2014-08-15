@@ -37,7 +37,7 @@ trait HasEventSubscriptions {
     Nil
 
   def cancelSubscriptions() {
-    subscriptions foreach(_.unsubscribe)
+    subscriptions.foreach(_.unsubscribe())
     subscriptions = Nil
   }
 

@@ -33,8 +33,8 @@ object Stages
     val stage = USBInstall.stage
     val pos =
       if (!USBInstall.firstScene) {
-        val x = stage.getX()
-        val y = stage.getY()
+        val x = stage.getX
+        val y = stage.getY
         stage.setMinWidth(0)
         stage.setMinHeight(0)
         stage.hide()
@@ -70,7 +70,7 @@ object Stages
     import RichOptional._
 
     Dialogs.create()
-      .owner(owner getOrElse(USBInstall.stage))
+      .owner(owner.getOrElse(USBInstall.stage))
       .style(DialogStyle.NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
@@ -81,7 +81,7 @@ object Stages
     val msg = if (message != "") Some(message) else None
     val dialog = makeDialogStage(owner, title, masthead, msg)
 
-    if (!actions.isEmpty)
+    if (actions.nonEmpty)
       dialog.actions(actions:_*)
 
     showDialogStage {
@@ -131,9 +131,9 @@ object Stages
     val (pane, controller) = tuple
     val grid = new GridPane
     grid.setAlignment(Pos.TOP_CENTER)
-    grid.getColumnConstraints().add(new ColumnConstraints() { setHgrow(Priority.ALWAYS) })
-    grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.NEVER) })
-    grid.getRowConstraints().add(new RowConstraints() { setVgrow(Priority.ALWAYS) })
+    grid.getColumnConstraints.add(new ColumnConstraints() { setHgrow(Priority.ALWAYS) })
+    grid.getRowConstraints.add(new RowConstraints() { setVgrow(Priority.NEVER) })
+    grid.getRowConstraints.add(new RowConstraints() { setVgrow(Priority.ALWAYS) })
     grid.addColumn(0, toolBar(pane, controller), pane, stepChange(pane))
 
     new Scene(grid)

@@ -5,14 +5,13 @@ import java.nio.file.{Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.regex.Pattern
 import scala.collection.mutable
-import scala.language.postfixOps
 import scala.util.matching.Regex
 import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
-import suiryc.scala.misc.RichEither._
 import suiryc.scala.sys.{Command, CommandResult}
+import suiryc.scala.util.RichEither._
 import usbinstall.{InstallUI, Stages}
 import usbinstall.settings.{InstallSettings, Settings}
 
@@ -35,7 +34,7 @@ class SyslinuxInstall(
     val devicePath = device.dev
     val targetRoot = partMount.get.to.toAbsolutePath
 
-    val others = Settings.core.oses filter(other => ((other ne settings) && other.enabled && other.syslinuxLabel.isDefined))
+    val others = Settings.core.oses filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
     val components = Settings.core.syslinuxExtraComponents
 
     Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
@@ -77,7 +76,7 @@ class SyslinuxInstall(
 
       val mbrBin = syslinuxRoot.resolve(Paths.get("mbr", "mbr.bin"))
       if (mbrBin.exists) {
-        val cmd = Seq("dd", "bs=440", "count=1", s"if=${mbrBin}", s"of=${devicePath}")
+        val cmd = Seq("dd", "bs=440", "count=1", s"if=$mbrBin", s"of=$devicePath")
         val CommandResult(result, stdout, stderr) =
           Command.execute(cmd)
         if (result != 0) {
@@ -89,7 +88,7 @@ class SyslinuxInstall(
     }
 
     ui.action("Backup MBR") {
-      Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${devicePath}", s"of=${targetRoot.resolve("mbr.backup")}"),
+      Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=$devicePath", s"of=${targetRoot.resolve("mbr.backup")}"),
         skipResult = false)
     }
 
@@ -111,13 +110,13 @@ class SyslinuxInstall(
           }
           device.partprobe().toEither("Failed to refresh partition table").orThrow
 
-          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${devicePath}", s"of=${targetRoot.resolve(s"mbr.part${otherPartition.partNumber}")}"),
+          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=$devicePath", s"of=${targetRoot.resolve(s"mbr.part${otherPartition.partNumber}")}"),
             skipResult = false)
         }
       }
       finally {
         ui.action("Restore MBR") {
-          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${targetRoot.resolve("mbr.backup")}", s"of=${devicePath}"),
+          Command.execute(Seq("dd", "bs=512", "count=1", "conv=notrunc", s"if=${targetRoot.resolve("mbr.backup")}", s"of=$devicePath"),
             skipResult = false)
 
           device.partprobe().toEither("Failed to refresh partition table").orThrow
@@ -144,9 +143,9 @@ TIMEOUT 100
 
       defaultEntry flatMap(_.syslinuxLabel) foreach { label =>
         sb.append(
-s"""ONTIMEOUT ${label}
+s"""ONTIMEOUT $label
 
-MENU DEFAULT ${label}
+MENU DEFAULT $label
 
 """)
       }
@@ -158,7 +157,7 @@ MENU DEFAULT ${label}
       } {
         sb.append(
 s"""
-LABEL ${syslinuxLabel}
+LABEL $syslinuxLabel
     MENU LABEL ^${other.label}
     KERNEL chain.c32
     APPEND boot ${otherPartition.partNumber}
@@ -205,22 +204,22 @@ MENU TITLE Misc tools
         component <- components if (component.kind == SyslinuxComponentKind.Image)
         image <- component.image
       } {
-        val imageName = image.getFileName()
+        val imageName = image.getFileName
 
       sb.append(
 s"""
 LABEL ${component.syslinuxLabel}
     MENU LABEL ^${component.label}
     KERNEL modules/memdisk
-    INITRD /bootdisk/${imageName}
+    INITRD /bootdisk/$imageName
 """)
 
-        if (imageName.toString.toLowerCase().endsWith(".iso")) {
+        if (imageName.toString.toLowerCase.endsWith(".iso")) {
           sb.append(
 """    APPEND iso
 """)
         }
-        else if (imageName.toString.toLowerCase().endsWith(".img")) {
+        else if (imageName.toString.toLowerCase.endsWith(".img")) {
           sb.append(
 """    APPEND floppy
 """)
@@ -240,7 +239,7 @@ LABEL return
 MENU END
 """)
 
-      syslinuxFile.toFile.write(sb.toString)
+      syslinuxFile.toFile.write(sb.toString())
     }
 
     installGrub4DOS(partMount.get)
@@ -250,7 +249,7 @@ MENU END
 
   protected def installGrub4DOS(partMount: PartitionMount): Unit = {
     val grub4dosRoot = ui.action(s"Search Grub4DOS") {
-      SyslinuxInstall.getGrub4DOS()
+      SyslinuxInstall.getGrub4DOS
     }
     val targetRoot = partMount.to.toAbsolutePath
 
@@ -267,7 +266,7 @@ MENU END
     reboot
 """)
 
-      grub4dosFile.toFile.write(sb.toString)
+      grub4dosFile.toFile.write(sb.toString())
     }
   }
 
@@ -281,24 +280,24 @@ MENU END
     val iso = new PartitionMount(pathISO, InstallSettings.tempDirectory("rEFInd"))
     val targetRoot = partMount.to.toAbsolutePath
 
-    iso.mount
+    iso.mount()
     try {
       val source = iso.to
       val sourceRoot = source.toAbsolutePath
 
-      copy(source ***, sourceRoot, targetRoot, "Copy rEFInd ISO content")
+      copy(source.***, sourceRoot, targetRoot, "Copy rEFInd ISO content")
     }
     finally {
-      iso.umount
+      iso.umount()
     }
 
-    copy(PathFinder(refindPath) / "drivers_x64" ***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), "Copy rEFInd extra content")
+    copy(PathFinder(refindPath) / "drivers_x64".***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), "Copy rEFInd extra content")
 
     ui.action("Configure rEFInd") {
       val refindFile = targetRoot.resolve(Paths.get("EFI", "boot", "refind.conf"))
       val sb = new StringBuilder
 
-      sb.append(refindFile.read)
+      sb.append(refindFile.read())
 
       sb.append(
 """
@@ -318,12 +317,12 @@ s"""
 menuentry \"${os.label}\" {
     icon /EFI/boot/icons/${OSKind.efiIcon(os.kind)}
     volume \"${os.partitionLabel}\"
-    loader /${efiBootloader}
+    loader /$efiBootloader
 }
 """)
       }
 
-      refindFile.toFile.write(sb.toString)
+      refindFile.toFile.write(sb.toString())
     }
   }
 
@@ -403,7 +402,7 @@ object SyslinuxInstall
 
   protected def find(version: String): Option[SyslinuxArchive] = {
     findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
-      error(s"No archive found for syslinux version[${version}]")
+      error(s"No archive found for syslinux version[$version]")
       None
     } { archive =>
       /* First check whether the matching archive is already associated to
@@ -413,7 +412,7 @@ object SyslinuxInstall
         case (_, Some(SyslinuxArchive(a, u))) if (archive.compareTo(a) == 0) =>
           SyslinuxArchive(a, u)
       } orElse findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
-        error(s"Could not find syslinux version[${version}] files in archive[${archive}]")
+        error(s"Could not find syslinux version[$version] files in archive[$archive]")
         None
       } { uncompressed =>
         build(uncompressed)
@@ -444,7 +443,7 @@ object SyslinuxInstall
       else Command.execute(Seq("tar", "xf", path.toString, "-C", uncompressPath.toString))
 
       if (result != 0) {
-        error(s"Failed to uncompress archive[${path}] to[${uncompressPath}]: $stderr")
+        error(s"Failed to uncompress archive[$path] to[$uncompressPath]: $stderr")
       }
 
     uncompressPath
@@ -454,7 +453,7 @@ object SyslinuxInstall
     def parentOption(path: Path) = Option(path.getParent)
 
     val finder = PathFinder(root) ** "extlinux" / "extlinux"
-    finder.get.toList.sorted.headOption map(_.toPath) flatMap(parentOption) flatMap(parentOption)
+    finder.get().toList.sorted.headOption.map(_.toPath).flatMap(parentOption).flatMap(parentOption)
   }
 
   protected def build(base: Path) {
@@ -474,14 +473,14 @@ object SyslinuxInstall
   protected def findGrub4DOSArchive(): Option[Path] =
     findPath(Settings.core.toolsPath, """(?i)grub4dos.*""".r)
 
-  def getGrub4DOS(): Path = {
-    findGrub4DOSArchive.fold[Path] {
+  def getGrub4DOS: Path = {
+    findGrub4DOSArchive().fold[Path] {
       throw new Exception("Could not find Grub4DOS archive")
     } { path =>
       val root = uncompress(path)
       val finder = PathFinder(root) ** "grldr"
-      finder.get.toList.sorted.headOption.fold {
-        throw new Exception(s"Could not find Grub4DOS files in its archive[${path.getFileName()}]")
+      finder.get().toList.sorted.headOption.fold {
+        throw new Exception(s"Could not find Grub4DOS files in its archive[${path.getFileName}]")
       } { path =>
         path.toPath.getParent
       }

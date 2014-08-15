@@ -4,17 +4,15 @@ import grizzled.slf4j.Logging
 import java.net.URL
 import java.util.ResourceBundle
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
-import javafx.geometry.Insets
 import javafx.scene.{Parent, Scene}
 import javafx.scene.control.{Label, Tab, TabPane, TextArea}
-import javafx.scene.layout.{AnchorPane, GridPane, Priority, VBox}
+import javafx.scene.layout.{AnchorPane, GridPane, VBox}
 import javafx.stage.{Modality, Stage, Window}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
 import suiryc.scala.javafx.concurrent.JFXSystem
-import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
@@ -92,7 +90,7 @@ class InstallController
     }
   }
 
-  override def canClearSettings() = false
+  override def canClearSettings = false
 
   override def settingsCleared(source: Window) {
     Stages.errorStage(Option(source), "Settings cleared", Some("Something unexpected happened"),
@@ -149,7 +147,7 @@ class InstallController
      * wait for this stage to be shown before starting installing.
      */
     def install() {
-      cancellableFuture = CancellableFuture(installTask(_))
+      cancellableFuture = CancellableFuture(installTask)
       cancellableFuture.future.onComplete {
         case Failure(ex) =>
           taskFailed(ex)
@@ -173,7 +171,7 @@ class InstallController
        * we get hiding first, then showing.
        */
       if (showing) {
-        if (USBInstall.stage.getScene() eq vbox.getScene()) {
+        if (USBInstall.stage.getScene eq vbox.getScene) {
           install()
         }
         else {
@@ -236,10 +234,10 @@ class InstallController
           AnchorPane.setLeftAnchor(osActivity, 10)
 
           osTab.setContent(pane)
-          logPanes.getTabs().add(osTab)
+          logPanes.getTabs.add(osTab)
           /* Only select new tab if previous one is still selected */
-          if (logPanes.getSelectionModel().getSelectedItem() eq previousTab)
-            logPanes.getSelectionModel().select(osTab)
+          if (logPanes.getSelectionModel.getSelectedItem eq previousTab)
+            logPanes.getSelectionModel.select(osTab)
         }
 
         def resetAppender() {
@@ -292,8 +290,8 @@ class InstallController
     switchLogWriter(previousLogWriter, installLogWriter)
 
     /* Only get back to initial tab if previous one is still selected */
-    if (logPanes.getSelectionModel().getSelectedItem() eq previousTab) JFXSystem.schedule {
-      logPanes.getSelectionModel().select(installTab)
+    if (logPanes.getSelectionModel.getSelectedItem eq previousTab) JFXSystem.schedule {
+      logPanes.getSelectionModel.select(installTab)
     }
 
     failedOses
@@ -308,7 +306,7 @@ class InstallController
     stage.setTitle("Installation failure")
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
-    stage.initOwner(vbox.getScene().getWindow())
+    stage.initOwner(vbox.getScene.getWindow)
     /* Track dimension as soon as shown, and unlisten once done */
     val subscription = stage.showingProperty().listen { showing =>
       if (showing) sfxStages.trackMinimumDimensions(stage)
@@ -316,8 +314,8 @@ class InstallController
     stage.showAndWait()
     subscription.unsubscribe()
 
-    val action = controller.getAction()
-    if (controller.getAsDefault())
+    val action = controller.getAction
+    if (controller.getAsDefault)
       Settings.core.componentInstallError() = action
 
     action

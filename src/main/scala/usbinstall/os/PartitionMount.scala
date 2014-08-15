@@ -3,7 +3,6 @@ package usbinstall.os
 import grizzled.slf4j.Logging
 import java.nio.file.Path
 import suiryc.scala.sys.{Command, CommandResult}
-import usbinstall.Stages
 
 
 class PartitionMount(
@@ -17,8 +16,8 @@ class PartitionMount(
 
   def mounted = _mounted
 
-  def mount = if (!mounted) {
-    val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString(), to.toString()))
+  def mount() = if (!mounted) {
+    val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString, to.toString))
 
     if (result != 0) {
       error(s"Cannot mount partition from $from to $to: $stderr")
@@ -28,11 +27,11 @@ class PartitionMount(
     _mounted = true
   }
 
-  def umount = if (mounted) {
-    val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", to.toString()))
+  def umount() = if (mounted) {
+    val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", to.toString))
 
     if (result != 0) {
-      val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", "-lf", to.toString()))
+      val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", "-lf", to.toString))
 
       if (result != 0) {
         error(s"Cannot unmount partition[$to]: $stderr")

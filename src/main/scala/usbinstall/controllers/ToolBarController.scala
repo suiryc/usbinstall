@@ -8,8 +8,6 @@ import javafx.scene.{Node, Parent, Scene}
 import javafx.scene.control.ToggleButton
 import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
-import suiryc.scala.javafx.concurrent.JFXSystem
-import suiryc.scala.javafx.event.Subscription
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.{HasEventSubscriptions, LogsStage}
 
@@ -42,16 +40,18 @@ class ToolBarController
     val options = loader.load[Parent]()
     val controller = loader.getController[OptionsController]()
 
-    paneController foreach { paneController =>
-      if (paneController.isInstanceOf[SettingsClearedListener])
-        controller.setListener(paneController.asInstanceOf[SettingsClearedListener])
+    paneController.foreach {
+      case paneController: SettingsClearedListener =>
+        controller.setListener(paneController)
+
+      case _ =>
     }
 
     val stage = new Stage
     stage.setTitle("Options")
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
-    stage.initOwner(event.getSource.asInstanceOf[Node].getScene().getWindow())
+    stage.initOwner(event.getSource.asInstanceOf[Node].getScene.getWindow)
     /* Track dimension as soon as shown, and unlisten once done */
     val subscription = stage.showingProperty().listen { showing =>
       if (showing) sfxStages.trackMinimumDimensions(stage)
