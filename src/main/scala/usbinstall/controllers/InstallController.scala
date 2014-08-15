@@ -181,7 +181,7 @@ class InstallController
           Stages.warningStage(None, "Unexpected situation", None,
             "Displayed window does not appear to be the expected one (installation)!")
         }
-        subscription.unsubscribe()
+        subscription.cancel()
       }
     }
   }
@@ -312,7 +312,7 @@ class InstallController
       if (showing) sfxStages.trackMinimumDimensions(stage)
     }
     stage.showAndWait()
-    subscription.unsubscribe()
+    subscription.cancel()
 
     val action = controller.getAction
     if (controller.getAsDefault)

@@ -1,7 +1,7 @@
 package usbinstall
 
 import javafx.scene.layout.Pane
-import suiryc.scala.javafx.event.Subscription
+import suiryc.scala.concurrent.Cancellable
 
 
 trait StepPane
@@ -33,11 +33,11 @@ trait UseStepPane {
 
 trait HasEventSubscriptions {
 
-  protected var subscriptions: List[Subscription] =
+  protected var subscriptions: List[Cancellable] =
     Nil
 
   def cancelSubscriptions() {
-    subscriptions.foreach(_.unsubscribe())
+    subscriptions.foreach(_.cancel())
     subscriptions = Nil
   }
 

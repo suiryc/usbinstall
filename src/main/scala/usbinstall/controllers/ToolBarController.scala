@@ -57,7 +57,7 @@ class ToolBarController
       if (showing) sfxStages.trackMinimumDimensions(stage)
     }
     stage.showAndWait()
-    subscription.unsubscribe()
+    subscription.cancel()
   }
 
   def onShowLogs(event: ActionEvent) {
