@@ -38,7 +38,7 @@ import usbinstall.{
   UseStepPane,
   USBInstall
 }
-import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings}
+import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings, SyslinuxInstall}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -67,6 +67,8 @@ class ChoosePartitionsController
 
   protected val installPopup = new Popup()
 
+  protected val infoPopup = new Popup()
+
   protected var stepPane: StepPane = _
 
   /* Note: subscriptions on external object need to be cancelled for
@@ -81,9 +83,14 @@ class ChoosePartitionsController
   updateAvailablePartitions()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions-installPopup.fxml"))
-    val node = loader.load[Parent]()
-    installPopup.getContent.add(node)
+    def loadPopup(popup: Popup, file: String) {
+      val loader = new FXMLLoader(getClass.getResource(file))
+      val node = loader.load[Parent]()
+      popup.getContent.add(node)
+    }
+
+    loadPopup(installPopup, "/fxml/choosePartitions-installPopup.fxml")
+    loadPopup(infoPopup, "/fxml/choosePartitions-infoPopup.fxml")
 
     formatAll.setOnAction { event: ActionEvent =>
       Settings.core.oses foreach { settings =>
@@ -100,7 +107,7 @@ class ChoosePartitionsController
       }
     }
 
-    attachDelayedInstallPopup(installAll)
+    attachDelayedPopup(installPopup, installAll)
 
     /* Initial partitions selection */
     selectPartitions(redo = false)
@@ -142,10 +149,12 @@ class ChoosePartitionsController
           val tooltip = new Tooltip(missingRequirements.mkString("\n"))
           label.setTooltip(tooltip)
           label.setTextFill(Color.RED)
+          detachDelayedPopup(label)
         }
         else {
           label.setTooltip(null)
           label.setTextFill(Color.BLACK)
+          attachDelayedPopup(infoPopup, label, updateInfoPopup(settings))
         }
       }
 
@@ -230,7 +239,7 @@ class ChoosePartitionsController
         else if (osInstall.isSelected) OSInstallStatus.Install
         else OSInstallStatus.NotInstalled
     }
-    attachDelayedInstallPopup(osInstall)
+    attachDelayedPopup(installPopup, osInstall)
 
     def installStatusToUI(v: OSInstallStatus.Value) {
       v match {
@@ -364,18 +373,18 @@ class ChoosePartitionsController
     selectPartitions(redo = true)
   }
 
-  private def checkInstallPopup(node: Node): Boolean = {
+  private def checkPopup(popup: Popup, node: Node): Boolean = {
     /* Hide current popup if not attached to targeted node */
-    if (Option(installPopup.getOwnerNode).exists(_ ne node) && installPopup.isShowing) {
-      installPopup.hide()
+    if (Option(popup.getOwnerNode).exists(_ ne node) && popup.isShowing) {
+      popup.hide()
       true
     }
     else false
   }
 
-  private def showInstallPopup(node: Node) {
+  private def showPopup(popup: Popup, node: Node) {
     /* Show popup if necessary */
-    if (!installPopup.isShowing || checkInstallPopup(node)) {
+    if (!popup.isShowing || checkPopup(popup, node)) {
       /* First display the popup right next to the targeted node. This is
        * necessary to prevent it stealing the mouse (triggering a 'mouse exited'
        * event on the targeted node while mouse is still over it).
@@ -386,12 +395,12 @@ class ChoosePartitionsController
       val bounds = node.getBoundsInLocal
       val pos = node.localToScreen(bounds.getMaxX, bounds.getMinY + (bounds.getMaxY - bounds.getMinY) / 2)
 
-      installPopup.show(node, pos.getX, pos.getY)
-      installPopup.setAnchorY(pos.getY - installPopup.getHeight / 2)
+      popup.show(node, pos.getX, pos.getY)
+      popup.setAnchorY(pos.getY - popup.getHeight / 2)
     }
   }
 
-  private def attachDelayedInstallPopup(node: Node) {
+  private def attachDelayedPopup(popup: Popup, node: Node, onShow: => Unit = {}) {
     /* Note: we could use ControlsFX PopOver, but we would face the same kind
      * of issues with popup (transparent background) stealing the mouse.
      * It would either require to:
@@ -413,19 +422,38 @@ class ChoosePartitionsController
     node.setOnMouseExited { event: MouseEvent =>
       cancellable.foreach(_.cancel())
       cancellable = None
-      installPopup.hide()
+      popup.hide()
     }
 
     node.setOnMouseEntered { event: MouseEvent =>
-      checkInstallPopup(node)
+      checkPopup(popup, node)
 
       import scala.concurrent.duration._
 
       cancellable = Some(JFXSystem.scheduleOnce(1.seconds) {
         cancellable = None
-        showInstallPopup(node)
+        onShow
+        showPopup(popup, node)
       })
     }
+  }
+
+  private def detachDelayedPopup(node: Node) {
+    node.setOnMouseExited { event: MouseEvent => }
+    node.setOnMouseEntered { event: MouseEvent => }
+  }
+
+  private def updateInfoPopup(settings: OSSettings) {
+    val root = infoPopup.getContent.get(0)
+    val partitionInfo = root.lookup("#partitionInfo").asInstanceOf[Label]
+    val syslinuxInfo = root.lookup("#syslinuxInfo").asInstanceOf[Label]
+
+    partitionInfo.setText(s"(${settings.partitionFormat}) ${settings.partitionLabel}")
+    val syslinux = settings.syslinuxVersion.map { version =>
+      val name = SyslinuxInstall.getSource(version).map(_.getFileName.toString).getOrElse("n/a")
+      s"($version) $name"
+    }.getOrElse("n/a")
+    syslinuxInfo.setText(syslinux)
   }
 
 }

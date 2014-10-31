@@ -398,9 +398,12 @@ object SyslinuxInstall
   private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
   def get(version: String): Option[Path] =
-    versions getOrElseUpdate(version, find(version)) map(_.uncompressed)
+    versions.getOrElseUpdate(version, find(version, true)).map(_.uncompressed)
 
-  protected def find(version: String): Option[SyslinuxArchive] = {
+  def getSource(version: String): Option[Path] =
+    versions.getOrElse(version, find(version, false)).map(_.archive)
+
+  protected def find(version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
     findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
       error(s"No archive found for syslinux version[$version]")
       None
@@ -408,16 +411,16 @@ object SyslinuxInstall
       /* First check whether the matching archive is already associated to
        * another (more precise/generic) version number.
        */
-      versions collectFirst {
+      versions.collectFirst {
         case (_, Some(SyslinuxArchive(a, u))) if (archive.compareTo(a) == 0) =>
           SyslinuxArchive(a, u)
-      } orElse findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
+      }.orElse(findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
         error(s"Could not find syslinux version[$version] files in archive[$archive]")
         None
       } { uncompressed =>
-        build(uncompressed)
+        if (doBuild) build(uncompressed)
         Some(SyslinuxArchive(archive, uncompressed))
-      }
+      })
     }
   }
 
