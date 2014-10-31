@@ -375,8 +375,11 @@ w
       /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
         os.ui.action(s"Search syslinux $version") {
-          if (!SyslinuxInstall.get(version).isDefined)
+          if (!SyslinuxInstall.get(version).isDefined) {
             throw new Exception(s"Could not find syslinux $version")
+          }
+          val name = SyslinuxInstall.getSource(version).map(_.getFileName.toString).getOrElse("n/a")
+          os.ui.activity(s"Syslinux found: $name")
         }
       }
 
