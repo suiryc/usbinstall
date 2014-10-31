@@ -371,7 +371,7 @@ w
       os.checkCancelled()
     }
 
-    if (os.settings.install) {
+    if (os.settings.enabled) {
       /* prepare syslinux */
       os.settings.syslinuxVersion foreach { version =>
         os.ui.action(s"Search syslinux $version") {
@@ -408,7 +408,7 @@ w
         /* prepare EFI */
         os.searchEFI(partMount)
 
-        if (os.settings.install) {
+        if (os.settings.enabled) {
           os.ui.action(s"Install bootloader") {
             os.checkCancelled()
             installBootloader(os, partMount)
