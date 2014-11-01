@@ -101,6 +101,9 @@ class OSSettings(
   protected val partitionSetting: PersistentProperty[String] =
     PersistentProperty(PersistentSetting.forString("settings.partition", null))
 
+  val persistent: PersistentProperty[Boolean] =
+    PersistentProperty(PersistentSetting.forBoolean("settings.persistence", default = false))
+
   val partition: ObjectProperty[Option[DevicePartition]] =
     new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))
 
@@ -147,6 +150,7 @@ class OSSettings(
     format.reset()
     installStatus.reset()
     partition.setValue(getDevicePartition(Option(partitionSetting.setting())))
+    persistent.reset()
   }
 
   def snapshot(snapshot: SettingsSnapshot) {

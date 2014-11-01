@@ -447,6 +447,7 @@ class ChoosePartitionsController
     val root = infoPopup.getContent.get(0)
     val partitionInfo = root.lookup("#partitionInfo").asInstanceOf[Label]
     val syslinuxInfo = root.lookup("#syslinuxInfo").asInstanceOf[Label]
+    val persistenceInfo = root.lookup("#persistenceInfo").asInstanceOf[Label]
 
     partitionInfo.setText(s"(${settings.partitionFormat}) ${settings.partitionLabel}")
     val syslinux = settings.syslinuxVersion.map { version =>
@@ -454,6 +455,7 @@ class ChoosePartitionsController
       s"($version) $name"
     }.getOrElse("n/a")
     syslinuxInfo.setText(syslinux)
+    persistenceInfo.setText(settings.persistent().toString)
   }
 
 }

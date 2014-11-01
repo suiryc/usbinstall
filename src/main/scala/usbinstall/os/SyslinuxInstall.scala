@@ -285,13 +285,13 @@ MENU END
       val source = iso.to
       val sourceRoot = source.toAbsolutePath
 
-      copy(source.***, sourceRoot, targetRoot, "Copy rEFInd ISO content")
+      copy(source.***, sourceRoot, targetRoot, settings.partitionFormat, "Copy rEFInd ISO content")
     }
     finally {
       iso.umount()
     }
 
-    copy(PathFinder(refindPath) / "drivers_x64".***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), "Copy rEFInd extra content")
+    copy(PathFinder(refindPath) / "drivers_x64".***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), settings.partitionFormat, "Copy rEFInd extra content")
 
     ui.action("Configure rEFInd") {
       val refindFile = targetRoot.resolve(Paths.get("EFI", "boot", "refind.conf"))

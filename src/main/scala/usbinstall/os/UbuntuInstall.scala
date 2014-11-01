@@ -6,7 +6,9 @@ import suiryc.scala.io.PathFinder
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
+import suiryc.scala.sys.Command
 import suiryc.scala.util.matching.RegexReplacer
+import suiryc.scala.util.RichEither._
 import usbinstall.InstallUI
 
 
@@ -17,7 +19,8 @@ class UbuntuInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  //override def installRequirements() =
+  override def installRequirements() =
+    Set("dd")
   //  Set("cpio", "lzma")
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
@@ -25,8 +28,9 @@ class UbuntuInstall(
     val sourceRoot = source.toAbsolutePath
     val targetRoot = partMount.get.to.toAbsolutePath
     val finder = source.***
+    val persistent = settings.persistent()
 
-    copy(finder, sourceRoot, targetRoot, "Copy ISO content")
+    copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
     /* Without 'casper', we need to patch 'initrd'. See comments below. */
     if (!targetRoot.resolve("casper").isDirectory)
@@ -47,51 +51,40 @@ class UbuntuInstall(
     ui.action("Prepare syslinux") {
       val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
 
-      /* Original code for persistence */
-//    if [ ${_persistence} -ne 0 ]
-//    then
-//        find "${dirPartMount}"/boot/grub "${dirPartMount}"/syslinux -maxdepth 1 \( -name "*.cfg" -or -name "*.conf" \) \
-//            | xargs grep -lEi "[[:blank:]]+(linux|append)[[:blank:]]+.*(initrd|boot=casper)" \
-//            | xargs perl -pi -e 's/([ \t]+(?:linux[ \t]+.*vmlinuz(?:\.efi)?|append)[ \t]+)(.*initrd|.*boot=casper)/\1persistent \2/i'
-//        checkReturnCode "Failed to prepare syslinux" 2
-//    fi
-
       /* Update 'casper' */
       targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile.write(s"$uuid\n")
       val confs = PathFinder(targetRoot) / (("boot" / "grub") ++ "syslinux") * (".*\\.cfg".r | ".*\\.conf".r)
-      val regex = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*boot=casper)", "pre")
-      val regexReplacer = RegexReplacer(regex, (m: Regex.Match) =>
+      val regexUUID = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*boot=casper)", "pre")
+      val regexUUIDReplacer = RegexReplacer(regexUUID, (m: Regex.Match) =>
         s"${m.group("pre")} uuid=$uuid"
       )
+
+      val rrs =
+        if (persistent) {
+          val regexPers = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*(?:boot=casper|initrd=[^ \t]*))", "pre")
+          val regexPersReplacer = RegexReplacer(regexPers, (m: Regex.Match) =>
+            s"${m.group("pre")} persistent"
+          )
+          regexUUIDReplacer :: regexPersReplacer :: Nil
+        }
+        else regexUUIDReplacer :: Nil
       for (conf <- confs.get()) {
-        regexReplace(targetRoot, conf, regexReplacer)
+        regexReplace(targetRoot, conf, rrs:_*)
       }
     }
 
-    /* Original code for persistence */
-//    persistenceFile="${dirPartMount}"/casper-rw
-//    if [ ${_persistence} -ne 0 ]
-//    then
-//        # Generate file for persistency
-//        touch "${persistenceFile}"
-//        persistencySize=$(($(df -B 1 "${dirPartMount}" | tail -n 1 | awk '{print $4}')/(1024*1024) - 1))
-//        if [ ${persistencySize} -lt 1024 ]
-//        then
-//            dialog --yesno "There is ${persistencySize}MiB available for persistency, which is less than 1GiB.\nContinue anyway ?" 20 70
-//            if [ $? -ne 0 ]
-//            then
-//                _persistence=0
-//                rm "${persistenceFile}"
-//            fi
-//        fi
-//    fi
-//    if [ ${_persistence} -ne 0 ]
-//    then
-//        updateStatus dialogStatus " * Generate ${persistencySize}MiB file for persistency"
-//        dd if=/dev/zero of="${persistenceFile}" bs=1M count=${persistencySize} \
-//            && mkfs.ext4 -F "${persistenceFile}"
-//        checkReturnCode "Failed to generate persistency file" 2
-//    fi
+    if (persistent) {
+      /* Generate the persistence file */
+      ui.action("Generate persistency file") {
+        val persistenceFile = targetRoot.resolve("casper-rw")
+        /* Note: leave 1 MiB for bootloader etc */
+        val sizeMB = targetRoot.toFile.getUsableSpace / (1024L * 1024L) - 1
+        ui.activity(s"There is ${ if (sizeMB < 1024) "only " else "" }${sizeMB}MiB available for persistency")
+
+        Command.execute(Seq("dd", "bs=1M", s"count=$sizeMB", "if=/dev/zero", s"of=$persistenceFile")).toEither("Failed to create persistency file") &&
+          Command.execute(Seq("mkfs.ext4", "-F", persistenceFile.toString)).toEither("Failed to format persistency file")
+      }
+    }
   }
 
 }

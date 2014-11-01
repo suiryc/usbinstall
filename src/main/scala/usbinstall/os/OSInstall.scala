@@ -67,7 +67,7 @@ class OSInstall(
   protected def getSyslinuxFile(targetRoot: Path) =
     Paths.get(targetRoot.toString, "syslinux", settings.syslinuxFile)
 
-  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, label: String) {
+  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFormat.Value, label: String) {
     ui.action(label) {
       finder.get().toList.sortBy(_.getPath) foreach { file =>
         val pathFile = file.toAbsolutePath
@@ -77,12 +77,18 @@ class OSInstall(
         if (pathTarget.exists)
           logger.warn(s"Path[$pathRelative] already processed, skipping")
         else {
+          val copyOptions =
+           if (targetType == PartitionFormat.fat32)
+             List(StandardCopyOption.COPY_ATTRIBUTES)
+           else
+             List(StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
           ui.activity(s"Copying file[$pathRelative]")
           FilesEx.copy(
             sourceRoot,
             pathRelative,
             targetRoot,
-            followLinks = false
+            followLinks = false,
+            options = copyOptions
           )
         }
       }
