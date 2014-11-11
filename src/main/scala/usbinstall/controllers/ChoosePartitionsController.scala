@@ -50,6 +50,9 @@ class ChoosePartitionsController
   with Logging
 {
 
+  /* XXX - When updating installation, consider ISO copy done, and redo everything else ? (misc files copy, bootloader conf, bootloader install ?) */
+  /* XXX - CLI way to point to configuration to use (multi-conf) */
+
   @FXML
   protected var elements: GridPane = _
 
