@@ -23,9 +23,17 @@ object Panes
     }.filter { device =>
       device.ueventProps.get("DRIVER") match {
         case Some("sd") =>
+          /* Usually HDD/SSD, including USB ones, and sometimes memory cards */
+          true
+
+        case Some("mmcblk") =>
+          /* Sometimes used for memory card */
           true
 
         case _ =>
+          /* Also allow non-void writable network block devices. Useful when
+           * testing installation on virtual disk handled by qemu-nbd tool.
+           */
           if (device.isInstanceOf[NetworkBlockDevice])
             device.size.either.fold(_ => false, v => (v > 0) && !device.readOnly)
           else
