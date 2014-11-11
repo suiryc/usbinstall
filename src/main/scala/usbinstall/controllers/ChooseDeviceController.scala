@@ -38,8 +38,8 @@ class ChooseDeviceController extends Initializable {
       Panes.devices.get(newValue) match {
         case oDevice @ Some(device) =>
           InstallSettings.device.set(oDevice)
-          vendor.setText(device.vendor)
-          model.setText(device.model)
+          vendor.setText(device.vendorOption.getOrElse(device.name))
+          model.setText(device.modelOption.getOrElse(device.name))
           device.size.either match {
             case Right(v) =>
               size.setText(Units.storage.toHumanReadable(v))
