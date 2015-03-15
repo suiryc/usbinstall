@@ -92,11 +92,6 @@
             <version>2.3.3</version>
         </dependency>
         <dependency>
-            <groupId>org.controlsfx</groupId>
-            <artifactId>controlsfx</artifactId>
-            <version>8.40.9</version>
-        </dependency>
-        <dependency>
             <groupId>suiryc</groupId>
             <artifactId>suiryc-scala-core_2.11</artifactId>
             <version>0.0.2-SNAPSHOT</version>

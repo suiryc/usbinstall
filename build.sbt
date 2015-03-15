@@ -9,7 +9,6 @@ val versions = Map[String, String](
   "scala" -> "2.11.1",
   "akka" -> "2.3.3",
   "config" -> "1.2.1",
-  "controlsfx" -> "8.40.9",
   "grizzled" -> "1.0.2",
   "logback" -> "1.1.2",
   "slf4j" -> "1.7.7",
@@ -33,7 +32,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % versions("logback"),
   "com.typesafe" % "config" % versions("config"),
   "com.typesafe.akka" %% "akka-actor" % versions("akka"),
-  "org.controlsfx" % "controlsfx" % versions("controlsfx"),
   "suiryc" %% "suiryc-scala-core" % versions("suiryc-scala"),
   "suiryc" %% "suiryc-scala-log" % versions("suiryc-scala"),
   "suiryc" %% "suiryc-scala-javafx" % versions("suiryc-scala")

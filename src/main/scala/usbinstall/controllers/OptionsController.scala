@@ -4,9 +4,8 @@ import java.net.URL
 import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
-import javafx.scene.control.{Button, ComboBox}
+import javafx.scene.control.{Button, ButtonType, ComboBox}
 import javafx.stage.{Stage, Window}
-import org.controlsfx.dialog.Dialog
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
 import usbinstall.Stages
@@ -80,9 +79,9 @@ class OptionsController extends Initializable {
   def onClear(event: ActionEvent) {
     val action = Stages.confirmStage(Some(window), "Clear settings", Some("Are you sure?"),
       "You are about to clear all settings and get back to initial or default values",
-      Stages.DialogActions.Ok_Cancel)
+      Stages.DialogButtons.Ok_Cancel)
 
-    if (action == Dialog.ACTION_OK) {
+    if (action.exists(_ == ButtonType.OK)) {
       Settings.core.prefs.removeNode()
       Settings.core.reset()
       update()

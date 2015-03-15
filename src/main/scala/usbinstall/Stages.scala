@@ -5,6 +5,7 @@ import javafx.application.Platform
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
 import javafx.scene.{Parent, Scene}
+import javafx.scene.control.{Alert, ButtonType, Label, TextArea}
 import javafx.scene.layout.{
   ColumnConstraints,
   GridPane,
@@ -12,8 +13,7 @@ import javafx.scene.layout.{
   RowConstraints
 }
 import javafx.stage.{Window, WindowEvent}
-import org.controlsfx.control.action.Action
-import org.controlsfx.dialog.{Dialog, Dialogs}
+import suiryc.scala.RichOption._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
@@ -25,8 +25,8 @@ object Stages
   extends Logging
 {
 
-  object DialogActions {
-    val Ok_Cancel = List(Dialog.ACTION_OK, Dialog.ACTION_CANCEL)
+  object DialogButtons {
+    val Ok_Cancel = List(ButtonType.OK, ButtonType.CANCEL)
   }
 
   protected def changeScene(title: String, scene: Scene, size: Option[(Double, Double)] = None) {
@@ -66,45 +66,69 @@ object Stages
     else
       JFXSystem.await(show)
 
-  protected def makeDialogStage(owner: Option[Window], title: String, masthead: Option[String], message: Option[String]): Dialogs = {
-    import RichOptional._
+  protected def makeDialogStage(kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: Option[String]): Alert = {
+    val alert = new Alert(kind)
+    alert.initOwner(owner.getOrElse(USBInstall.stage))
+    alert.setTitle(title)
+    alert.setHeaderText(headerText.orNull)
+    alert.setContentText(contentText.orNull)
 
-    Dialogs.create()
-      .owner(owner.getOrElse(USBInstall.stage))
-      .styleClass(Dialog.STYLE_CLASS_NATIVE)
-      .title(title)
-      .optional[String](masthead, _.masthead(_))
-      .optional[String](message, _.message(_))
+    alert
   }
 
-  protected def dialogStage[T](owner: Option[Window], title: String, masthead: Option[String], message: String, actions: List[Action], show: Dialogs => T): T = {
-    val msg = if (message != "") Some(message) else None
-    val dialog = makeDialogStage(owner, title, masthead, msg)
+  protected def dialogStage[T](kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: String, buttons: List[ButtonType]): Option[ButtonType] = {
+    val msg = if (contentText != "") Some(contentText) else None
+    val dialog = makeDialogStage(kind, owner, title, headerText, msg)
 
-    if (actions.nonEmpty)
-      dialog.actions(actions:_*)
+    if (buttons.nonEmpty)
+      dialog.getButtonTypes.setAll(buttons:_*)
 
     showDialogStage {
-      show(dialog)
+      dialog.showAndWait
     }
   }
 
-  def confirmStage(owner: Option[Window], title: String, masthead: Option[String], message: String, actions: List[Action] = Nil): Action =
-    dialogStage(owner, title, masthead, message, actions, _.showConfirm)
+  def confirmStage(owner: Option[Window], title: String, headerText: Option[String], contentText: String, buttons: List[ButtonType] = Nil): Option[ButtonType] =
+    dialogStage(Alert.AlertType.CONFIRMATION, owner, title, headerText, contentText, buttons)
 
-  def infoStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Unit =
-    dialogStage(owner, title, masthead, message, Nil, _.showInformation)
+  def infoStage(owner: Option[Window], title: String, headerText: Option[String], contentText: String): Unit =
+    dialogStage(Alert.AlertType.INFORMATION, owner, title, headerText, contentText, Nil)
 
-  def warningStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Action =
-    dialogStage(owner, title, masthead, message, Nil, _.showWarning)
+  def warningStage(owner: Option[Window], title: String, headerText: Option[String], contentText: String): Option[ButtonType] =
+    dialogStage(Alert.AlertType.WARNING, owner, title, headerText, contentText, Nil)
 
-  def errorStage(owner: Option[Window], title: String, masthead: Option[String], message: String): Action =
-    dialogStage(owner, title, masthead, message, Nil, _.showError)
+  def errorStage(owner: Option[Window], title: String, headerText: Option[String], contentText: String): Option[ButtonType] =
+    dialogStage(Alert.AlertType.ERROR, owner, title, headerText, contentText, Nil)
 
-  def errorStage(owner: Option[Window], title: String, masthead: Option[String], ex: Throwable): Action = {
-    val dialog = makeDialogStage(owner, title, masthead, None)
+  def errorStage(owner: Option[Window], title: String, headerText: Option[String], ex: Throwable): Option[ButtonType] = {
+    import java.io.{PrintWriter, StringWriter}
+
+    val dialog = makeDialogStage(Alert.AlertType.ERROR, owner, title, headerText, None)
+    val sw = new StringWriter()
+    val pw = new PrintWriter(sw)
+    ex.printStackTrace(pw)
+    val exceptionText = sw.toString
+
+    val label = new Label("The exception stacktrace was:")
+
+    val textArea = new TextArea(exceptionText)
+    textArea.setEditable(false)
+    textArea.setWrapText(true)
+
+    textArea.setMaxWidth(Double.MaxValue)
+    textArea.setMaxHeight(Double.MaxValue)
+    GridPane.setVgrow(textArea, Priority.ALWAYS)
+    GridPane.setHgrow(textArea, Priority.ALWAYS)
+
+    val expContent = new GridPane()
+    expContent.setMaxWidth(Double.MaxValue)
+    expContent.add(label, 0, 0)
+    expContent.add(textArea, 0, 1)
+
+    dialog.getDialogPane.setExpandableContent(expContent)
+
     showDialogStage {
-      dialog.showException(ex)
+      dialog.showAndWait
     }
   }
 
