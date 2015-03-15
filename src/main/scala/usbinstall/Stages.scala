@@ -60,21 +60,20 @@ object Stages
     sfxStages.trackMinimumDimensions(stage, size)
   }
 
-  protected def showDialogStage[T](show: => T): T =
-    if (Platform.isFxApplicationThread)
-      show
-    else
-      JFXSystem.await(show)
+  protected def jfxExecute[T](f: => T): T =
+    JFXSystem.await(f, logReentrant = false)
 
-  protected def makeDialogStage(kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: Option[String]): Alert = {
-    val alert = new Alert(kind)
-    alert.initOwner(owner.getOrElse(USBInstall.stage))
-    alert.setTitle(title)
-    alert.setHeaderText(headerText.orNull)
-    alert.setContentText(contentText.orNull)
+  protected def makeDialogStage(kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: Option[String]): Alert =
+    /* Note: it is important to create the 'Alert' inside JavaFX thread. */
+    jfxExecute {
+      val alert = new Alert(kind)
+      alert.initOwner(owner.getOrElse(USBInstall.stage))
+      alert.setTitle(title)
+      alert.setHeaderText(headerText.orNull)
+      alert.setContentText(contentText.orNull)
 
-    alert
-  }
+      alert
+    }
 
   protected def dialogStage[T](kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: String, buttons: List[ButtonType]): Option[ButtonType] = {
     val msg = if (contentText != "") Some(contentText) else None
@@ -83,7 +82,7 @@ object Stages
     if (buttons.nonEmpty)
       dialog.getButtonTypes.setAll(buttons:_*)
 
-    showDialogStage {
+    jfxExecute {
       dialog.showAndWait
     }
   }
@@ -127,7 +126,7 @@ object Stages
 
     dialog.getDialogPane.setExpandableContent(expContent)
 
-    showDialogStage {
+    jfxExecute {
       dialog.showAndWait
     }
   }

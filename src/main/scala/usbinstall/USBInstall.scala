@@ -119,34 +119,19 @@ class USBInstall extends Application {
   }
 
   def checkRequirements() {
-    /* Notes on ControlsFX dialog:
-     *  - dialog is displayed relatively to owner; which is upper-left corner if
-     *    it is not yet shown
-     *  - using dialog while stage is being built (in JavaFX thread) appears to
-     *    have some side effects: primary stage remains resizable while dialog
-     *    is being displayed, and switches to non-resizable once done
-     *
-     * Easy solution is to display the dialog after the primary stage has been
-     * shown, in a separate thread (Future).
+    val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
+    if (stdout != "0")
+      Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+
+    val unmet = USBInstall.checkRequirements(requirements)
+    if (unmet.nonEmpty)
+      Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
+        unmet.mkString("Missing executable(s): ", ", ", ""))
+
+    /* Accessing this lazy val now will trigger exceptions (error stage) for
+     * unexisting paths.
      */
-    import scala.concurrent.Future
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    Future {
-      val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
-      if (stdout != "0")
-        Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
-
-      val unmet = USBInstall.checkRequirements(requirements)
-      if (unmet.nonEmpty)
-        Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
-          unmet.mkString("Missing executable(s): ", ", ", ""))
-
-      /* Accessing this lazy val now will trigger exceptions (error stage) for
-       * unexisting paths.
-       */
-      Settings.core.syslinuxExtraComponents
-    }
+    Settings.core.syslinuxExtraComponents
   }
 
   override def stop() {
