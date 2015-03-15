@@ -17,7 +17,7 @@ val versions = Map[String, String](
   "scala" -> "2.11.1",
   "akka" -> "2.3.3",
   "config" -> "1.2.1",
-  "controlsfx" -> "8.0.6",
+  "controlsfx" -> "8.20.8",
   "grizzled" -> "1.0.2",
   "logback" -> "1.1.2",
   "slf4j" -> "1.7.7",

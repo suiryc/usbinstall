@@ -13,7 +13,7 @@ import javafx.scene.layout.{
 }
 import javafx.stage.{Window, WindowEvent}
 import org.controlsfx.control.action.Action
-import org.controlsfx.dialog.{Dialog, Dialogs, DialogStyle}
+import org.controlsfx.dialog.{Dialog, Dialogs}
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
@@ -26,7 +26,7 @@ object Stages
 {
 
   object DialogActions {
-    val Ok_Cancel = List(Dialog.Actions.OK, Dialog.Actions.CANCEL)
+    val Ok_Cancel = List(Dialog.ACTION_OK, Dialog.ACTION_CANCEL)
   }
 
   protected def changeScene(title: String, scene: Scene, size: Option[(Double, Double)] = None) {
@@ -71,7 +71,7 @@ object Stages
 
     Dialogs.create()
       .owner(owner.getOrElse(USBInstall.stage))
-      .style(DialogStyle.NATIVE)
+      .styleClass(Dialog.STYLE_CLASS_NATIVE)
       .title(title)
       .optional[String](masthead, _.masthead(_))
       .optional[String](message, _.message(_))
