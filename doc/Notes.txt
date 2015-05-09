@@ -48,6 +48,9 @@ Booting with the alternate kernel, or using wizard instead of startx may help.
 
 Ubuntu
 ------
+Uses syslinux:
+ - 4.x prior to 14.10
+ - 6.03 since 14.10
 EFI boot may show an error message:
 Could not open "\EFI\BOOT\fallback.efi"
 
@@ -56,14 +59,23 @@ See: https://bugs.launchpad.net/ubuntu/+bug/1241824
 To prevent the error message, which is not an issue if the text menu appears right after, one could copy 'grubx64.efi' to 'fallback.efi'
 
 
+Fedora
+------
+Uses syslinux:
+ - 4.x prior to 21
+ - 6.03 since 21
+
+
 CentOS
 ------
-Boot does not end if there is LUKS partition visible: CentOS boot asks for the password, but nothing happens.
+6.x: Boot does not end if there is LUKS partition visible: CentOS boot asks for the password, but nothing happens.
 
 
 Arch Linux
 ----------
-Uses syslinux 6.02
+Uses syslinux:
+ - 6.02 in versions <= 2014
+ - 6.03 in latest versions
 
 
 Kali
