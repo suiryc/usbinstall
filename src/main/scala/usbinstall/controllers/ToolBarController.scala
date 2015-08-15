@@ -7,7 +7,7 @@ import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.scene.{Node, Parent, Scene}
 import javafx.scene.control.ToggleButton
 import javafx.stage.{Modality, Stage}
-import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.{HasEventSubscriptions, LogsStage}
 

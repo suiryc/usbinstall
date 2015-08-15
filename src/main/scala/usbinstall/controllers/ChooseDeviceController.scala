@@ -5,7 +5,7 @@ import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Label, ListView}
-import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.misc.Units
 import usbinstall.settings.InstallSettings
 import usbinstall.{Panes, Stages}

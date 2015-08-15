@@ -4,7 +4,7 @@ import java.nio.file.{Path, Paths}
 import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.PersistentProperty
-import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.settings.{
   BaseSettings,

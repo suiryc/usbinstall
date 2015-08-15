@@ -25,7 +25,7 @@ import javafx.scene.layout.{
 }
 import javafx.scene.paint.Color
 import javafx.stage.{Popup, Window}
-import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.misc.{RichOptional, Units}

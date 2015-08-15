@@ -4,7 +4,7 @@ import grizzled.slf4j.Logging
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.layout.AnchorPane
-import suiryc.scala.javafx.beans.property.RichReadOnlyProperty._
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.io.{PathFinder, AllPassFileFilter}
 import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
 import usbinstall.controllers.{ChoosePartitionsController, InstallController}
