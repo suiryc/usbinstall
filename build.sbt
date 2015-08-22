@@ -4,14 +4,6 @@ name := "usbinstall"
 
 version := "0.0.2-SNAPSHOT"
 
-scalaVersion := versions("scala")
-
-scalacOptions ++= Seq("-deprecation", "-feature", "-optimize", "-unchecked", "-Yinline-warnings")
-
-scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits")
-
-fork in run := true
-
 val versions = Map[String, String](
   "java" -> "1.8",
   "scala" -> "2.11.1",
@@ -26,6 +18,14 @@ val versions = Map[String, String](
   "maven-surefire-plugin" -> "2.17",
   "scala-maven-plugin" -> "3.1.6"
 )
+
+scalaVersion := versions("scala")
+
+scalacOptions ++= Seq("-deprecation", "-feature", "-optimize", "-unchecked", "-Yinline-warnings")
+
+scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits")
+
+fork in run := true
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % versions("slf4j"),

@@ -90,19 +90,21 @@ class OSSettings(
 )(implicit settings: BaseSettings)
 {
 
+  import PersistentSetting._
+
   implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
 
   val format: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.forBoolean("settings.format", default = true))
+    PersistentProperty(PersistentSetting.from("settings.format", default = true))
 
   val installStatus: PersistentProperty[OSInstallStatus.Value] =
-    PersistentProperty(PersistentSetting.forEnumerationEx("settings.status", OSInstallStatus.Install))
+    PersistentProperty(PersistentSetting.from("settings.status", OSInstallStatus.Install))
 
   protected val partitionSetting: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.forString("settings.partition", null))
+    PersistentProperty(PersistentSetting.from("settings.partition", null))
 
   val persistent: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.forBoolean("settings.persistence", default = false))
+    PersistentProperty(PersistentSetting.from("settings.persistence", default = false))
 
   val partition: ObjectProperty[Option[DevicePartition]] =
     new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))
@@ -135,7 +137,7 @@ class OSSettings(
   def install = installStatus() == OSInstallStatus.Install
 
   def installable = enabled && partition.get.isDefined &&
-    (!isoPattern.isDefined || iso.get.isDefined)
+    (isoPattern.isEmpty || iso.get.isDefined)
 
   def formatable = install && format() && installable
 

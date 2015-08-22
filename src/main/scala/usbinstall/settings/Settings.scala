@@ -101,7 +101,7 @@ class Settings(
         path.resolve(name)
       }.find(_.toFile.exists)
 
-      if (!r.isDefined) {
+      if (r.isEmpty) {
         Stages.errorStage(None, "Missing component image", Some(label), s"Image[$name] not found in configured path")
       }
 
@@ -118,13 +118,13 @@ class Settings(
   val rEFIndPath = PathsEx.get(config.getString("refind.path"))
 
   val logDebugThreshold =
-    PersistentProperty(PersistentSetting.forSEnumeration("logDebugThreshold", LogLevel.DEBUG))
+    PersistentProperty(PersistentSetting.from("logDebugThreshold", LogLevel.DEBUG))
 
   val logInstallThreshold =
-    PersistentProperty(PersistentSetting.forSEnumeration("logInstallThreshold", LogLevel.INFO))
+    PersistentProperty(PersistentSetting.from("logInstallThreshold", LogLevel.INFO))
 
   val componentInstallError =
-    PersistentProperty(PersistentSetting.forEnumerationEx("componentInstallError", ErrorAction.Ask))
+    PersistentProperty(PersistentSetting.from("componentInstallError", ErrorAction.Ask))
 
   def reset() {
     logDebugThreshold.reset()
