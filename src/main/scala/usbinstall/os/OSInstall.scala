@@ -184,8 +184,8 @@ object OSInstall
       case OSKind.Syslinux =>
         new SyslinuxInstall(settings, ui, checkCancelled)
 
-      case OSKind.Win7_8 =>
-        new Windows7_8Install(settings, ui, checkCancelled)
+      case OSKind.Windows =>
+        new WindowsInstall(settings, ui, checkCancelled)
 
       case OSKind.GPartedLive =>
         new GPartedLiveInstall(settings, ui, checkCancelled)

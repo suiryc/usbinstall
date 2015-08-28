@@ -7,7 +7,7 @@ import suiryc.scala.sys.Command
 import usbinstall.InstallUI
 
 
-class Windows7_8Install(
+class WindowsInstall(
   override val settings: OSSettings,
   override val ui: InstallUI,
   override val checkCancelled: () => Unit

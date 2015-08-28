@@ -98,7 +98,7 @@ class SyslinuxInstall(
      * (e.g. from a LiveCD) to have the wanted partition as first
      */
     for {
-      other <- others if (other.kind == OSKind.Win7_8)
+      other <- others if (other.kind == OSKind.Windows)
       _ <- other.syslinuxLabel
       otherPartition <- other.partition.get if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
     } {

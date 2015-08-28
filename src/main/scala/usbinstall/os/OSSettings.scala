@@ -17,7 +17,8 @@ import usbinstall.Panes
 
 
 object OSKind extends EnumerationEx {
-  val Win7_8 = Value("Win7&8")
+
+  val Windows = Value
   val Syslinux = Value
   val GPartedLive = Value
   val SystemRescueCD = Value
@@ -28,7 +29,7 @@ object OSKind extends EnumerationEx {
   val Kali = Value
 
   def efiIcon(v: Value) = v match {
-    case Win7_8 => "os_win.icns"
+    case Windows => "os_win.icns"
     case Syslinux => "os_linux.icns"
     case GPartedLive => "os_linux.icns"
     case SystemRescueCD => "os_linux.icns"

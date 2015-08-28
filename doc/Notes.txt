@@ -20,7 +20,7 @@ syslinux 6.02 and 6.03-preX do not seem to be compatible:
 
 Windows
 -------
-Win7/8 only accesses the first partition (whatever its type) for removable USB disks, so either
+Windows 7/8/10 only accesses the first partition (whatever its type) for removable USB disks, so either
  - the install files must be on this partition
  - a virtual drive has to be set
  - partition table must be altered (e.g. from a LiveCD) to have the wanted partition as first
