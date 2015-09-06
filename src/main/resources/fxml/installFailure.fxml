@@ -5,27 +5,26 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.InstallFailureController">
    <children>
-      <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Do you wish to continue installation?" VBox.vgrow="NEVER">
+      <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" text="Do you wish to continue installation?" VBox.vgrow="NEVER">
          <VBox.margin>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </VBox.margin>
       </Label>
-      <GridPane hgap="10.0" VBox.vgrow="ALWAYS">
+      <GridPane hgap="10.0" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
         <columnConstraints>
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" />
-          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
-          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
+            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="-Infinity" />
+          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
+          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
         </columnConstraints>
         <rowConstraints>
           <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <Button mnemonicParsing="false" onAction="#onStop" text="Stop" GridPane.columnIndex="1" />
-            <Button mnemonicParsing="false" onAction="#onContinue" text="Continue" GridPane.columnIndex="2" />
-            <CheckBox fx:id="applyDefault" mnemonicParsing="false" text="Don't ask again">
+            <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onStop" text="Stop" GridPane.columnIndex="1" />
+            <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onContinue" text="Continue" GridPane.columnIndex="2" />
+            <CheckBox fx:id="applyDefault" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" text="Don't ask again">
                <GridPane.margin>
                   <Insets right="10.0" />
                </GridPane.margin>

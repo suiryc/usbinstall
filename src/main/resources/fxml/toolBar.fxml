@@ -4,9 +4,9 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 
-<ToolBar maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="usbinstall.controllers.ToolBarController">
+<ToolBar maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.ToolBarController">
   <items>
-    <Button mnemonicParsing="false" onAction="#onOptions" text="Options" /><ToggleButton fx:id="showLogs" mnemonicParsing="false" onAction="#onShowLogs" text="Show logs" />
+    <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onOptions" text="Options" /><ToggleButton fx:id="showLogs" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onShowLogs" text="Show logs" />
   </items>
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

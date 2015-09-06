@@ -8,20 +8,20 @@
 
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.LogsController">
    <children>
-      <GridPane hgap="5.0" vgap="5.0" VBox.vgrow="NEVER">
+      <GridPane hgap="5.0" minHeight="-Infinity" minWidth="-Infinity" vgap="5.0" VBox.vgrow="NEVER">
          <children>
-            <Label text="Threshold:">
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Threshold:">
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </padding>
             </Label>
-            <ComboBox fx:id="logThreshold" onAction="#onLogThreshold" GridPane.columnIndex="1" />
-            <Button mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="2" />
+            <ComboBox fx:id="logThreshold" minHeight="-Infinity" minWidth="-Infinity" onAction="#onLogThreshold" GridPane.columnIndex="1" />
+            <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="2" />
          </children>
          <columnConstraints>
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
-            <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
-            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="-Infinity" />
+            <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="-Infinity" />
+            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="-Infinity" />
          </columnConstraints>
          <rowConstraints>
             <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
@@ -30,7 +30,7 @@
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </VBox.margin>
       </GridPane>
-      <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS">
+      <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="300.0" minWidth="400.0" VBox.vgrow="ALWAYS">
          <children>
             <TextArea fx:id="textArea" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" wrapText="true" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0" />
          </children>

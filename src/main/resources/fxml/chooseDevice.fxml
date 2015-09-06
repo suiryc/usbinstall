@@ -13,17 +13,17 @@
 <children>
       <GridPane HBox.hgrow="SOMETIMES">
         <columnConstraints>
-          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
+          <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
         </columnConstraints>
         <rowConstraints>
-          <RowConstraints valignment="TOP" vgrow="SOMETIMES" />
-          <RowConstraints valignment="CENTER" vgrow="NEVER" />
+          <RowConstraints minHeight="-Infinity" valignment="TOP" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="-Infinity" valignment="CENTER" vgrow="NEVER" />
         </rowConstraints>
-         <children><ListView fx:id="devices" prefHeight="150.0" prefWidth="200.0">
+         <children><ListView fx:id="devices" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" prefWidth="200.0">
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </padding></ListView>
-            <Button mnemonicParsing="false" onAction="#onRefresh" text="Refresh" GridPane.rowIndex="1">
+            <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onRefresh" text="Refresh" GridPane.rowIndex="1">
                <GridPane.margin>
                   <Insets top="10.0" />
                </GridPane.margin>
@@ -45,16 +45,16 @@
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </padding>
-<children><Label alignment="CENTER_RIGHT" text="Vendor:">
+<children><Label alignment="CENTER_RIGHT" minHeight="-Infinity" minWidth="-Infinity" text="Vendor:">
 <font>
 <Font name="System Bold" size="13.0" />
-</font></Label><Label text="Model:" GridPane.rowIndex="1">
+</font></Label><Label minHeight="-Infinity" minWidth="-Infinity" text="Model:" GridPane.rowIndex="1">
 <font>
 <Font name="System Bold" size="13.0" />
-</font></Label><Label text="Size:" GridPane.rowIndex="2">
+</font></Label><Label minHeight="-Infinity" minWidth="-Infinity" text="Size:" GridPane.rowIndex="2">
 <font>
 <Font name="System Bold" size="13.0" />
-</font></Label><Label fx:id="vendor" GridPane.columnIndex="1" /><Label fx:id="model" GridPane.columnIndex="1" GridPane.rowIndex="1" /><Label fx:id="size" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+</font></Label><Label fx:id="vendor" minHeight="-Infinity" minWidth="-Infinity" GridPane.columnIndex="1" /><Label fx:id="model" minHeight="-Infinity" minWidth="-Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1" /><Label fx:id="size" minHeight="-Infinity" minWidth="-Infinity" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 </children>
 </GridPane>
 </children></HBox>

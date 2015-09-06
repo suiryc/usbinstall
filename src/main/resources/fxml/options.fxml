@@ -5,50 +5,50 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.OptionsController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="usbinstall.controllers.OptionsController">
 <children>
-      <GridPane hgap="5.0" vgap="5.0">
+      <GridPane hgap="5.0" minHeight="-Infinity" minWidth="-Infinity" vgap="5.0">
         <columnConstraints>
-          <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" />
-          <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
+          <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="-Infinity" />
+          <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="-Infinity" />
         </columnConstraints>
         <rowConstraints>
           <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
           <RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <Label text="Error upon component installation:" GridPane.rowIndex="1">
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Error upon component installation:" GridPane.rowIndex="1">
 <padding>
 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 </padding>
             </Label>
-            <ComboBox fx:id="componentInstallError" onAction="#onComponentInstallError" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label text="Installation log threshold:">
+            <ComboBox fx:id="componentInstallError" minHeight="-Infinity" minWidth="-Infinity" onAction="#onComponentInstallError" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label minHeight="-Infinity" minWidth="-Infinity" text="Installation log threshold:">
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </padding>
             </Label>
-            <ComboBox fx:id="logInstallThreshold" onAction="#onLogInstallThreshold" GridPane.columnIndex="1" />
+            <ComboBox fx:id="logInstallThreshold" minHeight="-Infinity" minWidth="-Infinity" onAction="#onLogInstallThreshold" GridPane.columnIndex="1" />
          </children>
-      </GridPane><GridPane hgap="10.0" VBox.vgrow="ALWAYS">
+      </GridPane><GridPane hgap="10.0" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
   <columnConstraints>
-    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
-    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
-            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
-            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" />
+    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
+    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
+            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
+            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="-Infinity" />
   </columnConstraints>
   <rowConstraints>
     <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="SOMETIMES" />
   </rowConstraints>
-<children><Button mnemonicParsing="false" onAction="#onReset" text="Reset">
+<children><Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onReset" text="Reset">
                <tooltip>
                   <Tooltip text="Reset shown settings to default values" />
-               </tooltip></Button><Button fx:id="clearButton" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1">
+               </tooltip></Button><Button fx:id="clearButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onClear" text="Clear" GridPane.columnIndex="1">
                <tooltip>
                   <Tooltip text="Clear all settings" />
                </tooltip></Button>
-            <Button mnemonicParsing="false" onAction="#onDone" text="Done" GridPane.columnIndex="3" />
-            <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#onCancel" text="Cancel" GridPane.columnIndex="2">
+            <Button minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onDone" text="Done" GridPane.columnIndex="3" />
+            <Button fx:id="cancelButton" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onCancel" text="Cancel" GridPane.columnIndex="2">
                <tooltip>
                   <Tooltip text="Cancel options changes" />
                </tooltip>
