@@ -24,7 +24,7 @@ import usbinstall.settings.{InstallSettings, Settings}
 
 object USBInstall {
 
-  /* Set locale to english as application is not i18n */
+  // Set locale to english as application is not i18n
   Locale.setDefault(Locale.ENGLISH)
 
   protected val loggerNames = List("usbinstall", "suiryc")
@@ -112,25 +112,30 @@ class USBInstall extends Application {
     systemStreams = SystemStreams.replace(new PrintStream(new LineSplitterOutputStream(lineWriter)))
 
     Stages.chooseDevice()
-    /* Explicitely load the settings */
+    // Explicitely load the settings
     Settings.load()
 
     checkRequirements()
   }
 
   def checkRequirements() {
-    val CommandResult(result, stdout, _) = Command.execute(Seq("id", "-u"))
-    if (stdout != "0")
-      Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+    try {
+      val CommandResult(_, stdout, _) = Command.execute(Seq("id", "-u"))
+      if (stdout != "0")
+        Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
 
-    val unmet = USBInstall.checkRequirements(requirements)
-    if (unmet.nonEmpty)
-      Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
-        unmet.mkString("Missing executable(s): ", ", ", ""))
+      val unmet = USBInstall.checkRequirements(requirements)
+      if (unmet.nonEmpty)
+        Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
+          unmet.mkString("Missing executable(s): ", ", ", ""))
+    }
+    catch {
+      case ex: Throwable =>
+        Stages.errorStage(None, "Missing requirements", Some("Could not check the requirements were met."), ex)
+    }
 
-    /* Accessing this lazy val now will trigger exceptions (error stage) for
-     * unexisting paths.
-     */
+    // Accessing this lazy val now will trigger exceptions (error stage) for
+    // non-existing paths.
     Settings.core.syslinuxExtraComponents
   }
 
