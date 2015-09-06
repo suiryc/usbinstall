@@ -12,14 +12,10 @@ import usbinstall.settings.Settings
 
 object LogsStage {
 
-  /* Note: when resizing down the TextArea, vertical scrollbar may appear even
-   * if there is actually nothing to scroll (empty area).
-   * There does not seem to be a correct way to get rid of the scrollbar when
-   * not needed (e.g. listening to visible size/region size changes etc).
-   */
-
-  private var pos: Option[(Double, Double)] = None
-  private var size: Option[(Double, Double)] = None
+  // Note: when resizing down the TextArea, vertical scrollbar may appear even
+  // if there is actually nothing to scroll (empty area).
+  // There does not seem to be a correct way to get rid of the scrollbar when
+  // not needed (e.g. listening to visible size/region size changes etc).
 
   protected val loader = new FXMLLoader(getClass.getResource("/fxml/logs.fxml"))
   protected val root = loader.load[Parent]()
@@ -99,42 +95,24 @@ object LogsStage {
   protected val stage = new Stage
   stage.setTitle("Logs")
   stage.setScene(new Scene(root))
-  /* Note: stage will disappear if declared owner is hidden.
-   * So don't use initOwner.
-   */
+  // Note: stage will disappear if declared owner is hidden.
+  // So don't use initOwner.
 
   stage.setOnCloseRequest { (event: WindowEvent) =>
     event.consume()
     LogsStage.hide()
   }
 
+  // Only track minimum dimensions upon first display
+  sfxStages.trackMinimumDimensions(stage, Some(800.0, 600.0))
+  // Keep position/size upon hiding/showing
+  sfxStages.keepBounds(stage)
+
   def show() {
-    /* Notes:
-     *  - we are in the JavaFX thread
-     *  - when showing again stage after hide, position and size are resetted
-     *  - to prevent artifacts (black areas on top or side of scene), it is
-     *    better to set position and size after showing stage
-     */
     stage.show()
-
-    pos foreach { t =>
-      stage.setX(t._1)
-      stage.setY(t._2)
-    }
-    size foreach { t =>
-      stage.setWidth(t._1)
-      stage.setHeight(t._2)
-    }
-
-    /* Only track minimum dimensions upon first display */
-    if (!pos.isDefined)
-      sfxStages.trackMinimumDimensions(stage, Some(800, 600))
   }
 
   def hide() {
-    /* Note: we are in the JavaFX thread */
-    pos = Some(stage.getX, stage.getY)
-    size = Some(stage.getWidth, stage.getHeight)
     stage.hide()
   }
 
