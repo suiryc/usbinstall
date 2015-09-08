@@ -80,4 +80,9 @@ Uses syslinux:
 
 Kali
 ----
-Seems to search and find the Ubuntu partition as the one to boot ...
+1.x: Seems to search and find the Ubuntu partition as the one to boot ...
+2.x: Works better
+
+Uses syslinux:
+ - 4.x in 1.x
+ - 6.03 in 2.x
