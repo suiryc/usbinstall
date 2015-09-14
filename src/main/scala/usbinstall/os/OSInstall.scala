@@ -69,7 +69,7 @@ class OSInstall(
 
   protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFormat.Value, label: String) {
     ui.action(label) {
-      finder.get().toList.sortBy(_.getPath) foreach { file =>
+      finder.get().toList.sortBy(_.getPath).foreach { file =>
         val pathFile = file.toAbsolutePath
         val pathRelative = sourceRoot.relativize(pathFile)
         val pathTarget = targetRoot.resolve(pathRelative)
@@ -152,14 +152,14 @@ class OSInstall(
 
   private def findEFI(mount: PartitionMount): Option[Path] = {
     val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
-    finder.get().toList.sorted.headOption foreach { path =>
+    finder.get().toList.sorted.headOption.foreach { path =>
       settings.efiBootloader = Some(mount.to.relativize(path.toPath))
     }
     settings.efiBootloader
   }
 
   def searchEFI(partMount: Option[PartitionMount]) {
-    if (!settings.efiBootloader.isDefined) partMount.foreach { partMount =>
+    if (settings.efiBootloader.isEmpty) partMount.foreach { partMount =>
       ui.action(s"Search EFI path") {
         checkCancelled()
         findEFI(partMount) match {
@@ -214,30 +214,30 @@ object OSInstall
     }
 
   private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
-    val iso = os.settings.iso.get map { pathISO =>
+    val iso = os.settings.iso.get.map { pathISO =>
       new PartitionMount(pathISO, InstallSettings.pathMountISO)
     }
-    val part = os.settings.partition.get map { partition =>
+    val part = os.settings.partition.get.map { partition =>
       new PartitionMount(partition.dev, InstallSettings.pathMountPartition)
     }
 
     try {
-      iso foreach { iso =>
+      iso.foreach { iso =>
         os.ui.activity(s"Mounting ISO[${iso.from.getFileName}]")
         iso.mount()
       }
-      part foreach { part =>
+      part.foreach { part =>
         os.ui.activity(s"Mounting partition[${part.from}]")
         part.mount()
       }
       todo(iso, part)
     }
     finally {
-      part foreach { part =>
+      part.foreach { part =>
         os.ui.activity("Unmounting partition")
         part.umount()
       }
-      iso foreach { iso =>
+      iso.foreach { iso =>
         os.ui.activity("Unmounting ISO")
         iso.umount()
       }
@@ -287,7 +287,7 @@ w
     def setLabel() = {
       val (command, envf) = kind match {
         case PartitionFormat.ext2 =>
-          /* Max ext2 label length: 16 */
+          // Max ext2 label length: 16
           (Seq("e2label", part.dev.toString, label), None)
 
         case PartitionFormat.fat32 =>
@@ -296,9 +296,8 @@ w
           }
 
           val actualLabel = label.take(11).padTo(11, ' ')
-          /* Max FAT32 label length: 11
-           * To work correctly, it is better to truncate/pad it.
-           */
+          // Max FAT32 label length: 11
+          // To work correctly, it is better to truncate/pad it.
           (Seq("mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
 
         case PartitionFormat.ntfs =>
@@ -320,7 +319,7 @@ w
       part <- os.settings.partition.get
       mount <- mount
     } {
-      /* Note: we already ensured this syslinux version was found */
+      // Note: we already ensured this syslinux version was found
       val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
       val CommandResult(result, stdout, stderr) =
         os.settings.partitionFormat match {
@@ -330,7 +329,7 @@ w
             Command.execute(Seq(syslinux.toString, "--install", target.toString))
 
           case _: PartitionFormat.MS =>
-            /* Note: it is safer (and mandatory for NTFS) to unmount partition first */
+            // Note: it is safer (and mandatory for NTFS) to unmount partition first
             mount.umount()
             val syslinux = syslinuxRoot.resolve(Paths.get("linux", "syslinux"))
             val target = part.dev
@@ -345,7 +344,7 @@ w
 
   private def deleteContent(root: Path) {
     if (!root.toFile.delete(true, true)) {
-      /* Some files may have the 'immutable' attribute */
+      // Some files may have the 'immutable' attribute
       val finder = PathFinder(root).***
 
       finder.get().map(_.toPath) foreach { path =>
@@ -363,14 +362,14 @@ w
   def install(os: OSInstall): Unit = {
     os.ui.none()
 
-    /* Prepare */
+    // Prepare
     if (os.settings.install) {
       os.ui.setStep(s"Prepare ${os.settings.label} installation")
       os.checkCancelled()
       os.prepare()
     }
 
-    /* Actual install */
+    // Actual install
     if (os.settings.enabled) {
       os.ui.none()
       os.ui.setStep(s"Install ${os.settings.label}")
@@ -378,10 +377,10 @@ w
     }
 
     if (os.settings.enabled) {
-      /* prepare syslinux */
+      // prepare syslinux
       os.settings.syslinuxVersion foreach { version =>
         os.ui.action(s"Search syslinux $version") {
-          if (!SyslinuxInstall.get(version).isDefined) {
+          if (SyslinuxInstall.get(version).isEmpty) {
             throw new Exception(s"Could not find syslinux $version")
           }
           val name = SyslinuxInstall.getSource(version).map(_.getFileName.toString).getOrElse("n/a")
@@ -389,7 +388,7 @@ w
         }
       }
 
-      /* format partition */
+      // format partition
       if (os.settings.formatable) {
         os.settings.partition.get foreach { part =>
           os.checkCancelled()
@@ -401,7 +400,7 @@ w
     if (os.settings.enabled) {
       os.checkCancelled()
       mountAndDo(os, (isoMount, partMount) => {
-        /* erase content */
+        // erase content
         if (os.settings.erasable) {
           os.checkCancelled()
           os.ui.action("Erasing partition content") {
@@ -414,7 +413,7 @@ w
           os.install(isoMount, partMount)
         }
 
-        /* prepare EFI */
+        // prepare EFI
         os.searchEFI(partMount)
 
         if (os.settings.enabled) {
