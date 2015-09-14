@@ -17,12 +17,27 @@ class PartitionMount(
   def mounted = _mounted
 
   def mount() = if (!mounted) {
-    val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString, to.toString))
+    // Sometimes trying to mount right after initializing the partition fails.
+    // In this case wait a bit and retry.
 
-    if (result != 0) {
-      error(s"Cannot mount partition from $from to $to: $stderr")
-      throw new Exception(s"Cannot mount partition[$from]: $stderr")
+    @scala.annotation.tailrec
+    def loop(left: Int): Unit = {
+      val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString, to.toString))
+
+      if (result != 0) {
+        if (left > 0) {
+          warn(s"Cannot mount partition from $from to $to: $stderr")
+          Thread.sleep(500)
+          loop(left - 1)
+        }
+        else {
+          error(s"Cannot mount partition from $from to $to: $stderr")
+          throw new Exception(s"Cannot mount partition[$from]: $stderr")
+        }
+      }
     }
+
+    loop(2)
 
     _mounted = true
   }
