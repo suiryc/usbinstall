@@ -22,13 +22,12 @@ class RedHatInstall(
 
     copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
-    val syslinuxFile = getSyslinuxFile(targetRoot)
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
       val partition = settings.partition.get.get
       val uuid = partition.uuid.fold(throw _, v => v)
-      var fsType = partition.fsType.fold(throw _, v => v)
+      val fsType = partition.fsType.fold(throw _, v => v)
       val optuuid = s"UUID=$uuid"
 
       /* Original code for persistence */

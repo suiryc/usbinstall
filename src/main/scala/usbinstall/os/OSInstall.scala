@@ -321,7 +321,7 @@ w
     } {
       // Note: we already ensured this syslinux version was found
       val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
-      val CommandResult(result, stdout, stderr) =
+      val CommandResult(result, _, stderr) =
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
             val syslinux = syslinuxRoot.resolve(Paths.get("extlinux", "extlinux"))

@@ -22,7 +22,7 @@ class PartitionMount(
 
     @scala.annotation.tailrec
     def loop(left: Int): Unit = {
-      val CommandResult(result, stdout, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString, to.toString))
+      val CommandResult(result, _, stderr) = Command.execute(Seq("mount") ++ mountOptions ++ Seq(from.toString, to.toString))
 
       if (result != 0) {
         if (left > 0) {
@@ -43,10 +43,10 @@ class PartitionMount(
   }
 
   def umount() = if (mounted) {
-    val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", to.toString))
+    val CommandResult(result, _, _) = Command.execute(Seq("umount", to.toString))
 
     if (result != 0) {
-      val CommandResult(result, stdout, stderr) = Command.execute(Seq("umount", "-lf", to.toString))
+      val CommandResult(result, _, stderr) = Command.execute(Seq("umount", "-lf", to.toString))
 
       if (result != 0) {
         error(s"Cannot unmount partition[$to]: $stderr")

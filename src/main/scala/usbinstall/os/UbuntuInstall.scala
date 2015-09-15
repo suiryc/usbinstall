@@ -45,7 +45,6 @@ class UbuntuInstall(
       }
     }
 
-    val syslinuxFile = getSyslinuxFile(targetRoot)
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {

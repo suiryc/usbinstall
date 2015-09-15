@@ -81,7 +81,7 @@ object USBInstall {
   def checkRequirements(requirements: Set[String]): Set[String] = {
     var unmet: Set[String] = Set.empty
 
-    for (requirement <- requirements if (!checkedRequirements.contains(requirement))) {
+    for (requirement <- requirements if !checkedRequirements.contains(requirement)) {
       val CommandResult(result, stdout, _) = Command.execute(Seq("which", requirement))
       if ((result != 0) || (stdout == ""))
         unmet += requirement

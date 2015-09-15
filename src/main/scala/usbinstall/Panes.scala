@@ -48,10 +48,10 @@ object Panes
 
   protected def initPane(pane: StepPane, root: Parent, controller: Option[Any] = None): (StepPane, Option[Any]) = {
     pane.getChildren.setAll(root)
-    AnchorPane.setTopAnchor(root, 0)
-    AnchorPane.setRightAnchor(root, 0)
-    AnchorPane.setBottomAnchor(root, 0)
-    AnchorPane.setLeftAnchor(root, 0)
+    AnchorPane.setTopAnchor(root, 0.0)
+    AnchorPane.setRightAnchor(root, 0.0)
+    AnchorPane.setBottomAnchor(root, 0.0)
+    AnchorPane.setLeftAnchor(root, 0.0)
 
     (pane, controller)
   }

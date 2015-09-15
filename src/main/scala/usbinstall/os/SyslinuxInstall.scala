@@ -60,7 +60,7 @@ class SyslinuxInstall(
       copy(syslinuxRoot.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinuxRoot, pathImages, None)
 
       for {
-        component <- components if (component.kind == SyslinuxComponentKind.Image)
+        component <- components if component.kind == SyslinuxComponentKind.Image
         image <- component.image
       } {
         copy(image, image.getParent, pathBootdisk, Some(PosixFilePermissions.fromString("rw-rw-rw-")))
@@ -77,7 +77,7 @@ class SyslinuxInstall(
       val mbrBin = syslinuxRoot.resolve(Paths.get("mbr", "mbr.bin"))
       if (mbrBin.exists) {
         val cmd = Seq("dd", "bs=440", "count=1", s"if=$mbrBin", s"of=$devicePath")
-        val CommandResult(result, stdout, stderr) =
+        val CommandResult(result, _, stderr) =
           Command.execute(cmd)
         if (result != 0) {
           Stages.errorStage(None, "MBR failure",
@@ -98,9 +98,9 @@ class SyslinuxInstall(
      * (e.g. from a LiveCD) to have the wanted partition as first
      */
     for {
-      other <- others if (other.kind == OSKind.Windows)
+      other <- others if other.kind == OSKind.Windows
       _ <- other.syslinuxLabel
-      otherPartition <- other.partition.get if ((otherPartition.partNumber > 1) && (otherPartition.partNumber < 5))
+      otherPartition <- other.partition.get if (otherPartition.partNumber > 1) && (otherPartition.partNumber < 5)
     } {
       try {
         ui.action(s"Backup MBR for partition ${otherPartition.partNumber}") {
@@ -201,7 +201,7 @@ MENU TITLE Misc tools
 """)
 
       for {
-        component <- components if (component.kind == SyslinuxComponentKind.Image)
+        component <- components if component.kind == SyslinuxComponentKind.Image
         image <- component.image
       } {
         val imageName = image.getFileName
@@ -308,7 +308,7 @@ scanfor manual
 
       searchEFI(Some(partMount))
       for {
-        os <- Settings.core.oses if (os.enabled)
+        os <- Settings.core.oses if os.enabled
         _ <- os.partition.get
         efiBootloader <- os.efiBootloader
       } {
@@ -398,10 +398,10 @@ object SyslinuxInstall
   private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
   def get(version: String): Option[Path] =
-    versions.getOrElseUpdate(version, find(version, true)).map(_.uncompressed)
+    versions.getOrElseUpdate(version, find(version, doBuild = true)).map(_.uncompressed)
 
   def getSource(version: String): Option[Path] =
-    versions.getOrElse(version, find(version, false)).map(_.archive)
+    versions.getOrElse(version, find(version, doBuild = false)).map(_.archive)
 
   protected def find(version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
     findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
@@ -412,7 +412,7 @@ object SyslinuxInstall
        * another (more precise/generic) version number.
        */
       versions.collectFirst {
-        case (_, Some(SyslinuxArchive(a, u))) if (archive.compareTo(a) == 0) =>
+        case (_, Some(SyslinuxArchive(a, u))) if archive.compareTo(a) == 0 =>
           SyslinuxArchive(a, u)
       }.orElse(findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
         error(s"Could not find syslinux version[$version] files in archive[$archive]")
@@ -441,7 +441,7 @@ object SyslinuxInstall
 
     val uncompressPath = InstallSettings.pathTemp.resolve(path.getFileName)
     uncompressPath.toFile.mkdirs
-    val CommandResult(result, stdout, stderr) =
+    val CommandResult(result, _, stderr) =
       if (isZip) Command.execute(Seq("unzip", "-qq", path.toString, "-d", uncompressPath.toString))
       else Command.execute(Seq("tar", "xf", path.toString, "-C", uncompressPath.toString))
 

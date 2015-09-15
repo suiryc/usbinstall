@@ -17,7 +17,6 @@ import suiryc.scala.RichOption._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
-import suiryc.scala.misc.RichOptional
 import usbinstall.controllers.{StepChangeController, ToolBarController}
 
 
@@ -171,7 +170,7 @@ object Stages
   }
 
   def install() {
-    changeScene("Install", step(Panes.install()), Some(800, 600))
+    changeScene("Install", step(Panes.install()), Some(800.0, 600.0))
   }
 
 }

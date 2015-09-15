@@ -139,9 +139,9 @@ class ChoosePartitionsController
       var missingRequirements = List[String]()
 
       if (settings.enabled) {
-        if (!settings.partition.get.isDefined)
+        if (settings.partition.get.isEmpty)
           missingRequirements :+= "Installation partition no set"
-        if (settings.isoPattern.isDefined && !settings.iso.get.isDefined)
+        if (settings.isoPattern.isDefined && settings.iso.get.isEmpty)
           missingRequirements :+= "ISO source not specified"
       }
       if (unmet.nonEmpty)
@@ -291,7 +291,7 @@ class ChoosePartitionsController
         settings.partition.set(Some(partition))
 
         /* Swap partitions if previously selected for other OS */
-        Settings.core.oses.filterNot(_ == settings).find(_.partition.get == Some(partition)) foreach { os =>
+        Settings.core.oses.filterNot(_ == settings).find(_.partition.get.contains(partition)) foreach { os =>
           os.partition.set(current)
         }
       }

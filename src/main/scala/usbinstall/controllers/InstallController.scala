@@ -123,8 +123,8 @@ class InstallController
         Stages.warningStage(None, "Installation failed", None, "Installation was cancelled")
         (false, true)
 
-      case InstallationException(_, _, notified) =>
-        (true, notified)
+      case InstallationException(_, _, n) =>
+        (true, n)
 
       case _ =>
         (true, false)
@@ -228,10 +228,10 @@ class InstallController
         val osTab = new Tab(settings.label)
         JFXSystem.schedule {
           val pane = new AnchorPane(osActivity)
-          AnchorPane.setTopAnchor(osActivity, 10)
-          AnchorPane.setRightAnchor(osActivity, 10)
-          AnchorPane.setBottomAnchor(osActivity, 10)
-          AnchorPane.setLeftAnchor(osActivity, 10)
+          AnchorPane.setTopAnchor(osActivity, 10.0)
+          AnchorPane.setRightAnchor(osActivity, 10.0)
+          AnchorPane.setBottomAnchor(osActivity, 10.0)
+          AnchorPane.setLeftAnchor(osActivity, 10.0)
 
           osTab.setContent(pane)
           logPanes.getTabs.add(osTab)

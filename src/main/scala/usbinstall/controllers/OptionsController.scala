@@ -81,7 +81,7 @@ class OptionsController extends Initializable {
       "You are about to clear all settings and get back to initial or default values",
       Stages.DialogButtons.Ok_Cancel)
 
-    if (action.exists(_ == ButtonType.OK)) {
+    if (action.contains(ButtonType.OK)) {
       Settings.core.prefs.removeNode()
       Settings.core.reset()
       update()

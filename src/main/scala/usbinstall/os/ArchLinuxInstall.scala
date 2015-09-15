@@ -23,7 +23,6 @@ class ArchLinuxInstall(
 
     copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
-    val syslinuxFile = getSyslinuxFile(targetRoot)
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
