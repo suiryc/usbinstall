@@ -16,6 +16,7 @@ import javafx.stage.{Window, WindowEvent}
 import suiryc.scala.RichOption._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
 
@@ -63,7 +64,7 @@ object Stages
     JFXSystem.await(f, logReentrant = false)
 
   protected def makeDialogStage(kind: Alert.AlertType, owner: Option[Window], title: String, headerText: Option[String], contentText: Option[String]): Alert =
-    /* Note: it is important to create the 'Alert' inside JavaFX thread. */
+    // Note: it is mandatory to create the 'Alert' inside JavaFX thread.
     jfxExecute {
       val alert = new Alert(kind)
       alert.initOwner(owner.getOrElse(USBInstall.stage))
@@ -98,37 +99,8 @@ object Stages
   def errorStage(owner: Option[Window], title: String, headerText: Option[String], contentText: String): Option[ButtonType] =
     dialogStage(Alert.AlertType.ERROR, owner, title, headerText, contentText, Nil)
 
-  def errorStage(owner: Option[Window], title: String, headerText: Option[String], ex: Throwable): Option[ButtonType] = {
-    import java.io.{PrintWriter, StringWriter}
-
-    val dialog = makeDialogStage(Alert.AlertType.ERROR, owner, title, headerText, None)
-    val sw = new StringWriter()
-    val pw = new PrintWriter(sw)
-    ex.printStackTrace(pw)
-    val exceptionText = sw.toString
-
-    val label = new Label("The exception stacktrace was:")
-
-    val textArea = new TextArea(exceptionText)
-    textArea.setEditable(false)
-    textArea.setWrapText(true)
-
-    textArea.setMaxWidth(Double.MaxValue)
-    textArea.setMaxHeight(Double.MaxValue)
-    GridPane.setVgrow(textArea, Priority.ALWAYS)
-    GridPane.setHgrow(textArea, Priority.ALWAYS)
-
-    val expContent = new GridPane()
-    expContent.setMaxWidth(Double.MaxValue)
-    expContent.add(label, 0, 0)
-    expContent.add(textArea, 0, 1)
-
-    dialog.getDialogPane.setExpandableContent(expContent)
-
-    jfxExecute {
-      dialog.showAndWait
-    }
-  }
+  def errorStage(owner: Option[Window], title: String, headerText: Option[String], ex: Throwable): Option[ButtonType] =
+    Dialogs.error(owner.orElse(Some(USBInstall.stage)), Some(title), headerText, ex)
 
   protected def toolBar(pane: StepPane, paneController: Option[Any]) = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/toolBar.fxml"))
