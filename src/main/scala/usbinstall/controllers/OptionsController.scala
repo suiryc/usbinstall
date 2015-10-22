@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Button, ButtonType, ComboBox}
 import javafx.stage.{Stage, Window}
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
 import usbinstall.Stages
@@ -42,7 +43,7 @@ class OptionsController extends Initializable {
   def setListener(listener: SettingsClearedListener) {
     this.listener = listener
 
-    /* Note: tooltip are not shown for disabled controls */
+    //Note: tooltip are not shown for disabled controls
     clearButton.setDisable(!listener.canClearSettings)
   }
 
@@ -69,17 +70,20 @@ class OptionsController extends Initializable {
   def onReset(event: ActionEvent) {
     Settings.core.logInstallThreshold.resetDefault()
     Settings.core.componentInstallError.resetDefault()
-    /* Note: we need to update the pane; alternatively we could make persistent
-     * properties out of those persistent settings and update the control upon
-     * value changing.
-     */
+    // Note: we need to update the pane; alternatively we could make persistent
+    // properties out of those persistent settings and update the control upon
+    // value changing.
     update()
   }
 
   def onClear(event: ActionEvent) {
-    val action = Stages.confirmStage(Some(window), "Clear settings", Some("Are you sure?"),
-      "You are about to clear all settings and get back to initial or default values",
-      Stages.DialogButtons.Ok_Cancel)
+    val action = Dialogs.confirmation(
+      owner = Some(window),
+      title = Some("Clear settings"),
+      headerText = Some("Are you sure?"),
+      contentText = Some("You are about to clear all settings and get back to initial or default values"),
+      buttons = Stages.DialogButtons.Ok_Cancel
+    )
 
     if (action.contains(ButtonType.OK)) {
       Settings.core.prefs.removeNode()

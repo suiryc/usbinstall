@@ -10,9 +10,10 @@ import suiryc.scala.io.{PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.util.RichEither._
-import usbinstall.{InstallUI, Stages}
+import usbinstall.{InstallUI, USBInstall}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -68,11 +69,11 @@ class SyslinuxInstall(
     }
 
     ui.action("Apply MBR") {
-      /* Original (disabled) code with altmbr */
-//    # altmbr does not seem to work as expected ...
-//    #[ -e "${syslinuxLocation}"/mbr/altmbr.bin ] \
-//    #    && dd bs=439 count=1 if="${syslinuxLocation}"/mbr/altmbr.bin of=${_devpath} \
-//    #    && printf $(printf '\\x%02X' ${syslinuxPartnb}) | dd bs=1 count=1 of=${_devpath} seek=439
+      // Original (disabled) code with altmbr
+      // # altmbr does not seem to work as expected ...
+      // #[ -e "${syslinuxLocation}"/mbr/altmbr.bin ] \
+      // #    && dd bs=439 count=1 if="${syslinuxLocation}"/mbr/altmbr.bin of=${_devpath} \
+      // #    && printf $(printf '\\x%02X' ${syslinuxPartnb}) | dd bs=1 count=1 of=${_devpath} seek=439
 
       val mbrBin = syslinuxRoot.resolve(Paths.get("mbr", "mbr.bin"))
       if (mbrBin.exists) {
@@ -80,9 +81,12 @@ class SyslinuxInstall(
         val CommandResult(result, _, stderr) =
           Command.execute(cmd)
         if (result != 0) {
-          Stages.errorStage(None, "MBR failure",
-            Some(s"Could not install syslinux MBR.\nYou may have to do it manually.\nEx: ${cmd.mkString(" ")}"),
-            stderr)
+          Dialogs.error(
+            owner = Some(USBInstall.stage),
+            title = Some("MBR failure"),
+            headerText = Some(s"Could not install syslinux MBR.\nYou may have to do it manually.\nEx: ${cmd.mkString(" ")}"),
+            contentText = Some(stderr)
+          )
         }
       }
     }
@@ -92,11 +96,10 @@ class SyslinuxInstall(
         skipResult = false)
     }
 
-    /* Note: Win7/8 only accesses the first partition (whatever its type) for
-     * removable USB disks: so the install files must be on this partition,
-     *  or a virtual drive has to be set, or partition table must be altered
-     * (e.g. from a LiveCD) to have the wanted partition as first
-     */
+    // Note: Win7/8 only accesses the first partition (whatever its type) for
+    // removable USB disks: so the install files must be on this partition,
+    //  or a virtual drive has to be set, or partition table must be altered
+    // (e.g. from a LiveCD) to have the wanted partition as first
     for {
       other <- others if other.kind == OSKind.Windows
       _ <- other.syslinuxLabel
@@ -163,19 +166,20 @@ LABEL $syslinuxLabel
     APPEND boot ${otherPartition.partNumber}
 """)
 
-        /* Original code allowing to specify a 'kernel' and 'append' options */
-//        if [ -n "${component_kernel}" ]
-//        then
-//            echo "    KERNEL ${component_kernel}" >> "${confFile}"
-//            if [ -n "${component_append}" ]
-//            then
-//                echo "    APPEND${component_append}" >> "${confFile}"
-//            fi
-//        else
-//            partnb=${component_partpath:${#_partpath_prefix}}
-//            echo "    KERNEL chain.c32
-//    APPEND boot ${partnb}${component_append}" >> "${confFile}"
-//        fi
+        // Original code allowing to specify a 'kernel' and 'append' options
+        //
+        //     if [ -n "${component_kernel}" ]
+        //     then
+        //         echo "    KERNEL ${component_kernel}" >> "${confFile}"
+        //         if [ -n "${component_append}" ]
+        //         then
+        //             echo "    APPEND${component_append}" >> "${confFile}"
+        //         fi
+        //     else
+        //         partnb=${component_partpath:${#_partpath_prefix}}
+        //         echo "    KERNEL chain.c32
+        // APPEND boot ${partnb}${component_append}" >> "${confFile}"
+        //     fi
       }
 
       components find(_.kind == SyslinuxComponentKind.Grub4DOS) foreach { component =>
@@ -328,9 +332,9 @@ menuentry \"${os.label}\" {
 
 }
 
-/* Original code allowing to use an OS as an image directly from syslinux (kind
- * of like misc images, but allowing to select the ISO at runtime)
- */
+// Original code allowing to use an OS as an image directly from syslinux (kind
+// of like misc images, but allowing to select the ISO at runtime)
+//
 //    local component_idx=0
 //    for ((component_idx=0; component_idx<${#install_component[@]}; component_idx++))
 //    do
@@ -408,9 +412,8 @@ object SyslinuxInstall
       error(s"No archive found for syslinux version[$version]")
       None
     } { archive =>
-      /* First check whether the matching archive is already associated to
-       * another (more precise/generic) version number.
-       */
+      // First check whether the matching archive is already associated to
+      // another (more precise/generic) version number.
       versions.collectFirst {
         case (_, Some(SyslinuxArchive(a, u))) if archive.compareTo(a) == 0 =>
           SyslinuxArchive(a, u)
@@ -460,17 +463,17 @@ object SyslinuxInstall
   }
 
   protected def build(base: Path) {
-    /*import scala.collection.JavaConversions._
-
-    def commandEnvf(env: java.util.Map[String, String]) {
-      env.put("DEBUG", "")
-    }
-
-    val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
-
-    if ((result == 0) && (arch != "i386")) {
-      Command.execute(Seq("make"), workingDirectory = Some(base.toFile), envf = Some(commandEnvf _))
-    }*/
+    //import scala.collection.JavaConversions._
+    //
+    //def commandEnvf(env: java.util.Map[String, String]) {
+    //  env.put("DEBUG", "")
+    //}
+    //
+    //val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
+    //
+    //if ((result == 0) && (arch != "i386")) {
+    //  Command.execute(Seq("make"), workingDirectory = Some(base.toFile), envf = Some(commandEnvf _))
+    //}
   }
 
   protected def findGrub4DOSArchive(): Option[Path] =

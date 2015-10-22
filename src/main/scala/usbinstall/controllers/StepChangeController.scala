@@ -20,8 +20,8 @@ class StepChangeController
   @FXML
   protected var next: Button = _
 
-  /* Note: subscriptions on tied objects do not need to be cancelled
-   * for pane/scene to be GCed. */
+  // Note: subscriptions on tied objects do not need to be cancelled
+  // for pane/scene to be GCed.
 
   protected var stepPrevious: AbstractStepButton = _
 

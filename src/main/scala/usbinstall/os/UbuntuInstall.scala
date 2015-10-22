@@ -32,11 +32,11 @@ class UbuntuInstall(
 
     copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
-    /* Without 'casper', we need to patch 'initrd'. See comments below. */
+    // Without 'casper', we need to patch 'initrd'. See comments below.
     if (!targetRoot.resolve("casper").isDirectory)
       throw new Exception("Ubuntu LiveCD without 'casper' directory are not handled")
 
-    /* Not always necessary, but without 'fallback.efi' OS may not boot */
+    // Not always necessary, but without 'fallback.efi' OS may not boot
     val grubx64EFI = PathFinder(targetRoot) / "(?i)EFI".r / "(?i)BOOT".r / "(?i)grubx64.efi".r
     grubx64EFI.get().headOption map(_.toPath) foreach { grubx64EFI =>
       val fallbackEFI = grubx64EFI.getParent.resolve("fallback.efi")
@@ -50,7 +50,7 @@ class UbuntuInstall(
     ui.action("Prepare syslinux") {
       val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
 
-      /* Update 'casper' */
+      // Update 'casper'
       targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile.write(s"$uuid\n")
       val confs = PathFinder(targetRoot) / (("boot" / "grub") ++ "syslinux") * (".*\\.cfg".r | ".*\\.conf".r)
       val regexUUID = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*boot=casper)", "pre")
@@ -73,10 +73,10 @@ class UbuntuInstall(
     }
 
     if (persistent) {
-      /* Generate the persistence file */
+      // Generate the persistence file
       ui.action("Generate persistency file") {
         val persistenceFile = targetRoot.resolve("casper-rw")
-        /* Note: leave 1 MiB for bootloader etc */
+        // Note: leave 1 MiB for bootloader etc
         val sizeMB = targetRoot.toFile.getUsableSpace / (1024L * 1024L) - 1
         ui.activity(s"There is ${ if (sizeMB < 1024) "only " else "" }${sizeMB}MiB available for persistency")
 
@@ -88,13 +88,12 @@ class UbuntuInstall(
 
 }
 
-/*
- * Without 'casper' - which indicates in a file the partition it belongs to by
- * its UUID - the LiveCD needs its 'initrd' to be patched to be able to boot on
- * a given partition. In this case, adding a file with our own UUID and patching
- * syslinux config becomes unnecessary.
- * Original (bash) code is kept here for reference:
- */
+// Without 'casper' - which indicates in a file the partition it belongs to by
+// its UUID - the LiveCD needs its 'initrd' to be patched to be able to boot on
+// a given partition. In this case, adding a file with our own UUID and patching
+// syslinux config becomes unnecessary.
+// Original (bash) code is kept here for reference:
+//
 //    local parttype=$(blkid -s TYPE -o value "${partpath}")
 //    local partuuid=$(blkid -o value -s UUID "${partpath}")
 //

@@ -24,8 +24,8 @@ class ToolBarController
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     showLogs.setSelected(LogsStage.showing.get)
-    /* Note: subscriptions on external object need to be cancelled for
-     * pane/scene to be GCed. */
+    // Note: subscriptions on external object need to be cancelled for
+    // pane/scene to be GCed.
     subscriptions ::= LogsStage.showing.listen { newValue =>
       showLogs.setSelected(newValue)
     }
@@ -52,7 +52,7 @@ class ToolBarController
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
     stage.initOwner(event.getSource.asInstanceOf[Node].getScene.getWindow)
-    /* Track dimension as soon as shown, and unlisten once done */
+    // Track dimension as soon as shown, and unlisten once done
     val subscription = stage.showingProperty().listen { showing =>
       if (showing) sfxStages.trackMinimumDimensions(stage)
     }

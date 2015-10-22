@@ -28,12 +28,12 @@ import javafx.stage.{Popup, Window}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.event.EventHandler._
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.{
   HasEventSubscriptions,
-  Stages,
   StepPane,
   UseStepPane,
   USBInstall
@@ -50,8 +50,8 @@ class ChoosePartitionsController
   with Logging
 {
 
-  /* XXX - When updating installation, consider ISO copy done, and redo everything else ? (misc files copy, bootloader conf, bootloader install ?) */
-  /* XXX - CLI way to point to configuration to use (multi-conf) */
+  // TODO - When updating installation, consider ISO copy done, and redo everything else ? (misc files copy, bootloader conf, bootloader install ?)
+  // TODO - CLI way to point to configuration to use (multi-conf)
 
   @FXML
   protected var elements: GridPane = _
@@ -74,8 +74,8 @@ class ChoosePartitionsController
 
   protected var stepPane: StepPane = _
 
-  /* Note: subscriptions on external object need to be cancelled for
-   * pane/scene to be GCed. */
+  // Note: subscriptions on external object need to be cancelled for
+  // pane/scene to be GCed.
 
   protected var osLabels = Map[OSSettings, Label]()
 
@@ -112,10 +112,10 @@ class ChoosePartitionsController
 
     attachDelayedPopup(installPopup, installAll)
 
-    /* Initial partitions selection */
+    // Initial partitions selection
     selectPartitions(redo = false)
 
-    /* Note: rows 1 (labels) and 2 (checkboxes) already used */
+    // Note: rows 1 (labels) and 2 (checkboxes) already used
     Settings.core.oses.foldLeft(2) { (idx, settings) =>
       elements.getRowConstraints.add(new RowConstraints(30) { setValignment(VPos.CENTER) })
       elements.addRow(idx, osRow(settings) : _*)
@@ -131,7 +131,7 @@ class ChoosePartitionsController
 
   private def updateRequirements() {
     val nok = Settings.core.oses.foldLeft(false) { (nok, settings) =>
-      /* We just need to create an instance to check its requirements */
+      // We just need to create an instance to check its requirements
       val osInstall = OSInstall(settings, null, () => {})
       val unmet = USBInstall.checkRequirements(osInstall.requirements())
       val osNok = (settings.enabled && !settings.installable) || unmet.nonEmpty
@@ -184,18 +184,23 @@ class ChoosePartitionsController
     partitions.setPadding(new Insets(10))
     partitions.setHgap(5)
     partitions.setVgap(3)
-    for (alignement <- List(HPos.RIGHT, HPos.LEFT, HPos.LEFT, HPos.LEFT))
-      partitions.getColumnConstraints.add(new ColumnConstraints { setHalignment(alignement) })
+    for (alignment <- List(HPos.RIGHT, HPos.LEFT, HPos.LEFT, HPos.LEFT))
+      partitions.getColumnConstraints.add(new ColumnConstraints { setHalignment(alignment) })
 
     devicePartitions.foldLeft(0) { (idx, partition) =>
       if (partition.mounted) {
         val button = new Button("Unmount")
         button.setOnAction { event: ActionEvent =>
-          val CommandResult(result, stdout, stderr) = partition.umount
+          val CommandResult(result, _, stderr) = partition.umount
 
           if (result != 0) {
             error(s"Cannot unmount partition[${partition.dev}]: $stderr")
-            Stages.errorStage(None, "Cannot unmount partition", Some(partition.dev.toString), stderr)
+            Dialogs.error(
+              owner = Some(USBInstall.stage),
+              title = Some("Cannot unmount partition"),
+              headerText = Some(partition.dev.toString),
+              contentText = Some(stderr)
+            )
           }
           updateAvailablePartitions()
           updatePartitionsPane()
@@ -283,14 +288,13 @@ class ChoosePartitionsController
       osPartition.getSelectionModel.select(partition.dev.toString)
     }
     osPartition.getSelectionModel.selectedItemProperty.listen { selected =>
-      /* Note: first change those settings, to shorten change cyclic
-       * propagation when swapping partition with another OS.
-       */
+      // Note: first change those settings, to shorten change cyclic
+      // propagation when swapping partition with another OS.
       partitions.find(_.dev.toString == selected) foreach { partition =>
         val current = settings.partition.get
         settings.partition.set(Some(partition))
 
-        /* Swap partitions if previously selected for other OS */
+        // Swap partitions if previously selected for other OS
         Settings.core.oses.filterNot(_ == settings).find(_.partition.get.contains(partition)) foreach { os =>
           os.partition.set(current)
         }
@@ -313,7 +317,7 @@ class ChoosePartitionsController
       osISO.getSelectionModel.selectedIndexProperty.listen { selected =>
         settings.iso.set(Some(available(selected.intValue())))
       }
-      /* Select outside ctor to trigger settings assignation */
+      // Select outside ctor to trigger settings assignation
       osISO.getSelectionModel.select(0)
 
       osISO
@@ -335,32 +339,30 @@ class ChoosePartitionsController
 
   private def selectPartitions(redo: Boolean) {
     Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
-      /* First reset settings for other devices */
+      // First reset settings for other devices
       if (os.partition.get.exists(_.device != device))
         os.partition.set(None)
 
-      /* What we want is to the select the best fitting partition when either:
-       *   - we are redoing the selection
-       *   - the saved partition is not available
-       *   - there is no saved partition
-       * The best fitting partition is selected amongst the remaining available
-       * ones, unless the OS is not to be installed, in which case it is set to
-       * None.
-       *
-       * In particular, the saved partition of a 'not to install' OS is still
-       * reserved for this OS until we redo the selection or an OS configured
-       * earlier in the list needs to select a partition and finds this one as
-       * fitting.
-       */
+      // What we want is to the select the best fitting partition when either:
+      //   - we are redoing the selection
+      //   - the saved partition is not available
+      //   - there is no saved partition
+      // The best fitting partition is selected amongst the remaining available
+      // ones, unless the OS is not to be installed, in which case it is set to
+      // None.
+      //
+      // In particular, the saved partition of a 'not to install' OS is still
+      // reserved for this OS until we redo the selection or an OS configured
+      // earlier in the list needs to select a partition and finds this one as
+      // fitting.
       if (redo || !os.partition.get.exists(devicePartitions.contains(_)))
         os.partition.set {
           if (devicePartitions.isEmpty || (os.installStatus() == OSInstallStatus.NotInstalled))
             None
           else Some(
             devicePartitions.find(_.size() >= os.size).getOrElse(
-              /* Note: double reverse gives us the 'first' partition when more
-               * than one have the same size
-               */
+              // Note: double reverse gives us the 'first' partition when more
+              // than one have the same size
               devicePartitions.reverse.sortBy(_.size()).reverse.head
             )
           )
@@ -377,7 +379,7 @@ class ChoosePartitionsController
   }
 
   private def checkPopup(popup: Popup, node: Node): Boolean = {
-    /* Hide current popup if not attached to targeted node */
+    // Hide current popup if not attached to targeted node
     if (Option(popup.getOwnerNode).exists(_ ne node) && popup.isShowing) {
       popup.hide()
       true
@@ -386,15 +388,14 @@ class ChoosePartitionsController
   }
 
   private def showPopup(popup: Popup, node: Node) {
-    /* Show popup if necessary */
+    // Show popup if necessary
     if (!popup.isShowing || checkPopup(popup, node)) {
-      /* First display the popup right next to the targeted node. This is
-       * necessary to prevent it stealing the mouse (triggering a 'mouse exited'
-       * event on the targeted node while mouse is still over it).
-       * Then adjust the Y position so that the middle of the node and the popup
-       * are aligned.
-       * Note: we need to show the popup before being able to get its height.
-       */
+      // First display the popup right next to the targeted node. This is
+      // necessary to prevent it stealing the mouse (triggering a 'mouse exited'
+      // event on the targeted node while mouse is still over it).
+      // Then adjust the Y position so that the middle of the node and the popup
+      // are aligned.
+      // Note: we need to show the popup before being able to get its height.
       val bounds = node.getBoundsInLocal
       val pos = node.localToScreen(bounds.getMaxX, bounds.getMinY + (bounds.getMaxY - bounds.getMinY) / 2)
 
@@ -404,22 +405,21 @@ class ChoosePartitionsController
   }
 
   private def attachDelayedPopup(popup: Popup, node: Node, onShow: => Unit = {}) {
-    /* Note: we could use ControlsFX PopOver, but we would face the same kind
-     * of issues with popup (transparent background) stealing the mouse.
-     * It would either require to:
-     *  - move the popup away from the node; but then the arrow pointing to
-     *    the node may seem too far away
-     *  - check mouse position when 'exiting' node and listen to mouse over
-     *    popup to determine when we really need to hide the popup
-     * It may not be worth the benifit for the kind of popup we have here.
-     *
-     * So stick to a simple customized JavaFX popup.
-     * Helpers:
-     *  - '-fx-background-radius' style to have round corners
-     *  - '-fx-background-color' to set background (transparent otherwise)
-     *  - '-fx-effect' to add shadow
-     *  - see http://stackoverflow.com/questions/17551774/javafx-styling-pop-up-windows
-     */
+    // Note: we could use ControlsFX PopOver, but we would face the same kind
+    // of issues with popup (transparent background) stealing the mouse.
+    // It would either require to:
+    //  - move the popup away from the node; but then the arrow pointing to
+    //    the node may seem too far away
+    //  - check mouse position when 'exiting' node and listen to mouse over
+    //    popup to determine when we really need to hide the popup
+    // It may not be worth the benefit for the kind of popup we have here.
+    //
+    // So stick to a simple customized JavaFX popup.
+    // Helpers:
+    //  - '-fx-background-radius' style to have round corners
+    //  - '-fx-background-color' to set background (transparent otherwise)
+    //  - '-fx-effect' to add shadow
+    //  - see http://stackoverflow.com/questions/17551774/javafx-styling-pop-up-windows
     @volatile var cancellable: Option[akka.actor.Cancellable] = None
 
     node.setOnMouseExited { event: MouseEvent =>

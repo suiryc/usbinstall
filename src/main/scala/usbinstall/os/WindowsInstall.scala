@@ -42,38 +42,39 @@ class WindowsInstall(
       ui.activity(s"Rename source[${targetRoot.relativize(bootmgfw)}] target[${targetRoot.relativize(bootx64)}]")
       Files.move(bootmgfw, bootx64)
     }
-    /* Original code to handle booting on FAT partition: */
-//    # Note: not necessary with NTFS
-//    local syslinuxVersion=${install_component_syslinux_version[${_flavor}]}
-//    if [ -n "${syslinuxVersion}" ]
-//    then
-//        local syslinuxLocation=\${syslinux${syslinuxVersion}Location}
-//
-//        updateStatus dialogStatus " * Apply syslinux"
-//
-//        mkdir -p "${dirPartMount}"/syslinux/modules \
-//            && cp "${syslinuxLocation}"/com32/libutil/libutil.c32 "${syslinuxLocation}"/com32/lib/libcom32.c32 \
-//                "${syslinuxLocation}"/com32/chain/chain.c32 "${dirPartMount}"/syslinux/modules \
-//            && sync
-//        checkReturnCode "Failed to copy syslinux" 2
-//
-//        local confFile="${dirPartMount}/syslinux/${syslinuxFile}"
-//        # syslinux want some default
-//        echo "PATH modules
-//DEFAULT bootmgr
-//TIMEOUT 1
-//
-//KERNEL chain.c32
-//APPEND boot fs ntldr=/bootmgr
-//
-//LABEL bootmgr
-//    KERNEL chain.c32
-//    APPEND boot fs ntldr=/bootmgr
-//" > "${confFile}"
-//
-//        sync
-//        checkReturnCode "Failed to sync filesystem" 2
-//    fi
+    // Original code to handle booting on FAT partition:
+    //
+    //    # Note: not necessary with NTFS
+    //    local syslinuxVersion=${install_component_syslinux_version[${_flavor}]}
+    //    if [ -n "${syslinuxVersion}" ]
+    //    then
+    //        local syslinuxLocation=\${syslinux${syslinuxVersion}Location}
+    //
+    //        updateStatus dialogStatus " * Apply syslinux"
+    //
+    //        mkdir -p "${dirPartMount}"/syslinux/modules \
+    //            && cp "${syslinuxLocation}"/com32/libutil/libutil.c32 "${syslinuxLocation}"/com32/lib/libcom32.c32 \
+    //                "${syslinuxLocation}"/com32/chain/chain.c32 "${dirPartMount}"/syslinux/modules \
+    //            && sync
+    //        checkReturnCode "Failed to copy syslinux" 2
+    //
+    //        local confFile="${dirPartMount}/syslinux/${syslinuxFile}"
+    //        # syslinux want some default
+    //        echo "PATH modules
+    //DEFAULT bootmgr
+    //TIMEOUT 1
+    //
+    //KERNEL chain.c32
+    //APPEND boot fs ntldr=/bootmgr
+    //
+    //LABEL bootmgr
+    //    KERNEL chain.c32
+    //    APPEND boot fs ntldr=/bootmgr
+    //" > "${confFile}"
+    //
+    //        sync
+    //        checkReturnCode "Failed to sync filesystem" 2
+    //    fi
   }
 
 }

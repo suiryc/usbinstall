@@ -7,6 +7,7 @@ import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.PersistentProperty
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.{
   BaseConfig,
@@ -16,7 +17,7 @@ import suiryc.scala.settings.{
   SettingsSnapshot
 }
 import suiryc.scala.misc.{EnumerationEx, Units}
-import usbinstall.Stages
+import usbinstall.USBInstall
 import usbinstall.os.{
   OSKind,
   OSSettings,
@@ -35,9 +36,8 @@ object Settings {
     Preferences.userRoot.node("suiryc.usbinstall").node(confPath))
 
   def load() {
-    /* Settings are automatically loaded by accessing this object for the
-     * first time.
-     */
+    // Settings are automatically loaded by accessing this object for the
+    // first time.
   }
 
 }
@@ -102,7 +102,12 @@ class Settings(
       }.find(_.toFile.exists)
 
       if (r.isEmpty) {
-        Stages.errorStage(None, "Missing component image", Some(label), s"Image[$name] not found in configured path")
+        Dialogs.error(
+          owner = Some(USBInstall.stage),
+          title = Some("Missing component image"),
+          headerText = Some(label),
+          contentText = Some(s"Image[$name] not found in configured path")
+        )
       }
 
       r

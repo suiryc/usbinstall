@@ -29,68 +29,66 @@ object LogsStage {
     controller.logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
   }
 
-  /*
-   * Example code with basic list view
-   * Note: populating list view while hidden trigger warnings
-
-   * Note: logger sometimes is already running inside JavaFX thread
-  protected def jfxSchedule(action: => Unit) {
-    JFXSystem.schedule(action, false)
-  }
-
-  case class MessageCellData(val level: MessageLevel.Value, val msg: String)
-
-  class MessageCell
-    extends ListCell[MessageCellData]
-  {
-    val hbox = new HBox
-    val labelType = new Label
-    val labelMsg = new Label
-
-    hbox.getChildren.addAll(labelType, labelMsg)
-
-    override protected def updateItem(item: MessageCellData, empty: Boolean) {
-      super.updateItem(item, empty)
-      setText(null)
-      if (empty) {
-        setGraphic(null)
-      }
-      else {
-        val (txtType, txtMsg) = Option(item) map { msg =>
-          (msg.level.shortName, msg.msg)
-        } getOrElse(("UNK", "No Message"))
-        labelType.setText(txtType)
-        labelMsg.setText(txtMsg)
-        setGraphic(hbox)
-      }
-    }
-  }
-
-  private val listViewItems = FXCollections.observableArrayList[MessageCellData]()
-  private val listView = new ListView[MessageCellData]
-  listView.setItems(listViewItems)
-  listView.setCellFactory { (lv: ListView[MessageCellData]) =>
-    new MessageCell
-  }
-
-  protected def scrollListViewToEnd() {
-    if (showing.get)
-      listView.scrollTo(listView.getItems().size)
-  }
-
-  val listViewWriter = new MessageWriter {
-
-    override def write(level: MessageLevel.Value, msg: String, throwable: Option[Throwable]) {
-      val item = MessageCellData(level, msg)
-      jfxSchedule {
-        listViewItems.add(item)
-        scrollListViewToEnd()
-      }
-    }
-
-  }
-
-  */
+  //
+  // Example code with basic list view
+  // Note: populating list view while hidden trigger warnings
+  //
+  // Note: logger sometimes is already running inside JavaFX thread
+  //  protected def jfxSchedule(action: => Unit) {
+  //    JFXSystem.schedule(action, false)
+  //  }
+  //
+  //  case class MessageCellData(val level: MessageLevel.Value, val msg: String)
+  //
+  //  class MessageCell
+  //    extends ListCell[MessageCellData]
+  //  {
+  //    val hbox = new HBox
+  //    val labelType = new Label
+  //    val labelMsg = new Label
+  //
+  //    hbox.getChildren.addAll(labelType, labelMsg)
+  //
+  //    override protected def updateItem(item: MessageCellData, empty: Boolean) {
+  //      super.updateItem(item, empty)
+  //      setText(null)
+  //      if (empty) {
+  //        setGraphic(null)
+  //      }
+  //      else {
+  //        val (txtType, txtMsg) = Option(item) map { msg =>
+  //          (msg.level.shortName, msg.msg)
+  //        } getOrElse(("UNK", "No Message"))
+  //        labelType.setText(txtType)
+  //        labelMsg.setText(txtMsg)
+  //        setGraphic(hbox)
+  //      }
+  //    }
+  //}
+  //
+  //  private val listViewItems = FXCollections.observableArrayList[MessageCellData]()
+  //  private val listView = new ListView[MessageCellData]
+  //  listView.setItems(listViewItems)
+  //  listView.setCellFactory { (lv: ListView[MessageCellData]) =>
+  //    new MessageCell
+  //  }
+  //
+  //  protected def scrollListViewToEnd() {
+  //    if (showing.get)
+  //      listView.scrollTo(listView.getItems().size)
+  //  }
+  //
+  //  val listViewWriter = new MessageWriter {
+  //
+  //    override def write(level: MessageLevel.Value, msg: String, throwable: Option[Throwable]) {
+  //      val item = MessageCellData(level, msg)
+  //      jfxSchedule {
+  //        listViewItems.add(item)
+  //        scrollListViewToEnd()
+  //      }
+  //    }
+  //
+  //  }
 
   protected val stage = new Stage
   stage.setTitle("Logs")

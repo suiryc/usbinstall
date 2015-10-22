@@ -12,6 +12,7 @@ import suiryc.scala.io.{
   SystemStreams
 }
 import suiryc.scala.io.RichFile._
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.{
   Loggers,
   LogLinePatternWriter,
@@ -112,7 +113,7 @@ class USBInstall extends Application {
     systemStreams = SystemStreams.replace(new PrintStream(new LineSplitterOutputStream(lineWriter)))
 
     Stages.chooseDevice()
-    // Explicitely load the settings
+    // Explicitly load the settings
     Settings.load()
 
     checkRequirements()
@@ -121,17 +122,33 @@ class USBInstall extends Application {
   def checkRequirements() {
     try {
       val CommandResult(_, stdout, _) = Command.execute(Seq("id", "-u"))
-      if (stdout != "0")
-        Stages.warningStage(None, "Non-privileged user?", None, "Running user may not have the required privileges to execute system commands")
+      if (stdout != "0") {
+        Dialogs.warning(
+          owner = Some(USBInstall.stage),
+          title = Some("Non-privileged user?"),
+          headerText = None,
+          contentText = Some("Running user may not have the required privileges to execute system commands")
+        )
+      }
 
       val unmet = USBInstall.checkRequirements(requirements)
-      if (unmet.nonEmpty)
-        Stages.warningStage(None, "Unmet requirements", Some("The following requirements were not met.\nProgram may not work as expected."),
-          unmet.mkString("Missing executable(s): ", ", ", ""))
+      if (unmet.nonEmpty) {
+        Dialogs.warning(
+          owner = Some(USBInstall.stage),
+          title = Some("Unmet requirements"),
+          headerText = Some("The following requirements were not met.\nProgram may not work as expected."),
+          contentText = Some(unmet.mkString("Missing executable(s): ", ", ", ""))
+        )
+      }
     }
     catch {
       case ex: Throwable =>
-        Stages.errorStage(None, "Missing requirements", Some("Could not check the requirements were met."), ex)
+        Dialogs.error(
+          owner = Some(USBInstall.stage),
+          title = Some("Missing requirements"),
+          headerText = Some("Could not check the requirements were met."),
+          ex = Some(ex)
+        )
     }
 
     // Accessing this lazy val now will trigger exceptions (error stage) for

@@ -9,8 +9,8 @@ trait StepPane
   with HasEventSubscriptions
 {
 
-  /* Note: subscriptions on external object need to be cancelled for
-   * pane/scene to be GCed. */
+  // Note: subscriptions on external object need to be cancelled for
+  // pane/scene to be GCed.
 
   var subscriptionHolders: List[HasEventSubscriptions] =
     Nil

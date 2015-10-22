@@ -6,9 +6,10 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Label, ListView}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
+import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.Units
 import usbinstall.settings.InstallSettings
-import usbinstall.{Panes, Stages}
+import usbinstall.{Panes, USBInstall}
 
 
 class ChooseDeviceController extends Initializable {
@@ -44,9 +45,14 @@ class ChooseDeviceController extends Initializable {
             case Right(v) =>
               size.setText(Units.storage.toHumanReadable(v))
 
-            case Left(e) =>
+            case Left(ex) =>
               size.setText("<unknown>")
-              Stages.errorStage(None, "Cannot get device info", Some(s"Device: ${device.dev}"), e)
+              Dialogs.error(
+                owner = Some(USBInstall.stage),
+                title = Some("Cannot get device info"),
+                headerText = Some(s"Device: ${device.dev}"),
+                ex = Some(ex)
+              )
           }
 
         case _ =>
@@ -63,8 +69,8 @@ class ChooseDeviceController extends Initializable {
 
   private def refreshDevices() {
     devices.getItems.setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
-    /* Note: we need to reset the setting, because assigning the same value
-     * is not seen as a value change. */
+    // Note: we need to reset the setting, because assigning the same value
+    // is not seen as a value change.
     InstallSettings.device.set(None)
   }
 
