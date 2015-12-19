@@ -2,11 +2,11 @@ import sbt._
 import Keys._
 
 val versions = Map[String, String](
-  "scala"        -> "2.11.7",
   "akka"         -> "2.4.1",
   "config"       -> "1.3.0",
   "grizzled"     -> "1.0.2",
   "logback"      -> "1.1.3",
+  "scala"        -> "2.11.7",
   "slf4j"        -> "1.7.13",
   "suiryc-scala" -> "0.0.2-SNAPSHOT",
   "usbinstall"   -> "0.0.2-SNAPSHOT"
