@@ -1,7 +1,7 @@
 import sbt._
 import Keys._
 
-val versions = Map[String, String](
+lazy val versions = Map[String, String](
   "akka"         -> "2.4.1",
   "config"       -> "1.3.0",
   "grizzled"     -> "1.0.2",
