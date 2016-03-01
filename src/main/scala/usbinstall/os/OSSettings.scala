@@ -92,7 +92,7 @@ class OSSettings(
 
   import PersistentSetting._
 
-  implicit val osInstallStatus: OSInstallStatus.type = OSInstallStatus
+  implicit private val osInstallStatusEnum = OSInstallStatus
 
   val format: PersistentProperty[Boolean] =
     PersistentProperty(PersistentSetting.from("settings.format", default = true))

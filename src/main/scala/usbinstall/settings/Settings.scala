@@ -52,8 +52,8 @@ class Settings(
   import BaseConfig._
 
   implicit private val settings: BaseSettings = this
-  implicit private val errorAction: ErrorAction.type = ErrorAction
-  implicit private val logThreshold: LogLevel.type = LogLevel
+  implicit private val errorActionEnum = ErrorAction
+  implicit private val logThresholdEnum = LogLevel
 
   val logDebugPattern = config.getString("log.debug.pattern")
   val logInstallPattern = config.getString("log.install.pattern")
