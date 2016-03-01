@@ -3,6 +3,7 @@ package usbinstall.settings
 import com.typesafe.config.{Config, ConfigFactory}
 import java.util.prefs.Preferences
 import scala.collection.JavaConversions._
+import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
@@ -16,7 +17,7 @@ import suiryc.scala.settings.{
   SettingSnapshot,
   SettingsSnapshot
 }
-import suiryc.scala.misc.{EnumerationEx, Units}
+import suiryc.scala.misc.Units
 import usbinstall.USBInstall
 import usbinstall.os.{
   OSKind,
@@ -64,12 +65,12 @@ class Settings(
     implicit val settings = new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
 
     new OSSettings(
-      OSKind(kind),
+      OSKind.byName(kind),
       label,
       Units.storage.fromHumanReadable(config.getString("size")),
       option[String]("iso.pattern", config) map { _.r },
       config.getString("partition.label"),
-      PartitionFormat(config.getString("partition.format")),
+      PartitionFormat.byName(config.getString("partition.format")),
       option[String]("syslinux.label", config),
       option[String]("syslinux.version", config)
     )
@@ -114,7 +115,7 @@ class Settings(
     }
 
     new SyslinuxComponent(
-      SyslinuxComponentKind(kind),
+      SyslinuxComponentKind.byName(kind),
       label,
       image
     )
@@ -156,7 +157,7 @@ class Settings(
 }
 
 
-object ErrorAction extends EnumerationEx {
+object ErrorAction extends Enumeration {
   val Ask = Value
   val Stop = Value
   val Skip = Value

@@ -5,7 +5,6 @@ import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.misc.EnumerationEx
 import suiryc.scala.settings.{
   BaseSettings,
   PersistentSetting,
@@ -16,7 +15,7 @@ import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.Panes
 
 
-object OSKind extends EnumerationEx {
+object OSKind extends Enumeration {
 
   val Windows = Value
   val Syslinux = Value
@@ -43,7 +42,7 @@ object OSKind extends EnumerationEx {
 
 }
 
-object OSInstallStatus extends EnumerationEx {
+object OSInstallStatus extends Enumeration {
   val NotInstalled = Value
   val Installed = Value
   val Install = Value
@@ -54,7 +53,7 @@ class SyslinuxEntry(
   val label: String
 )
 
-object SyslinuxComponentKind extends EnumerationEx {
+object SyslinuxComponentKind extends Enumeration {
   val Image = Value
   val Grub4DOS = Value
 }
@@ -69,7 +68,7 @@ class SyslinuxComponent(
 
 }
 
-object PartitionFormat extends EnumerationEx {
+object PartitionFormat extends Enumeration {
 
   trait extX
   trait MS
