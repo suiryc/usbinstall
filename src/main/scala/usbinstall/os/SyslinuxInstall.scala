@@ -29,7 +29,7 @@ class SyslinuxInstall(
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
     val syslinuxVersion = settings.syslinuxVersion.get
-    val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
+    val syslinux = SyslinuxInstall.get(syslinuxVersion).get
     val partition = settings.partition.get.get
     val device = partition.device
     val devicePath = device.dev
@@ -48,17 +48,17 @@ class SyslinuxInstall(
 
       List(pathModules, pathImages, pathBootdisk) foreach(_.toFile.mkdirs())
 
-      val syslinuxCom32 = syslinuxRoot.resolve("com32")
+      val syslinuxCom32 = syslinux.modules.resolve("com32")
       val syslinuxModules = List(
         syslinuxCom32.resolve(Paths.get("libutil", "libutil.c32")),
         syslinuxCom32.resolve(Paths.get("lib", "libcom32.c32")),
         syslinuxCom32.resolve(Paths.get("menu", "vesamenu.c32")),
         syslinuxCom32.resolve(Paths.get("chain", "chain.c32")),
-        syslinuxRoot.resolve(Paths.get("memdisk", "memdisk"))
+        syslinux.modules.resolve(Paths.get("memdisk", "memdisk"))
       )
 
-      copy(syslinuxModules, syslinuxRoot, pathModules, None)
-      copy(syslinuxRoot.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinuxRoot, pathImages, None)
+      copy(syslinuxModules, syslinux.modules, pathModules, None)
+      copy(syslinux.root.resolve(Paths.get("sample", "syslinux_splash.jpg")), syslinux.root, pathImages, None)
 
       for {
         component <- components if component.kind == SyslinuxComponentKind.Image
@@ -75,7 +75,7 @@ class SyslinuxInstall(
       // #    && dd bs=439 count=1 if="${syslinuxLocation}"/mbr/altmbr.bin of=${_devpath} \
       // #    && printf $(printf '\\x%02X' ${syslinuxPartnb}) | dd bs=1 count=1 of=${_devpath} seek=439
 
-      val mbrBin = syslinuxRoot.resolve(Paths.get("mbr", "mbr.bin"))
+      val mbrBin = syslinux.modules.resolve(Paths.get("mbr", "mbr.bin"))
       if (mbrBin.exists) {
         val cmd = Seq("dd", "bs=440", "count=1", s"if=$mbrBin", s"of=$devicePath")
         val CommandResult(result, _, stderr) =
@@ -397,11 +397,12 @@ object SyslinuxInstall
   extends Logging
 {
 
-  protected case class SyslinuxArchive(archive: Path, uncompressed: Path)
+  case class Syslinux(root: Path, modules: Path)
+  protected case class SyslinuxArchive(archive: Path, uncompressed: Syslinux)
 
   private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
-  def get(version: String): Option[Path] =
+  def get(version: String): Option[Syslinux] =
     versions.getOrElseUpdate(version, find(version, doBuild = true)).map(_.uncompressed)
 
   def getSource(version: String): Option[Path] =
@@ -420,9 +421,9 @@ object SyslinuxInstall
       }.orElse(findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
         error(s"Could not find syslinux version[$version] files in archive[$archive]")
         None
-      } { uncompressed =>
-        if (doBuild) build(uncompressed)
-        Some(SyslinuxArchive(archive, uncompressed))
+      } { syslinux =>
+        if (doBuild) build(syslinux)
+        Some(SyslinuxArchive(archive, syslinux))
       })
     }
   }
@@ -455,14 +456,26 @@ object SyslinuxInstall
     uncompressPath
   }
 
-  protected def findBase(root: Path): Option[Path] = {
+  protected def findBase(root: Path): Option[Syslinux] = {
     def parentOption(path: Path) = Option(path.getParent)
 
-    val finder = PathFinder(root) ** "extlinux" / "extlinux"
-    finder.get().toList.sorted.headOption.map(_.toPath).flatMap(parentOption).flatMap(parentOption)
+    // In syslinux 4 & 5, we have the following hierarchy:
+    //   extlinux / extlinux
+    //   com32 / * / *.c32
+    //   sample / syslinux_splash.jpg
+    // Starting with syslinux 6, extlinux & com32 files are now located inside
+    // "bios" folder (EFI files being under dedicated folders).
+    val finderRoot = (PathFinder(root) ** "sample" / "syslinux_splash.jpg").?
+    val finderModules = (PathFinder(root) ** "extlinux" / "extlinux").?
+    for {
+      root <- finderRoot.get().toList.sorted.headOption.map(_.toPath).flatMap(parentOption).flatMap(parentOption)
+      modules <- finderModules.get().toList.sorted.headOption.map(_.toPath).flatMap(parentOption).flatMap(parentOption)
+    } yield {
+      Syslinux(root, modules)
+    }
   }
 
-  protected def build(base: Path) {
+  protected def build(syslinux: Syslinux) {
     //import scala.collection.JavaConversions._
     //
     //def commandEnvf(env: java.util.Map[String, String]) {
@@ -472,7 +485,7 @@ object SyslinuxInstall
     //val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
     //
     //if ((result == 0) && (arch != "i386")) {
-    //  Command.execute(Seq("make"), workingDirectory = Some(base.toFile), envf = Some(commandEnvf _))
+    //  Command.execute(Seq("make"), workingDirectory = Some(syslinux.root.toFile), envf = Some(commandEnvf _))
     //}
   }
 

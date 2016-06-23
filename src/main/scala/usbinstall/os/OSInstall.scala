@@ -320,20 +320,20 @@ w
       mount <- mount
     } {
       // Note: we already ensured this syslinux version was found
-      val syslinuxRoot = SyslinuxInstall.get(syslinuxVersion).get
+      val syslinux = SyslinuxInstall.get(syslinuxVersion).get
       val CommandResult(result, _, stderr) =
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
-            val syslinux = syslinuxRoot.resolve(Paths.get("extlinux", "extlinux"))
+            val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
             val target = mount.to.resolve("syslinux")
-            Command.execute(Seq(syslinux.toString, "--install", target.toString))
+            Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
 
           case _: PartitionFormat.MS =>
             // Note: it is safer (and mandatory for NTFS) to unmount partition first
             mount.umount()
-            val syslinux = syslinuxRoot.resolve(Paths.get("linux", "syslinux"))
+            val syslinuxBin = syslinux.modules.resolve(Paths.get("linux", "syslinux"))
             val target = part.dev
-            Command.execute(Seq(syslinux.toString, "--install", target.toString))
+            Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
         }
       if (result != 0) {
         error(s"Failed to install syslinux bootloader: $stderr")
