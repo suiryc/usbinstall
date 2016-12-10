@@ -54,6 +54,7 @@ class StepChangeController
       stepNext.disableProperty.listen { v =>
         next.setDisable(v)
       }
+      ()
     }
     else next.setVisible(false)
   }

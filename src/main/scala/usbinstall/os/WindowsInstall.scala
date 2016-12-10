@@ -42,6 +42,7 @@ class WindowsInstall(
       ui.activity(s"Rename source[${targetRoot.relativize(bootmgfw)}] target[${targetRoot.relativize(bootx64)}]")
       Files.move(bootmgfw, bootx64)
     }
+    ()
     // Original code to handle booting on FAT partition:
     //
     //    # Note: not necessary with NTFS

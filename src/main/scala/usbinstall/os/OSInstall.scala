@@ -135,6 +135,7 @@ class OSInstall(
         Files.move(isolinuxCfg.getParent, syslinuxFile.getParent)
       }
     }
+    ()
   }
 
   def regexReplace(root: Path, path: Path, rrs: RegexReplacer*)(implicit codec: Codec): Boolean = {
@@ -293,6 +294,7 @@ w
         case PartitionFormat.fat32 =>
           def commandEnvf(env: java.util.Map[String, String]) {
             env.put("MTOOLS_SKIP_CHECK", "1")
+            ()
           }
 
           val actualLabel = label.take(11).padTo(11, ' ')

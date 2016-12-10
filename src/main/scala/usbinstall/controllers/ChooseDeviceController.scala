@@ -54,12 +54,14 @@ class ChooseDeviceController extends Initializable {
                 ex = Some(ex)
               )
           }
+          ()
 
         case _ =>
           devices.getSelectionModel.select(-1)
           resetDeviceInfo()
       }
     }
+    ()
   }
 
   def onRefresh(event: ActionEvent) {

@@ -124,6 +124,7 @@ class SyslinuxInstall(
 
           device.partprobe().toEither("Failed to refresh partition table").orThrow
         }
+        ()
       }
     }
 

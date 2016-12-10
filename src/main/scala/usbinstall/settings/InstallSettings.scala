@@ -23,10 +23,10 @@ object InstallSettings {
   def tempDirectory(prefix: String): Path =
     tempDirectory(Some(pathTemp), prefix, deleteOnExit = false)
 
-  lazy val pathTemp = tempDirectory(None, "usbinstall.tmp-", deleteOnExit = true)
+  lazy val pathTemp: Path = tempDirectory(None, "usbinstall.tmp-", deleteOnExit = true)
 
-  lazy val pathMountISO = tempDirectory(None, "usbinstall.iso-", deleteOnExit = true)
+  lazy val pathMountISO: Path = tempDirectory(None, "usbinstall.iso-", deleteOnExit = true)
 
-  lazy val pathMountPartition = tempDirectory(None, "usbinstall.part-", deleteOnExit = true)
+  lazy val pathMountPartition: Path = tempDirectory(None, "usbinstall.part-", deleteOnExit = true)
 
 }

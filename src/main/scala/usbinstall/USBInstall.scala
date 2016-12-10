@@ -154,6 +154,7 @@ class USBInstall extends Application {
     // Accessing this lazy val now will trigger exceptions (error stage) for
     // non-existing paths.
     Settings.core.syslinuxExtraComponents
+    ()
   }
 
   override def stop() {

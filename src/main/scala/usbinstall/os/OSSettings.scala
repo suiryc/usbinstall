@@ -27,7 +27,7 @@ object OSKind extends Enumeration {
   val ArchLinux = Value
   val Kali = Value
 
-  def efiIcon(v: Value) = v match {
+  def efiIcon(v: Value): String = v match {
     case Windows => "os_win.icns"
     case Syslinux => "os_linux.icns"
     case GPartedLive => "os_linux.icns"
@@ -64,7 +64,7 @@ class SyslinuxComponent(
   val image: Option[Path]
 ) {
 
-  def syslinuxLabel = label.replaceAll("[^a-zA-Z0-9_]", "_")
+  def syslinuxLabel: String = label.replaceAll("[^a-zA-Z0-9_]", "_")
 
 }
 
@@ -132,18 +132,18 @@ class OSSettings(
   var efiBootloader: Option[Path] =
     None
 
-  def enabled = installStatus() != OSInstallStatus.NotInstalled
+  def enabled: Boolean = installStatus() != OSInstallStatus.NotInstalled
 
-  def install = installStatus() == OSInstallStatus.Install
+  def install: Boolean = installStatus() == OSInstallStatus.Install
 
-  def installable = enabled && partition.get.isDefined &&
+  def installable: Boolean = enabled && partition.get.isDefined &&
     (isoPattern.isEmpty || iso.get.isDefined)
 
-  def formatable = install && format() && installable
+  def formatable: Boolean = install && format() && installable
 
-  def erasable = install && !format() && installable
+  def erasable: Boolean = install && !format() && installable
 
-  def syslinuxFile = partitionFormat match {
+  def syslinuxFile: String = partitionFormat match {
     case _: PartitionFormat.extX => "extlinux.conf"
     case _: PartitionFormat.MS => "syslinux.cfg"
   }

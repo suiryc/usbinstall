@@ -55,13 +55,13 @@ object Panes
     (pane, controller)
   }
 
-  def chooseDevice() = {
+  def chooseDevice(): (StepPane, Option[Any]) = {
     val root = FXMLLoader.load[Parent](getClass.getResource("/fxml/chooseDevice.fxml"))
     val pane = new AnchorPane with StepPane {
       override val previous = NoButton
 
       override val next = new NextButton(this, {
-        InstallSettings.device.get.exists { device =>
+        InstallSettings.device.get.exists { _ =>
           Stages.choosePartitions()
           true
         }
@@ -83,7 +83,7 @@ object Panes
     initPane(pane, root)
   }
 
-  def choosePartitions() = {
+  def choosePartitions(): (StepPane, Option[Any]) = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/choosePartitions.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ChoosePartitionsController]()
@@ -109,7 +109,7 @@ object Panes
   }
 
 
-  def install() = {
+  def install(): (StepPane, Option[Any]) = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/install.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[InstallController]()

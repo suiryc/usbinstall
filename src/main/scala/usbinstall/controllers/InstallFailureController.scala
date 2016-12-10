@@ -16,9 +16,9 @@ class InstallFailureController extends Initializable {
 
   protected var action = ErrorAction.Ask
 
-  def getAction = action
+  def getAction: ErrorAction.Value = action
 
-  def getAsDefault = applyDefault.isSelected
+  def getAsDefault: Boolean = applyDefault.isSelected
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
   }

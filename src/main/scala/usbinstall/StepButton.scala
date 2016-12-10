@@ -13,17 +13,17 @@ abstract class AbstractStepButton(
   def triggered(): Unit
 
   val disableProperty = new SimpleBooleanProperty(xdisabled)
-  def disable = disableProperty.get
-  def disable_=(v: Boolean) = disableProperty.set(v)
+  def disable: Boolean = disableProperty.get
+  def disable_=(v: Boolean): Unit = disableProperty.set(v)
 
   val labelProperty = new SimpleStringProperty(xlabel)
-  def label = labelProperty.get
-  def label_=(v: String) = labelProperty.set(v)
+  def label: String = labelProperty.get
+  def label_=(v: String): Unit = labelProperty.set(v)
 
 }
 
 object NoButton extends AbstractStepButton(false, false, "", () => false) {
-  override def triggered() = {}
+  override def triggered(): Unit = {}
 }
 
 class StepButton(
@@ -33,7 +33,7 @@ class StepButton(
 ) extends AbstractStepButton(true, false, xlabel, () => f)
 {
 
-  override def triggered() = {
+  override def triggered(): Unit = {
     if (onTrigger()) pane.cancelSubscriptions()
   }
 

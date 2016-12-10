@@ -14,9 +14,9 @@ class PartitionMount(
 
   private var _mounted = false
 
-  def mounted = _mounted
+  def mounted: Boolean = _mounted
 
-  def mount() = if (!mounted) {
+  def mount(): Unit = if (!mounted) {
     // Sometimes trying to mount right after initializing the partition fails.
     // In this case wait a bit and retry.
 
@@ -42,7 +42,7 @@ class PartitionMount(
     _mounted = true
   }
 
-  def umount() = if (mounted) {
+  def umount(): Unit = if (mounted) {
     val CommandResult(result, _, _) = Command.execute(Seq("umount", to.toString))
 
     if (result != 0) {

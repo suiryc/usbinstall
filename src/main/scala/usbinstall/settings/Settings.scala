@@ -1,8 +1,9 @@
 package usbinstall.settings
 
 import com.typesafe.config.{Config, ConfigFactory}
+import java.nio.file.Path
 import java.util.prefs.Preferences
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
@@ -10,22 +11,10 @@ import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
-import suiryc.scala.settings.{
-  BaseConfig,
-  BaseSettings,
-  PersistentSetting,
-  SettingSnapshot,
-  SettingsSnapshot
-}
+import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.misc.Units
 import usbinstall.USBInstall
-import usbinstall.os.{
-  OSKind,
-  OSSettings,
-  PartitionFormat,
-  SyslinuxComponent,
-  SyslinuxComponentKind
-}
+import usbinstall.os.{OSKind, OSSettings, PartitionFormat, SyslinuxComponent, SyslinuxComponentKind}
 
 
 object Settings {
@@ -55,10 +44,10 @@ class Settings(
   implicit private val errorActionEnum = ErrorAction
   implicit private val logThresholdEnum = LogLevel
 
-  val logDebugPattern = config.getString("log.debug.pattern")
-  val logInstallPattern = config.getString("log.install.pattern")
+  val logDebugPattern: String = config.getString("log.debug.pattern")
+  val logInstallPattern: String = config.getString("log.install.pattern")
 
-  val oses = config.getConfigList("oses").toList map { config =>
+  val oses: List[OSSettings] = config.getConfigList("oses").asScala.toList map { config =>
     val kind = config.getString("kind")
     val label = option[String]("label", config).getOrElse(kind)
 
@@ -76,25 +65,25 @@ class Settings(
     )
   }
 
-  val isoPath = config.getStringList("iso.path").toList map { path =>
+  val isoPath: List[Path] = config.getStringList("iso.path").asScala.toList map { path =>
     PathsEx.get(path)
   }
 
-  val isos = isoPath.flatMap { path =>
+  val isos: List[Path] = isoPath.flatMap { path =>
     ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get map(_.toPath)
   }.sortBy { _.toString }.reverse
 
-  val toolsPath = config.getStringList("tools.path").toList map { path =>
+  val toolsPath: List[Path] = config.getStringList("tools.path").asScala.toList map { path =>
     PathsEx.get(path)
   }
 
   protected val syslinuxExtra = config.getConfig("syslinux.extra")
 
-  val syslinuxExtraImagesPath = syslinuxExtra.getStringList("images.path").toList map { path =>
+  val syslinuxExtraImagesPath: List[Path] = syslinuxExtra.getStringList("images.path").asScala.toList map { path =>
     PathsEx.get(path)
   }
 
-  lazy val syslinuxExtraComponents = syslinuxExtra.getConfigList("components").toList map { config =>
+  lazy val syslinuxExtraComponents: List[SyslinuxComponent] = syslinuxExtra.getConfigList("components").asScala.toList map { config =>
     val kind = option[String]("kind", config).getOrElse("image")
     val label = option[String]("label", config).getOrElse(kind)
     val image = option[String]("image", config).flatMap { name =>
@@ -121,7 +110,7 @@ class Settings(
     )
   }
 
-  val rEFIndPath = PathsEx.get(config.getString("refind.path"))
+  val rEFIndPath: Path = PathsEx.get(config.getString("refind.path"))
 
   val logDebugThreshold =
     PersistentProperty(PersistentSetting.from("logDebugThreshold", LogLevel.DEBUG))

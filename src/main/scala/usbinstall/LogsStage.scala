@@ -1,11 +1,12 @@
 package usbinstall
 
+import javafx.beans.property.ReadOnlyBooleanProperty
 import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.controllers.LogsController
 import usbinstall.settings.Settings
 
@@ -21,7 +22,7 @@ object LogsStage {
   protected val root = loader.load[Parent]()
   protected val controller = loader.getController[LogsController]()
 
-  val areaWriter = controller.logArea.msgWriter
+  val areaWriter: ThresholdLogLinePatternWriter = controller.logArea.msgWriter
   areaWriter.setPattern(Settings.core.logDebugPattern)
   areaWriter.setThreshold(Settings.core.logDebugThreshold().level)
   Settings.core.logDebugThreshold.listen { v =>
@@ -102,7 +103,7 @@ object LogsStage {
   }
 
   // Only track minimum dimensions upon first display
-  sfxStages.trackMinimumDimensions(stage, Some(800.0, 600.0))
+  sfxStages.trackMinimumDimensions(stage, Some((800.0, 600.0)))
   // Keep position/size upon hiding/showing
   sfxStages.keepBounds(stage)
 
@@ -114,6 +115,6 @@ object LogsStage {
     stage.hide()
   }
 
-  def showing = stage.showingProperty
+  def showing: ReadOnlyBooleanProperty = stage.showingProperty
 
 }

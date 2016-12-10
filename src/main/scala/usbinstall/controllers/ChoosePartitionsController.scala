@@ -16,7 +16,6 @@ import javafx.scene.control.{
   Label,
   Tooltip
 }
-import javafx.scene.input.MouseEvent
 import javafx.scene.layout.{
   AnchorPane,
   ColumnConstraints,
@@ -27,7 +26,6 @@ import javafx.scene.paint.Color
 import javafx.stage.{Popup, Window}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
-import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
@@ -90,18 +88,19 @@ class ChoosePartitionsController
       val loader = new FXMLLoader(getClass.getResource(file))
       val node = loader.load[Parent]()
       popup.getContent.add(node)
+      ()
     }
 
     loadPopup(installPopup, "/fxml/choosePartitions-installPopup.fxml")
     loadPopup(infoPopup, "/fxml/choosePartitions-infoPopup.fxml")
 
-    formatAll.setOnAction { event: ActionEvent =>
+    formatAll.setOnAction { _ =>
       Settings.core.oses foreach { settings =>
         settings.format() = formatAll.isSelected
       }
     }
 
-    installAll.setOnAction { event: ActionEvent =>
+    installAll.setOnAction { _ =>
       val status = if (installAll.isIndeterminate) OSInstallStatus.Installed
         else if (installAll.isSelected) OSInstallStatus.Install
         else OSInstallStatus.NotInstalled
@@ -190,7 +189,7 @@ class ChoosePartitionsController
     devicePartitions.foldLeft(0) { (idx, partition) =>
       if (partition.mounted) {
         val button = new Button("Unmount")
-        button.setOnAction { event: ActionEvent =>
+        button.setOnAction { _ =>
           val CommandResult(result, _, stderr) = partition.umount
 
           if (result != 0) {
@@ -223,6 +222,7 @@ class ChoosePartitionsController
       idx + 1
     }
     partitionsPane.getChildren.setAll(partitions)
+    ()
   }
 
   private def osRow(settings: OSSettings): List[Node] = {
@@ -242,7 +242,7 @@ class ChoosePartitionsController
 
     val osInstall = new CheckBox
     osInstall.setAllowIndeterminate(true)
-    osInstall.setOnAction { event: ActionEvent =>
+    osInstall.setOnAction { _ =>
       settings.installStatus() = if (osInstall.isIndeterminate) OSInstallStatus.Installed
         else if (osInstall.isSelected) OSInstallStatus.Install
         else OSInstallStatus.NotInstalled
@@ -371,6 +371,7 @@ class ChoosePartitionsController
       import RichOptional._
       devicePartitions.optional[DevicePartition](os.partition.get, (parts, part) => parts.filterNot(_ == part))
     }
+    ()
   }
 
   def onAutoSelectPartitions(event: ActionEvent) {
@@ -422,13 +423,13 @@ class ChoosePartitionsController
     //  - see http://stackoverflow.com/questions/17551774/javafx-styling-pop-up-windows
     @volatile var cancellable: Option[akka.actor.Cancellable] = None
 
-    node.setOnMouseExited { event: MouseEvent =>
+    node.setOnMouseExited { _ =>
       cancellable.foreach(_.cancel())
       cancellable = None
       popup.hide()
     }
 
-    node.setOnMouseEntered { event: MouseEvent =>
+    node.setOnMouseEntered { _ =>
       checkPopup(popup, node)
 
       import scala.concurrent.duration._
@@ -442,8 +443,8 @@ class ChoosePartitionsController
   }
 
   private def detachDelayedPopup(node: Node) {
-    node.setOnMouseExited { event: MouseEvent => }
-    node.setOnMouseEntered { event: MouseEvent => }
+    node.setOnMouseExited { _ => }
+    node.setOnMouseEntered { _ => }
   }
 
   private def updateInfoPopup(settings: OSSettings) {

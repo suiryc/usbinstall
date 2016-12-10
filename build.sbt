@@ -2,12 +2,12 @@ import sbt._
 import Keys._
 
 lazy val versions = Map[String, String](
-  "akka"         -> "2.4.1",
-  "config"       -> "1.3.0",
-  "grizzled"     -> "1.0.2",
-  "logback"      -> "1.1.3",
-  "scala"        -> "2.11.7",
-  "slf4j"        -> "1.7.13",
+  "akka"         -> "2.4.14",
+  "config"       -> "1.3.1",
+  "grizzled"     -> "1.3.0",
+  "logback"      -> "1.1.8",
+  "scala"        -> "2.12.1",
+  "slf4j"        -> "1.7.21",
   "suiryc-scala" -> "0.0.2-SNAPSHOT",
   "usbinstall"   -> "0.0.2-SNAPSHOT"
 )
@@ -22,10 +22,21 @@ lazy val usbinstall = project.in(file(".")).
 
     scalacOptions ++= Seq(
       "-deprecation",
+      "-encoding", "UTF-8",
       "-feature",
-      "-optimize",
       "-unchecked",
-      "-Yinline-warnings"
+      "-Xfatal-warnings",
+      "-Xlint",
+      "-Yno-adapted-args",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard",
+      "-Ywarn-inaccessible",
+      "-Ywarn-infer-any",
+      "-Ywarn-dead-code",
+      "-Ywarn-nullary-override",
+      "-Ywarn-nullary-unit",
+      "-Ywarn-unused",
+      "-Ywarn-unused-import"
     ),
     scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits"),
     resolvers += Resolver.mavenLocal,

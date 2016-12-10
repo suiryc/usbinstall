@@ -98,6 +98,7 @@ class InstallController
       headerText = Some("Something unexpected happened"),
       contentText = Some("Settings have been cleared while it should not be possible.")
     )
+    ()
   }
 
   private def taskDone() {
@@ -208,6 +209,7 @@ class InstallController
         subscription.cancel()
       }
     }
+    ()
   }
 
   private def installTask(cancellable: Cancellable): List[String] = {
@@ -269,7 +271,7 @@ class InstallController
         }
 
         val next = try {
-          val os = OSInstall(settings, ui, checkCancelled)
+          val os = OSInstall(settings, ui, () => checkCancelled())
 
           OSInstall.install(os)
           (osTab, osLogWriter, previousFailedOSes)
@@ -296,11 +298,11 @@ class InstallController
                 )
                 val action = JFXSystem.await(askOnFailure())
                 if (action != ErrorAction.Skip)
-                  throw new InstallationException(s"Failed to install ${settings.label}", ex, true)
+                  throw InstallationException(s"Failed to install ${settings.label}", ex, true)
                 doSkip()
 
               case ErrorAction.Stop =>
-                throw new InstallationException(s"Failed to install ${settings.label}", ex)
+                throw InstallationException(s"Failed to install ${settings.label}", ex)
 
               case ErrorAction.Skip =>
                 // Nothing to do except go to next OS

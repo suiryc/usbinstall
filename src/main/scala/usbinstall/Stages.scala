@@ -12,8 +12,6 @@ import javafx.scene.layout.{
   Priority,
   RowConstraints
 }
-import javafx.stage.WindowEvent
-import suiryc.scala.javafx.event.EventHandler._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
 
@@ -35,10 +33,10 @@ object Stages
         stage.setMinWidth(0)
         stage.setMinHeight(0)
         stage.hide()
-        Some(x, y)
+        Some((x, y))
       }
       else {
-        stage.setOnCloseRequest { (event: WindowEvent) =>
+        stage.setOnCloseRequest { _ =>
           stage.close()
           Platform.exit()
         }
@@ -76,7 +74,7 @@ object Stages
     root
   }
 
-  def step(tuple: (StepPane, Option[Any])) = {
+  def step(tuple: (StepPane, Option[Any])): Scene = {
     val (pane, controller) = tuple
     val grid = new GridPane
     grid.setAlignment(Pos.TOP_CENTER)
@@ -97,7 +95,7 @@ object Stages
   }
 
   def install() {
-    changeScene("Install", step(Panes.install()), Some(800.0, 600.0))
+    changeScene("Install", step(Panes.install()), Some((800.0, 600.0)))
   }
 
 }

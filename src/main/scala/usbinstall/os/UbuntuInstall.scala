@@ -84,6 +84,7 @@ class UbuntuInstall(
           Command.execute(Seq("mkfs.ext4", "-F", persistenceFile.toString)).toEither("Failed to format persistency file")
       }
     }
+    ()
   }
 
 }
