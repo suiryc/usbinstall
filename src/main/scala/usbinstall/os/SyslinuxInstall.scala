@@ -1,6 +1,6 @@
 package usbinstall.os
 
-import grizzled.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import java.nio.file.{Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.regex.Pattern
@@ -395,7 +395,7 @@ menuentry \"${os.label}\" {
 //    done
 
 object SyslinuxInstall
-  extends Logging
+  extends StrictLogging
 {
 
   case class Syslinux(root: Path, modules: Path)
@@ -411,7 +411,7 @@ object SyslinuxInstall
 
   protected def find(version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
     findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
-      error(s"No archive found for syslinux version[$version]")
+      logger.error(s"No archive found for syslinux version[$version]")
       None
     } { archive =>
       // First check whether the matching archive is already associated to
@@ -420,7 +420,7 @@ object SyslinuxInstall
         case (_, Some(SyslinuxArchive(a, u))) if archive.compareTo(a) == 0 =>
           SyslinuxArchive(a, u)
       }.orElse(findBase(uncompress(archive)).fold[Option[SyslinuxArchive]] {
-        error(s"Could not find syslinux version[$version] files in archive[$archive]")
+        logger.error(s"Could not find syslinux version[$version] files in archive[$archive]")
         None
       } { syslinux =>
         if (doBuild) build(syslinux)
@@ -451,7 +451,7 @@ object SyslinuxInstall
       else Command.execute(Seq("tar", "xf", path.toString, "-C", uncompressPath.toString))
 
       if (result != 0) {
-        error(s"Failed to uncompress archive[$path] to[$uncompressPath]: $stderr")
+        logger.error(s"Failed to uncompress archive[$path] to[$uncompressPath]: $stderr")
       }
 
     uncompressPath

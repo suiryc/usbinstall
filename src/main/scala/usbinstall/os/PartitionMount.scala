@@ -1,6 +1,6 @@
 package usbinstall.os
 
-import grizzled.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import java.nio.file.Path
 import suiryc.scala.sys.{Command, CommandResult}
 
@@ -9,7 +9,7 @@ class PartitionMount(
   val from: Path,
   val to: Path,
   val mountOptions: Seq[String] = Nil
-) extends Logging
+) extends StrictLogging
 {
 
   private var _mounted = false
@@ -26,12 +26,12 @@ class PartitionMount(
 
       if (result != 0) {
         if (left > 0) {
-          warn(s"Cannot mount partition from $from to $to: $stderr")
+          logger.warn(s"Cannot mount partition from $from to $to: $stderr")
           Thread.sleep(500)
           loop(left - 1)
         }
         else {
-          error(s"Cannot mount partition from $from to $to: $stderr")
+          logger.error(s"Cannot mount partition from $from to $to: $stderr")
           throw new Exception(s"Cannot mount partition[$from]: $stderr")
         }
       }
@@ -49,7 +49,7 @@ class PartitionMount(
       val CommandResult(result, _, stderr) = Command.execute(Seq("umount", "-lf", to.toString))
 
       if (result != 0) {
-        error(s"Cannot unmount partition[$to]: $stderr")
+        logger.error(s"Cannot unmount partition[$to]: $stderr")
       }
     }
 

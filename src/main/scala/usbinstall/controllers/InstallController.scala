@@ -1,6 +1,6 @@
 package usbinstall.controllers
 
-import grizzled.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import java.net.URL
 import java.util.ResourceBundle
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
@@ -16,14 +16,7 @@ import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.{Dialogs, LogArea}
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
-import usbinstall.{
-  HasEventSubscriptions,
-  InstallationException,
-  InstallUI,
-  StepPane,
-  USBInstall,
-  UseStepPane
-}
+import usbinstall.{HasEventSubscriptions, InstallUI, InstallationException, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{ErrorAction, InstallSettings, Settings}
 
@@ -33,7 +26,7 @@ class InstallController
   with UseStepPane
   with SettingsClearedListener
   with HasEventSubscriptions
-  with Logging
+  with StrictLogging
 {
 
   @FXML
@@ -140,7 +133,7 @@ class InstallController
     }
 
     if (log)
-      error(s"Installation failed", ex)
+      logger.error(s"Installation failed", ex)
     if (!notified) {
       Dialogs.error(
         owner = Some(USBInstall.stage),
@@ -167,7 +160,7 @@ class InstallController
           taskFailed(ex)
 
         case Success(failedOSes) =>
-          info(s"Task ended")
+          logger.info(s"Task ended")
           taskDone()
 
           if (failedOSes.isEmpty) {
@@ -282,7 +275,7 @@ class InstallController
             throw ex
 
           case ex: Throwable =>
-            error(s"Failed to install ${settings.label}: ${ex.getMessage}", ex)
+            logger.error(s"Failed to install ${settings.label}: ${ex.getMessage}", ex)
             resetAppender()
 
             def doSkip() =
@@ -298,7 +291,7 @@ class InstallController
                 )
                 val action = JFXSystem.await(askOnFailure())
                 if (action != ErrorAction.Skip)
-                  throw InstallationException(s"Failed to install ${settings.label}", ex, true)
+                  throw InstallationException(s"Failed to install ${settings.label}", ex, notified = true)
                 doSkip()
 
               case ErrorAction.Stop =>

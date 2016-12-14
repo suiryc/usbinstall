@@ -1,6 +1,6 @@
 package usbinstall.controllers
 
-import grizzled.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import java.net.URL
 import java.util.ResourceBundle
 import javafx.beans.property.SimpleObjectProperty
@@ -8,20 +8,8 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.geometry.{HPos, Insets, VPos}
 import javafx.scene.{Node, Parent}
-import javafx.scene.control.{
-  Button,
-  CheckBox,
-  ComboBox,
-  Hyperlink,
-  Label,
-  Tooltip
-}
-import javafx.scene.layout.{
-  AnchorPane,
-  ColumnConstraints,
-  GridPane,
-  RowConstraints
-}
+import javafx.scene.control.{Button, CheckBox, ComboBox, Hyperlink, Label, Tooltip}
+import javafx.scene.layout.{AnchorPane, ColumnConstraints, GridPane, RowConstraints}
 import javafx.scene.paint.Color
 import javafx.stage.{Popup, Window}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
@@ -30,12 +18,7 @@ import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
-import usbinstall.{
-  HasEventSubscriptions,
-  StepPane,
-  UseStepPane,
-  USBInstall
-}
+import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings, SyslinuxInstall}
 import usbinstall.settings.{InstallSettings, Settings}
 
@@ -45,7 +28,7 @@ class ChoosePartitionsController
   with UseStepPane
   with SettingsClearedListener
   with HasEventSubscriptions
-  with Logging
+  with StrictLogging
 {
 
   // TODO - When updating installation, consider ISO copy done, and redo everything else ? (misc files copy, bootloader conf, bootloader install ?)
@@ -193,7 +176,7 @@ class ChoosePartitionsController
           val CommandResult(result, _, stderr) = partition.umount
 
           if (result != 0) {
-            error(s"Cannot unmount partition[${partition.dev}]: $stderr")
+            logger.error(s"Cannot unmount partition[${partition.dev}]: $stderr")
             Dialogs.error(
               owner = Some(USBInstall.stage),
               title = Some("Cannot unmount partition"),

@@ -1,6 +1,6 @@
 package usbinstall.os
 
-import grizzled.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import java.io.File
 import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermission
@@ -20,7 +20,7 @@ class OSInstall(
   val settings: OSSettings,
   val ui: InstallUI,
   val checkCancelled: () => Unit
-) extends Logging
+) extends StrictLogging
 {
 
   /**
@@ -177,7 +177,7 @@ class OSInstall(
 }
 
 object OSInstall
-  extends Logging
+  extends StrictLogging
 {
 
   def apply(settings: OSSettings, ui: InstallUI, checkCancelled: () => Unit): OSInstall =
@@ -338,7 +338,7 @@ w
             Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
         }
       if (result != 0) {
-        error(s"Failed to install syslinux bootloader: $stderr")
+        logger.error(s"Failed to install syslinux bootloader: $stderr")
         throw new Exception("Failed to install syslinux bootloader")
       }
     }
@@ -355,7 +355,7 @@ w
 
       if (!root.toFile.delete(true, true)) {
         val msg = "Some content could not be deleted"
-        error(s"$msg: ${finder.get().mkString(", ")}")
+        logger.error(s"$msg: ${finder.get().mkString(", ")}")
         throw new Exception(msg)
       }
     }

@@ -1,6 +1,5 @@
 package usbinstall
 
-import grizzled.slf4j.Logging
 import javafx.application.Platform
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
@@ -16,9 +15,7 @@ import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
 
 
-object Stages
-  extends Logging
-{
+object Stages {
 
   object DialogButtons {
     val Ok_Cancel = List(ButtonType.OK, ButtonType.CANCEL)
