@@ -188,8 +188,8 @@ object OSInstall
       case OSKind.Windows =>
         new WindowsInstall(settings, ui, checkCancelled)
 
-      case OSKind.GPartedLive =>
-        new GPartedLiveInstall(settings, ui, checkCancelled)
+      case OSKind.Generic =>
+        new GenericInstall(settings, ui, checkCancelled)
 
       case OSKind.SystemRescueCD =>
         new SystemRescueCDInstall(settings, ui, checkCancelled)
@@ -205,9 +205,6 @@ object OSInstall
 
       case OSKind.ArchLinux =>
         new ArchLinuxInstall(settings, ui, checkCancelled)
-
-      case OSKind.Kali =>
-        new KaliInstall(settings, ui, checkCancelled)
 
       case kind =>
         val msg = s"Unhandled OS type: $kind"

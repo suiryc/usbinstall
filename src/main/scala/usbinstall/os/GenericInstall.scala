@@ -4,7 +4,7 @@ import suiryc.scala.io.PathFinder._
 import usbinstall.InstallUI
 
 
-class KaliInstall(
+class GenericInstall(
   override val settings: OSSettings,
   override val ui: InstallUI,
   override val checkCancelled: () => Unit

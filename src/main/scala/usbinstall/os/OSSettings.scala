@@ -19,13 +19,12 @@ object OSKind extends Enumeration {
 
   val Windows = Value
   val Syslinux = Value
-  val GPartedLive = Value
+  val Generic = Value
   val SystemRescueCD = Value
   val Ubuntu = Value
   val Fedora = Value
   val CentOS = Value
   val ArchLinux = Value
-  val Kali = Value
 
   def efiIcon(v: Value): String = v match {
     case Windows => "os_win.icns"
