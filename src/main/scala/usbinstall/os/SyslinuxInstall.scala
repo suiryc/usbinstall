@@ -1,7 +1,7 @@
 package usbinstall.os
 
 import com.typesafe.scalalogging.StrictLogging
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.regex.Pattern
 import scala.collection.mutable
@@ -34,6 +34,7 @@ class SyslinuxInstall(
     val device = partition.device
     val devicePath = device.dev
     val targetRoot = partMount.get.to.toAbsolutePath
+    val pathBootdisk = targetRoot.resolve("bootdisk")
 
     val others = Settings.core.oses filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
     val components = Settings.core.syslinuxExtraComponents
@@ -44,7 +45,6 @@ class SyslinuxInstall(
     ui.action("Copy syslinux files") {
       val pathModules = targetRoot.resolve(Paths.get("syslinux", "modules"))
       val pathImages = targetRoot.resolve(Paths.get("syslinux", "images"))
-      val pathBootdisk = targetRoot.resolve("bootdisk")
 
       List(pathModules, pathImages, pathBootdisk) foreach(_.toFile.mkdirs())
 
@@ -131,9 +131,9 @@ class SyslinuxInstall(
     ui.action("Configure syslinux") {
       val syslinuxFile = getSyslinuxFile(targetRoot)
       val sb = new StringBuilder
-      val defaultEntry = others find { other =>
+      val defaultEntry = others.find { other =>
         other.kind == OSKind.SystemRescueCD
-      } orElse others.headOption
+      }.orElse(others.headOption)
 
       sb.append(
 """PATH modules
@@ -145,7 +145,7 @@ PROMPT 0
 TIMEOUT 100
 """)
 
-      defaultEntry flatMap(_.syslinuxLabel) foreach { label =>
+      defaultEntry.flatMap(_.syslinuxLabel).foreach { label =>
         sb.append(
 s"""ONTIMEOUT $label
 
@@ -183,7 +183,7 @@ LABEL $syslinuxLabel
         //     fi
       }
 
-      components find(_.kind == SyslinuxComponentKind.Grub4DOS) foreach { component =>
+      components.find(_.kind == SyslinuxComponentKind.Grub4DOS).foreach { component =>
         sb.append(
 s"""
 
@@ -211,23 +211,42 @@ MENU TITLE Misc tools
       } {
         val imageName = image.getFileName
 
-      sb.append(
-s"""
-LABEL ${component.syslinuxLabel}
-    MENU LABEL ^${component.label}
-    KERNEL modules/memdisk
-    INITRD /bootdisk/$imageName
-""")
+        sb.append(
+          s"""
+             |LABEL ${component.syslinuxLabel}
+             |    MENU LABEL ^${component.label}
+             |""".stripMargin)
 
-        if (imageName.toString.toLowerCase.endsWith(".iso")) {
-          sb.append(
-"""    APPEND iso
-""")
+        val extension = imageName.toString.split('.').last.toLowerCase
+        val memdiskKind = extension match {
+          case "iso" ⇒ Some("iso")
+          case "img" ⇒ Some("floppy")
+          case _     ⇒ None
         }
-        else if (imageName.toString.toLowerCase.endsWith(".img")) {
-          sb.append(
-"""    APPEND floppy
-""")
+        memdiskKind match {
+          case Some(kind) ⇒
+            sb.append(
+              s"""    KERNEL modules/memdisk
+                 |    INITRD /bootdisk/$imageName
+                 |    APPEND $kind
+                 |""".stripMargin)
+
+          case None ⇒
+            val actualName = if (extension == "bin") {
+              // Files with "bin" extension are considered as boot sectors and
+              // not executable code, so rename them.
+              val withoutExtension = imageName.toString.split('.').reverse.tail.reverse.mkString(".")
+              val pathSrc = pathBootdisk.resolve(imageName)
+              val pathDst = pathBootdisk.resolve(withoutExtension)
+              ui.activity(s"Rename source[${targetRoot.relativize(pathSrc)}] target[${targetRoot.relativize(pathDst)}]")
+              Files.move(pathSrc, pathDst)
+              withoutExtension
+            } else {
+              imageName
+            }
+            sb.append(
+              s"""    KERNEL /bootdisk/$actualName
+                 |""".stripMargin)
         }
       }
 
