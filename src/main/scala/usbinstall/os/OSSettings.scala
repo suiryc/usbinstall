@@ -27,16 +27,15 @@ object OSKind extends Enumeration {
   val ArchLinux = Value
 
   def efiIcon(v: Value): String = v match {
-    case Windows => "os_win.icns"
-    case Syslinux => "os_linux.icns"
-    case GPartedLive => "os_linux.icns"
-    case SystemRescueCD => "os_linux.icns"
-    case Ubuntu => "os_ubuntu.icns"
-    case Fedora => "os_fedora.icns"
-    case CentOS => "os_centos.icns"
-    case ArchLinux => "os_arch.icns"
-    case Kali => "os_arch.icns"
-    case _ => "os_unknown.icns"
+    case Windows => "os_win.png"
+    case Syslinux => "os_linux.png"
+    case Generic => "os_linux.png"
+    case SystemRescueCD => "os_linux.png"
+    case Ubuntu => "os_ubuntu.png"
+    case Fedora => "os_fedora.png"
+    case CentOS => "os_centos.png"
+    case ArchLinux => "os_arch.png"
+    case _ => "os_unknown.png"
   }
 
 }
