@@ -20,6 +20,10 @@ class GenericInstall(
     copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
     renameSyslinux(targetRoot)
+
+    ui.action("Prepare grub") {
+      fixGrubSearch(targetRoot)
+    }
   }
 
 }

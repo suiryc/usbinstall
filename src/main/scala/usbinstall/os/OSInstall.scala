@@ -5,6 +5,7 @@ import java.io.File
 import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermission
 import scala.io.Codec
+import scala.util.matching.Regex
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.RichFile._
@@ -136,6 +137,22 @@ class OSInstall(
       }
     }
     ()
+  }
+
+  protected def fixGrubSearch(targetRoot: Path): Unit = {
+    val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
+
+    val pfroot = (PathFinder(targetRoot) * "(?i)boot".r) ++ (PathFinder(targetRoot) * "(?i)efi".r)
+    val confs = pfroot ** ("(?i).*\\.cfg".r | "(?i).*\\.conf".r)
+    val regexReplacers = List(
+      RegexReplacer(
+        new Regex("""(?i)([ \t]+(?:search)[ \t]+[^\r\n]*)[ \t]+-f[ \t]+[^\s]+""", "pre"),
+        (m: Regex.Match) => s"${m.group("pre")} --fs-uuid $uuid"
+      )
+    )
+    for (conf <- confs.get()) {
+      regexReplace(targetRoot, conf, regexReplacers:_*)
+    }
   }
 
   def regexReplace(root: Path, path: Path, rrs: RegexReplacer*)(implicit codec: Codec): Boolean = {
