@@ -30,7 +30,7 @@ class SystemRescueCDInstall(
       val regexReplacers = List(
         RegexReplacer("(?i)scandelay=1", "scandelay=2"),
         RegexReplacer(
-          new Regex("(?i)([ \t]+(?:linux|initrd)[ \t]+)/isolinux/", "pre"),
+          new Regex("""(?i)([ \t]+(?:linux|initrd)[ \t]+)/isolinux/""", "pre"),
           (m: Regex.Match) => s"${m.group("pre")}/syslinux/"
         )
       )

@@ -53,14 +53,14 @@ class UbuntuInstall(
       // Update 'casper'
       targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile.write(s"$uuid\n")
       val confs = PathFinder(targetRoot) / (("boot" / "grub") ++ "syslinux") * (".*\\.cfg".r | ".*\\.conf".r)
-      val regexUUID = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*boot=casper)", "pre")
+      val regexUUID = new Regex("""(?i)([ \t]+(?:linux|append)[ \t]+[^\r\n]*boot=casper)""", "pre")
       val regexUUIDReplacer = RegexReplacer(regexUUID, (m: Regex.Match) =>
         s"${m.group("pre")} uuid=$uuid"
       )
 
       val rrs =
         if (persistent) {
-          val regexPers = new Regex("(?i)([ \t]+(?:linux|append)[ \t]+.*(?:boot=casper|initrd=[^ \t]*))", "pre")
+          val regexPers = new Regex("""(?i)([ \t]+(?:linux|append)[ \t]+[^\r\n]*(?:boot=casper|initrd=[^\s]*))""", "pre")
           val regexPersReplacer = RegexReplacer(regexPers, (m: Regex.Match) =>
             s"${m.group("pre")} persistent"
           )

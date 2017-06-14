@@ -52,13 +52,13 @@ class RedHatInstall(
       val efiBoot = targetRoot / "(?i)EFI".r / "(?i)BOOT".r
       val confs = (efiBoot ++ (targetRoot / "syslinux")) * (".*\\.cfg".r | ".*\\.conf".r)
       val regexReplacers = List(RegexReplacer(
-        new Regex("(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+)/isolinux/", "pre"),
+        new Regex("""(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+)/isolinux/""", "pre"),
         (m: Regex.Match) => s"${m.group("pre")}/syslinux/"
       ), RegexReplacer(
-        new Regex("(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+.*[ \t]+root=live:)[^ \t]+", "pre"),
+        new Regex("""(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+[^\r\n]*[ \t]+root=live:)[^\s]+""", "pre"),
         (m: Regex.Match) => s"${m.group("pre")}$optuuid"
       ), RegexReplacer(
-        new Regex("(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+.*[ \t]+rootfstype=)[^ \t\r\n]+", "pre"),
+        new Regex("""(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+[^\r\n]*[ \t]+rootfstype=)[^\s]+""", "pre"),
         (m: Regex.Match) => s"${m.group("pre")}$fsType"
       ))
       for (conf <- confs.get()) {
