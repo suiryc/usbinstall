@@ -5,7 +5,7 @@ import javafx.scene.Parent
 import javafx.scene.layout.AnchorPane
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.io.{AllPassFileFilter, PathFinder}
-import suiryc.scala.sys.linux.{Device, NetworkBlockDevice}
+import suiryc.scala.sys.linux.{Device, LoopbackDevice, NetworkBlockDevice}
 import usbinstall.controllers.{ChoosePartitionsController, InstallController}
 import usbinstall.settings.InstallSettings
 
@@ -28,9 +28,10 @@ object Panes {
           true
 
         case _ =>
-          // Also allow non-void writable network block devices. Useful when
-          // testing installation on virtual disk handled by qemu-nbd tool.
-          if (device.isInstanceOf[NetworkBlockDevice])
+          // Also allow non-void writable loopback or network block devices.
+          // Useful when testing installation on raw disk file or virtual disk
+          // handled by qemu-nbd tool.
+          if (device.isInstanceOf[LoopbackDevice] || device.isInstanceOf[NetworkBlockDevice])
             device.size.either.fold(_ => false, v => (v > 0) && !device.readOnly)
           else
             false
