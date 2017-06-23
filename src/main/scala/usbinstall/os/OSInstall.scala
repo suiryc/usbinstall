@@ -264,65 +264,75 @@ object OSInstall
     val label = os.settings.partitionLabel
 
     def format = {
-      val command = kind match {
-        case PartitionFormat.ext2 =>
-          Seq(s"mkfs.$kind", part.dev.toString)
+      if (os.settings.formatable) {
+        val command = kind match {
+          case PartitionFormat.ext2 =>
+            Seq(s"mkfs.$kind", part.dev.toString)
 
-        case PartitionFormat.fat32 =>
-          Seq("mkfs.vfat", "-F", "32", part.dev.toString)
+          case PartitionFormat.fat32 =>
+            Seq("mkfs.vfat", "-F", "32", part.dev.toString)
 
-        case PartitionFormat.ntfs =>
-          Seq(s"mkfs.$kind", "--fast", part.dev.toString)
+          case PartitionFormat.ntfs =>
+            Seq(s"mkfs.$kind", "--fast", part.dev.toString)
+        }
+
+        os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
+          Command.execute(command).toEither("Failed to format partition")
+        }
       }
-
-      os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
-        Command.execute(command).toEither("Failed to format partition")
-      }
+      else Right("Not formatable")
     }
 
     def setType() = {
-      val id = kind match {
-        case PartitionFormat.ext2 => "83"
-        case PartitionFormat.fat32 => "b"
-        case PartitionFormat.ntfs => "7"
+      val (partType, id) = kind match {
+        case PartitionFormat.ext2 => ("ext2", "83")
+        case PartitionFormat.fat32 => ("vfat", "b")
+        case PartitionFormat.ntfs => ("ntfs", "7")
       }
 
-      val input = s"""t
+      if (!part.fsType.contains(partType)) {
+        val input =
+          s"""t
 ${part.partNumber}
 $id
 w
 """.getBytes
 
-      os.ui.action(s"Set partition ${part.dev.toString} type ($kind)") {
-        Command.execute(Seq("fdisk", part.device.dev.toString), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
-          Command.execute(Seq("partprobe", "-d", part.device.dev.toString)).toEither("Failed to set partition type")
+        os.ui.action(s"Set partition ${part.dev.toString} type ($kind)") {
+          Command.execute(Seq("fdisk", part.device.dev.toString), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
+            Command.execute(Seq("partprobe", "-d", part.device.dev.toString)).toEither("Failed to set partition type")
+        }
       }
+      else Right("Partition type already set")
     }
 
     def setLabel() = {
-      val (command, envf) = kind match {
-        case PartitionFormat.ext2 =>
-          // Max ext2 label length: 16
-          (Seq("e2label", part.dev.toString, label), None)
+      if (!part.label.contains(label)) {
+        val (command, envf) = kind match {
+          case PartitionFormat.ext2 =>
+            // Max ext2 label length: 16
+            (Seq("e2label", part.dev.toString, label), None)
 
-        case PartitionFormat.fat32 =>
-          def commandEnvf(env: java.util.Map[String, String]) {
-            env.put("MTOOLS_SKIP_CHECK", "1")
-            ()
-          }
+          case PartitionFormat.fat32 =>
+            def commandEnvf(env: java.util.Map[String, String]) {
+              env.put("MTOOLS_SKIP_CHECK", "1")
+              ()
+            }
 
-          val actualLabel = label.take(11).padTo(11, ' ')
-          // Max FAT32 label length: 11
-          // To work correctly, it is better to truncate/pad it.
-          (Seq("mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
+            val actualLabel = label.take(11).padTo(11, ' ')
+            // Max FAT32 label length: 11
+            // To work correctly, it is better to truncate/pad it.
+            (Seq("mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
 
-        case PartitionFormat.ntfs =>
-          (Seq("ntfslabel", "--force", part.dev.toString, label), None)
+          case PartitionFormat.ntfs =>
+            (Seq("ntfslabel", "--force", part.dev.toString, label), None)
+        }
+
+        os.ui.action(s"Set partition ${part.dev.toString} label ($label)") {
+          Command.execute(command, envf = envf).toEither("Failed to label partition")
+        }
       }
-
-      os.ui.action(s"Set partition ${part.dev.toString} label ($label)") {
-        Command.execute(command, envf = envf).toEither("Failed to label partition")
-      }
+      else Right("Partition label already set")
     }
 
     format && setType && setLabel &&
@@ -363,7 +373,7 @@ w
       // Some files may have the 'immutable' attribute
       val finder = PathFinder(root).***
 
-      finder.get().map(_.toPath) foreach { path =>
+      finder.get().map(_.toPath).foreach { path =>
         Command.execute(Seq("chattr", "-i", path.toString))
       }
 
@@ -394,7 +404,7 @@ w
 
     if (os.settings.enabled) {
       // prepare syslinux
-      os.settings.syslinuxVersion foreach { version =>
+      os.settings.syslinuxVersion.foreach { version =>
         os.ui.action(s"Search syslinux $version") {
           if (SyslinuxInstall.get(version).isEmpty) {
             throw new Exception(s"Could not find syslinux $version")
@@ -404,12 +414,10 @@ w
         }
       }
 
-      // format partition
-      if (os.settings.formatable) {
-        os.settings.partition.get foreach { part =>
-          os.checkCancelled()
-          preparePartition(os, part).orThrow
-        }
+      // prepare (format, set type and label) partition
+      os.settings.partition.get.foreach { part =>
+        os.checkCancelled()
+        preparePartition(os, part).orThrow
       }
     }
 
