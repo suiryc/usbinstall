@@ -7,6 +7,9 @@ import suiryc.scala.sys.linux.Device
 
 object InstallSettings {
 
+  val profile: ObjectProperty[Option[ProfileSettings]] =
+    new SimpleObjectProperty(None)
+
   val device: ObjectProperty[Option[Device]] =
     new SimpleObjectProperty(None)
 

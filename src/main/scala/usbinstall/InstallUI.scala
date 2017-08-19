@@ -16,8 +16,8 @@ class InstallUI(
     jfxSchedule {
       step.setText(value.getOrElse(""))
     }
-    value foreach { value =>
-      osActivity foreach(_.write(s"**** Step: $value"))
+    value.foreach { value =>
+      osActivity.foreach(_.write(s"**** Step: $value"))
       globalActivity.write(s"**** Step: $value")
     }
   }
@@ -30,8 +30,8 @@ class InstallUI(
     jfxSchedule {
       action.setText(value.getOrElse(""))
     }
-    value foreach { value =>
-      osActivity foreach(_.write(s"** Action: $value"))
+    value.foreach { value =>
+      osActivity.foreach(_.write(s"** Action: $value"))
       globalActivity.write(s"** Action: $value")
     }
   }
@@ -60,7 +60,7 @@ class InstallUI(
   }
 
   def activity(value: String) {
-    osActivity foreach(_.write(value))
+    osActivity.foreach(_.write(value))
   }
 
   protected def jfxSchedule(action: => Unit) {

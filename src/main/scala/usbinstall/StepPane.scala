@@ -17,7 +17,7 @@ trait StepPane
 
   override def cancelSubscriptions() {
     super.cancelSubscriptions()
-    subscriptionHolders foreach(_.cancelSubscriptions())
+    subscriptionHolders.foreach(_.cancelSubscriptions())
     subscriptionHolders = Nil
   }
 
@@ -33,6 +33,10 @@ trait UseStepPane {
 
 trait HasEventSubscriptions {
 
+  // Note: this is for subscriptions on objects not owned by the controller
+  // pane (e.g. Settings accessible from all classes). We need to track those
+  // and cancel them when leaving the pane, otherwise they remain forever
+  // and can be problematic when navigating forth and back in panes.
   protected var subscriptions: List[Cancellable] =
     Nil
 

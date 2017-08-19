@@ -18,9 +18,9 @@ object LogsStage {
   // There does not seem to be a correct way to get rid of the scrollbar when
   // not needed (e.g. listening to visible size/region size changes etc).
 
-  protected val loader = new FXMLLoader(getClass.getResource("/fxml/logs.fxml"))
-  protected val root = loader.load[Parent]()
-  protected val controller = loader.getController[LogsController]()
+  private val loader = new FXMLLoader(getClass.getResource("/fxml/logs.fxml"))
+  private val root = loader.load[Parent]()
+  private val controller = loader.getController[LogsController]()
 
   val areaWriter: ThresholdLogLinePatternWriter = controller.logArea.msgWriter
   areaWriter.setPattern(Settings.core.logDebugPattern)
@@ -57,7 +57,7 @@ object LogsStage {
   //        setGraphic(null)
   //      }
   //      else {
-  //        val (txtType, txtMsg) = Option(item) map { msg =>
+  //        val (txtType, txtMsg) = Option(item).map { msg =>
   //          (msg.level.shortName, msg.msg)
   //        } getOrElse(("UNK", "No Message"))
   //        labelType.setText(txtType)

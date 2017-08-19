@@ -51,14 +51,14 @@ object USBInstall {
   }
 
   private def addAppender(appender: ProxyAppender) {
-    loggerNames foreach { name =>
+    loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.addAppender(appender)
     }
   }
 
   private def detachAppender(appender: ProxyAppender) {
-    loggerNames foreach { name =>
+    loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.detachAppender(appender)
     }
@@ -112,7 +112,7 @@ class USBInstall extends Application {
     lineWriter = new ProxyLineWriter(List(LogsStage.areaWriter))
     systemStreams = SystemStreams.replace(new PrintStream(new LineSplitterOutputStream(lineWriter)))
 
-    Stages.chooseDevice()
+    Stages.chooseProfile()
     // Explicitly load the settings
     Settings.load()
 
@@ -151,9 +151,11 @@ class USBInstall extends Application {
         )
     }
 
-    // Accessing this lazy val now will trigger exceptions (error stage) for
-    // non-existing paths.
-    Settings.core.syslinuxExtraComponents
+    Settings.profiles.values.foreach { profile =>
+      // Accessing this lazy val now will trigger exceptions (error stage) for
+      // non-existing paths.
+      profile.syslinuxExtraComponents
+    }
     ()
   }
 

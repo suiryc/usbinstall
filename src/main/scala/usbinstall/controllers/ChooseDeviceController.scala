@@ -33,11 +33,14 @@ class ChooseDeviceController extends Initializable {
   }
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+    val profile = InstallSettings.profile.get.get
+
     refreshDevices()
 
     devices.getSelectionModel.selectedItemProperty.listen { newValue =>
       Panes.devices.get(newValue) match {
         case oDevice @ Some(device) =>
+          profile.device.update(newValue)
           InstallSettings.device.set(oDevice)
           vendor.setText(device.vendorOption.getOrElse(device.name))
           model.setText(device.modelOption.getOrElse(device.name))
@@ -61,6 +64,11 @@ class ChooseDeviceController extends Initializable {
           resetDeviceInfo()
       }
     }
+
+    Option(profile.device()).filter(Panes.devices.contains).foreach { deviceName =>
+      devices.getSelectionModel.select(deviceName)
+    }
+
     ()
   }
 

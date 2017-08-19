@@ -65,6 +65,8 @@ class InstallController
 
   protected var installLogWriter: ThresholdLogLinePatternWriter = _
 
+  private val profile = InstallSettings.profile.get.get
+
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     activityLogArea = LogArea(activityArea)
     installLogWriter = activityLogArea.msgWriter
@@ -207,7 +209,7 @@ class InstallController
 
   private def installTask(cancellable: Cancellable): List[String] = {
 
-    def checkCancelled() =
+    def checkCancelled(): Unit =
       cancellable.check {
         activityLogArea.write("Cancelled")
         ui.activity("Cancelled")
@@ -224,7 +226,7 @@ class InstallController
     ui.activity(s"ISO mount path[${InstallSettings.pathMountISO}]")
     ui.activity(s"Partition mount path[${InstallSettings.pathMountPartition}]")
 
-    val (notsyslinux, syslinux) = Settings.core.oses.partition(_.kind != OSKind.Syslinux)
+    val (notsyslinux, syslinux) = profile.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
     val (previousTab, previousLogWriter, failedOses) =
       oses.foldLeft[(Tab, ThresholdLogLinePatternWriter, List[String])](installTab, installLogWriter, Nil) { (previous, settings) =>
@@ -266,7 +268,7 @@ class InstallController
         val next = try {
           val os = OSInstall(settings, ui, () => checkCancelled())
 
-          OSInstall.install(os)
+          OSInstall.install(profile, os)
           (osTab, osLogWriter, previousFailedOSes)
         }
         catch {

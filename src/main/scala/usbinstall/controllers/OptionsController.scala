@@ -86,8 +86,8 @@ class OptionsController extends Initializable {
     )
 
     if (action.contains(ButtonType.OK)) {
-      Settings.core.prefs.removeNode()
-      Settings.core.reset()
+      onReset(event)
+      Settings.prefsRoot.removeNode()
       update()
       Option(listener).foreach(_.settingsCleared(window))
     }
@@ -102,7 +102,7 @@ class OptionsController extends Initializable {
     window.asInstanceOf[Stage].close()
   }
 
-  protected def window =
+  protected def window: Window =
     logInstallThreshold.getScene.getWindow
 
 }

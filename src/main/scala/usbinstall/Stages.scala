@@ -42,7 +42,7 @@ object Stages {
 
     stage.setTitle(title)
     stage.setScene(scene)
-    pos foreach { pos =>
+    pos.foreach { pos =>
       stage.setX(pos._1)
       stage.setY(pos._2)
     }
@@ -52,7 +52,7 @@ object Stages {
     sfxStages.trackMinimumDimensions(stage, size)
   }
 
-  protected def toolBar(pane: StepPane, paneController: Option[Any]) = {
+  protected def toolBar(pane: StepPane, paneController: Option[Any]): Parent = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/toolBar.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[ToolBarController]()
@@ -62,7 +62,7 @@ object Stages {
     root
   }
 
-  protected def stepChange(pane: StepPane) = {
+  protected def stepChange(pane: StepPane): Parent = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/stepChange.fxml"))
     val root = loader.load[Parent]()
     val controller = loader.getController[StepChangeController]()
@@ -81,6 +81,10 @@ object Stages {
     grid.addColumn(0, toolBar(pane, controller), pane, stepChange(pane))
 
     new Scene(grid)
+  }
+
+  def chooseProfile() {
+    changeScene("Choose profile", step(Panes.chooseProfile()))
   }
 
   def chooseDevice() {

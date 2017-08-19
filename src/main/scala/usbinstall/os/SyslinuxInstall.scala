@@ -14,7 +14,7 @@ import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.util.RichEither._
 import usbinstall.{InstallUI, USBInstall}
-import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.settings.{InstallSettings, ProfileSettings}
 
 
 class SyslinuxInstall(
@@ -28,16 +28,17 @@ class SyslinuxInstall(
     Set("parted", "dd")
 
   override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
+    val profile = InstallSettings.profile.get.get
     val syslinuxVersion = settings.syslinuxVersion.get
-    val syslinux = SyslinuxInstall.get(syslinuxVersion).get
+    val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
     val partition = settings.partition.get.get
     val device = partition.device
     val devicePath = device.dev
     val targetRoot = partMount.get.to.toAbsolutePath
     val pathBootdisk = targetRoot.resolve("bootdisk")
 
-    val others = Settings.core.oses filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
-    val components = Settings.core.syslinuxExtraComponents
+    val others = profile.oses.filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
+    val components = profile.syslinuxExtraComponents
 
     Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
       skipResult = false)
@@ -46,7 +47,7 @@ class SyslinuxInstall(
       val pathModules = targetRoot.resolve(Paths.get("syslinux", "modules"))
       val pathImages = targetRoot.resolve(Paths.get("syslinux", "images"))
 
-      List(pathModules, pathImages, pathBootdisk) foreach(_.toFile.mkdirs())
+      List(pathModules, pathImages, pathBootdisk).foreach(_.toFile.mkdirs())
 
       val syslinuxCom32 = syslinux.modules.resolve("com32")
       val syslinuxModules = List(
@@ -266,14 +267,14 @@ MENU END
       syslinuxFile.toFile.write(sb.toString())
     }
 
-    installGrub4DOS(partMount.get)
+    installGrub4DOS(profile, partMount.get)
 
-    installREFInd(partMount.get)
+    installREFInd(profile, partMount.get)
   }
 
-  protected def installGrub4DOS(partMount: PartitionMount): Unit = {
+  protected def installGrub4DOS(profile: ProfileSettings, partMount: PartitionMount): Unit = {
     val grub4dosRoot = ui.action(s"Search Grub4DOS") {
-      SyslinuxInstall.getGrub4DOS
+      SyslinuxInstall.getGrub4DOS(profile)
     }
     val targetRoot = partMount.to.toAbsolutePath
 
@@ -294,8 +295,8 @@ MENU END
     }
   }
 
-  protected def installREFInd(partMount: PartitionMount): Unit = {
-    val refindPath = Settings.core.rEFIndPath
+  protected def installREFInd(profile: ProfileSettings, partMount: PartitionMount): Unit = {
+    val refindPath = profile.rEFIndPath
     val pathISO = ui.action(s"Search rEFInd") {
       SyslinuxInstall.findPath(List(refindPath.resolve("iso")), """(?i)refind.*""".r).fold {
         throw new Exception("Could not find rEFInd ISO")
@@ -332,7 +333,7 @@ scanfor manual
 
       searchEFI(Some(partMount))
       for {
-        os <- Settings.core.oses if os.enabled
+        os <- profile.oses if os.enabled
         _ <- os.partition.get
         efiBootloader <- os.efiBootloader
       } {
@@ -422,14 +423,14 @@ object SyslinuxInstall
 
   private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
-  def get(version: String): Option[Syslinux] =
-    versions.getOrElseUpdate(version, find(version, doBuild = true)).map(_.uncompressed)
+  def get(profile: ProfileSettings, version: String): Option[Syslinux] =
+    versions.getOrElseUpdate(version, find(profile, version, doBuild = true)).map(_.uncompressed)
 
-  def getSource(version: String): Option[Path] =
-    versions.getOrElse(version, find(version, doBuild = false)).map(_.archive)
+  def getSource(profile: ProfileSettings, version: String): Option[Path] =
+    versions.getOrElse(version, find(profile, version, doBuild = false)).map(_.archive)
 
-  protected def find(version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
-    findSyslinuxArchive(version).fold[Option[SyslinuxArchive]] {
+  protected def find(profile: ProfileSettings, version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
+    findSyslinuxArchive(profile, version).fold[Option[SyslinuxArchive]] {
       logger.error(s"No archive found for syslinux version[$version]")
       None
     } { archive =>
@@ -449,16 +450,16 @@ object SyslinuxInstall
   }
 
   protected def findPath(roots: List[Path], regex: Regex): Option[Path] = {
-    val files = roots flatMap { path =>
+    val files = roots.flatMap { path =>
       val finder = PathFinder(path) ** (regex & RegularFileFilter)
 
-      finder.get map(_.toPath)
+      finder.get.map(_.toPath)
     }
     files.sorted.reverse.headOption
   }
 
-  protected def findSyslinuxArchive(version: String): Option[Path] =
-    findPath(Settings.core.toolsPath, s"""(?i)syslinux.*-${Pattern.quote(version)}.*""".r)
+  protected def findSyslinuxArchive(profile: ProfileSettings, version: String): Option[Path] =
+    findPath(profile.toolsPath, s"""(?i)syslinux.*-${Pattern.quote(version)}.*""".r)
 
   protected def uncompress(path: Path): Path = {
     val isZip = path.getFileName.toString.endsWith(".zip")
@@ -509,11 +510,11 @@ object SyslinuxInstall
     //}
   }
 
-  protected def findGrub4DOSArchive(): Option[Path] =
-    findPath(Settings.core.toolsPath, """(?i)grub4dos.*""".r)
+  protected def findGrub4DOSArchive(profile: ProfileSettings): Option[Path] =
+    findPath(profile.toolsPath, """(?i)grub4dos.*""".r)
 
-  def getGrub4DOS: Path = {
-    findGrub4DOSArchive().fold[Path] {
+  def getGrub4DOS(profile: ProfileSettings): Path = {
+    findGrub4DOSArchive(profile).fold[Path] {
       throw new Exception("Could not find Grub4DOS archive")
     } { path =>
       val root = uncompress(path)

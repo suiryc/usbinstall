@@ -38,7 +38,7 @@ class UbuntuInstall(
 
     // Not always necessary, but without 'fallback.efi' OS may not boot
     val grubx64EFI = PathFinder(targetRoot) / "(?i)EFI".r / "(?i)BOOT".r / "(?i)grubx64.efi".r
-    grubx64EFI.get().headOption map(_.toPath) foreach { grubx64EFI =>
+    grubx64EFI.get().headOption.map(_.toPath).foreach { grubx64EFI =>
       val fallbackEFI = grubx64EFI.getParent.resolve("fallback.efi")
       if (!fallbackEFI.exists) ui.action("Prepare EFI") {
         duplicate(grubx64EFI, targetRoot, fallbackEFI, None)

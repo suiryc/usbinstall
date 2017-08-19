@@ -14,7 +14,7 @@ import suiryc.scala.sys.linux.DevicePartition
 import suiryc.scala.util.RichEither._
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
-import usbinstall.settings.InstallSettings
+import usbinstall.settings.{InstallSettings, ProfileSettings}
 
 
 class OSInstall(
@@ -65,7 +65,7 @@ class OSInstall(
     installRequirements() ++ formatRequirements
   }
 
-  protected def getSyslinuxFile(targetRoot: Path) =
+  protected def getSyslinuxFile(targetRoot: Path): Path =
     Paths.get(targetRoot.toString, "syslinux", settings.syslinuxFile)
 
   protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFormat.Value, label: String) {
@@ -339,14 +339,14 @@ w
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
-  private def installBootloader(os: OSInstall, mount: Option[PartitionMount]): Unit = {
+  private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: Option[PartitionMount]): Unit = {
     for {
       syslinuxVersion <- os.settings.syslinuxVersion
       part <- os.settings.partition.get
       mount <- mount
     } {
       // Note: we already ensured this syslinux version was found
-      val syslinux = SyslinuxInstall.get(syslinuxVersion).get
+      val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
       val CommandResult(result, _, stderr) =
         os.settings.partitionFormat match {
           case _: PartitionFormat.extX =>
@@ -385,7 +385,7 @@ w
     }
   }
 
-  def install(os: OSInstall): Unit = {
+  def install(profile: ProfileSettings, os: OSInstall): Unit = {
     os.ui.none()
 
     // Prepare
@@ -406,10 +406,10 @@ w
       // prepare syslinux
       os.settings.syslinuxVersion.foreach { version =>
         os.ui.action(s"Search syslinux $version") {
-          if (SyslinuxInstall.get(version).isEmpty) {
+          if (SyslinuxInstall.get(profile, version).isEmpty) {
             throw new Exception(s"Could not find syslinux $version")
           }
-          val name = SyslinuxInstall.getSource(version).map(_.getFileName.toString).getOrElse("n/a")
+          val name = SyslinuxInstall.getSource(profile, version).map(_.getFileName.toString).getOrElse("n/a")
           os.ui.activity(s"Syslinux found: $name")
         }
       }
@@ -443,7 +443,7 @@ w
         if (os.settings.enabled) {
           os.ui.action(s"Install bootloader") {
             os.checkCancelled()
-            installBootloader(os, partMount)
+            installBootloader(profile, os, partMount)
           }
         }
       })

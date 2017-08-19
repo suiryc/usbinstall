@@ -20,7 +20,7 @@ import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings, SyslinuxInstall}
-import usbinstall.settings.{InstallSettings, Settings}
+import usbinstall.settings.InstallSettings
 
 
 class ChoosePartitionsController
@@ -30,9 +30,6 @@ class ChoosePartitionsController
   with HasEventSubscriptions
   with StrictLogging
 {
-
-  // TODO - When updating installation, consider ISO copy done, and redo everything else ? (misc files copy, bootloader conf, bootloader install ?)
-  // TODO - CLI way to point to configuration to use (multi-conf)
 
   @FXML
   protected var elements: GridPane = _
@@ -58,12 +55,13 @@ class ChoosePartitionsController
   // Note: subscriptions on external object need to be cancelled for
   // pane/scene to be GCed.
 
-  protected var osLabels = Map[OSSettings, Label]()
+  private var osLabels = Map[OSSettings, Label]()
 
-  protected val device = InstallSettings.device.get.get
-  protected val devicePartitions = device.partitions.toList sortBy(_.partNumber)
-  protected var partitions = List[DevicePartition]()
-  protected val partitionsStringProp = new SimpleObjectProperty(List[String]())
+  private val profile = InstallSettings.profile.get.get
+  private val device = InstallSettings.device.get.get
+  private val devicePartitions = device.partitions.toList sortBy(_.partNumber)
+  private var partitions = List[DevicePartition]()
+  private val partitionsStringProp = new SimpleObjectProperty(List[String]())
   updateAvailablePartitions()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
@@ -78,7 +76,7 @@ class ChoosePartitionsController
     loadPopup(infoPopup, "/fxml/choosePartitions-infoPopup.fxml")
 
     formatAll.setOnAction { _ =>
-      Settings.core.oses foreach { settings =>
+      profile.oses.foreach { settings =>
         settings.format() = formatAll.isSelected
       }
     }
@@ -87,7 +85,7 @@ class ChoosePartitionsController
       val status = if (installAll.isIndeterminate) OSInstallStatus.Installed
         else if (installAll.isSelected) OSInstallStatus.Install
         else OSInstallStatus.NotInstalled
-      Settings.core.oses foreach { settings =>
+      profile.oses.foreach { settings =>
         settings.installStatus() = status
       }
     }
@@ -98,7 +96,7 @@ class ChoosePartitionsController
     selectPartitions(redo = false)
 
     // Note: rows 1 (labels) and 2 (checkboxes) already used
-    Settings.core.oses.foldLeft(2) { (idx, settings) =>
+    profile.oses.foldLeft(2) { (idx, settings) =>
       elements.getRowConstraints.add(new RowConstraints(30) { setValignment(VPos.CENTER) })
       elements.addRow(idx, osRow(settings) : _*)
       idx + 1
@@ -112,7 +110,7 @@ class ChoosePartitionsController
   }
 
   private def updateRequirements() {
-    val nok = Settings.core.oses.foldLeft(false) { (nok, settings) =>
+    val nok = profile.oses.foldLeft(false) { (nok, settings) =>
       // We just need to create an instance to check its requirements
       val osInstall = OSInstall(settings, null, () => {})
       val unmet = USBInstall.checkRequirements(osInstall.requirements())
@@ -129,7 +127,7 @@ class ChoosePartitionsController
       if (unmet.nonEmpty)
         missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
 
-      osLabels.get(settings) foreach { label =>
+      osLabels.get(settings).foreach { label =>
         if (osNok) {
           val tooltip = new Tooltip(missingRequirements.mkString("\n"))
           label.setTooltip(tooltip)
@@ -154,7 +152,7 @@ class ChoosePartitionsController
 
     updateRequirements()
 
-    Settings.core.oses foreach { settings =>
+    profile.oses.foreach { settings =>
       subscriptions ::= settings.installStatus.listen(updateRequirements())
       subscriptions ::= settings.partition.listen(updateRequirements())
       subscriptions ::= settings.iso.listen(updateRequirements())
@@ -258,7 +256,7 @@ class ChoosePartitionsController
     osPartition.setPromptText("Partition")
     osPartition.getItems.setAll(partitionsStringProp.get:_*)
     def selectPartition() {
-      settings.partition.get foreach { partition =>
+      settings.partition.get.foreach { partition =>
         osPartition.getSelectionModel.select(partition.dev.toString)
       }
     }
@@ -267,18 +265,18 @@ class ChoosePartitionsController
       osPartition.getItems.setAll(newValue:_*)
       selectPartition()
     }
-    settings.partition.get foreach { partition =>
+    settings.partition.get.foreach { partition =>
       osPartition.getSelectionModel.select(partition.dev.toString)
     }
     osPartition.getSelectionModel.selectedItemProperty.listen { selected =>
       // Note: first change those settings, to shorten change cyclic
       // propagation when swapping partition with another OS.
-      partitions.find(_.dev.toString == selected) foreach { partition =>
+      partitions.find(_.dev.toString == selected).foreach { partition =>
         val current = settings.partition.get
         settings.partition.set(Some(partition))
 
         // Swap partitions if previously selected for other OS
-        Settings.core.oses.filterNot(_ == settings).find(_.partition.get.contains(partition)) foreach { os =>
+        profile.oses.filterNot(_ == settings).find(_.partition.get.contains(partition)).foreach { os =>
           os.partition.set(current)
         }
       }
@@ -290,8 +288,8 @@ class ChoosePartitionsController
       settings.partition.set(newValue)
     }
 
-    val osISO = settings.isoPattern map { regex =>
-      val available = Settings.core.isos.filter { path =>
+    val osISO = settings.isoPattern.map { regex =>
+      val available = profile.isos.filter { path =>
         regex.pattern.matcher(path.getFileName.toString).find()
       }
 
@@ -310,7 +308,7 @@ class ChoosePartitionsController
   }
 
   private def availablePartitions() =
-    devicePartitions filter { partition =>
+    devicePartitions.filter { partition =>
       val size = partition.size()
       !partition.mounted && (size > 1 * 1024 * 1024)
     }
@@ -321,7 +319,7 @@ class ChoosePartitionsController
   }
 
   private def selectPartitions(redo: Boolean) {
-    Settings.core.oses.foldLeft(partitions) { (devicePartitions, os) =>
+    profile.oses.foldLeft(partitions) { (devicePartitions, os) =>
       // First reset settings for other devices
       if (os.partition.get.exists(_.device != device))
         os.partition.set(None)
@@ -438,7 +436,7 @@ class ChoosePartitionsController
 
     partitionInfo.setText(s"(${settings.partitionFormat}) ${settings.partitionLabel}")
     val syslinux = settings.syslinuxVersion.map { version =>
-      val name = SyslinuxInstall.getSource(version).map(_.getFileName.toString).getOrElse("n/a")
+      val name = SyslinuxInstall.getSource(profile, version).map(_.getFileName.toString).getOrElse("n/a")
       s"($version) $name"
     }.getOrElse("n/a")
     syslinuxInfo.setText(syslinux)

@@ -90,7 +90,7 @@ class OSSettings(
 
   import PersistentSetting._
 
-  implicit private val osInstallStatusEnum = OSInstallStatus
+  implicit private val osInstallStatusEnum: OSInstallStatus.type = OSInstallStatus
 
   val format: PersistentProperty[Boolean] =
     PersistentProperty(PersistentSetting.from("settings.format", default = true))
@@ -107,12 +107,12 @@ class OSSettings(
   val partition: ObjectProperty[Option[DevicePartition]] =
     new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))
 
-  protected def getDevicePartition(v: Option[String]) =
-    v flatMap { dev =>
+  protected def getDevicePartition(v: Option[String]): Option[DevicePartition] =
+    v.flatMap { dev =>
       val path = Paths.get(dev)
       if (path.toFile.exists) {
-        DevicePartition.option(path) flatMap { initial =>
-          Panes.devices.get(initial.device.dev.toString) flatMap { device =>
+        DevicePartition.option(path).flatMap { initial =>
+          Panes.devices.get(initial.device.dev.toString).flatMap { device =>
             device.partitions.find(_.partNumber == initial.partNumber)
           }
         }

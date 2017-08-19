@@ -6,7 +6,7 @@ import javafx.scene.layout.AnchorPane
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.io.{AllPassFileFilter, PathFinder}
 import suiryc.scala.sys.linux.{Device, LoopbackDevice, NetworkBlockDevice}
-import usbinstall.controllers.{ChoosePartitionsController, InstallController}
+import usbinstall.controllers.{ChoosePartitionsController, ChooseProfileController, InstallController}
 import usbinstall.settings.InstallSettings
 
 
@@ -53,10 +53,38 @@ object Panes {
     (pane, controller)
   }
 
+  def chooseProfile(): (StepPane, Option[Any]) = {
+    val loader = new FXMLLoader(getClass.getResource("/fxml/chooseProfile.fxml"))
+    val root = loader.load[Parent]()
+    val controller = loader.getController[ChooseProfileController]()
+
+    val pane = new AnchorPane with StepPane {
+      override val previous: NoButton.type = NoButton
+
+      override val next = new NextButton(this, {
+        InstallSettings.profile.get.exists { _ =>
+          Stages.chooseDevice()
+          true
+        }
+      }) {
+        disable = InstallSettings.profile.getValue.isEmpty
+
+        subscriptions ::= InstallSettings.profile.listen { v =>
+          disable = v.isEmpty
+        }
+      }
+    }
+
+    initPane(pane, root, Some(controller))
+  }
+
   def chooseDevice(): (StepPane, Option[Any]) = {
     val root = FXMLLoader.load[Parent](getClass.getResource("/fxml/chooseDevice.fxml"))
     val pane = new AnchorPane with StepPane {
-      override val previous = NoButton
+      override val previous = new PreviousButton(this, {
+        Stages.chooseProfile()
+        true
+      })
 
       override val next = new NextButton(this, {
         InstallSettings.device.get.exists { _ =>
@@ -64,16 +92,10 @@ object Panes {
           true
         }
       }) {
-        disable = true
+        disable = Option(InstallSettings.device.getValue).isEmpty
 
-        subscriptions ::= InstallSettings.device.listen { device =>
-          Option(device) match {
-            case Some(_) =>
-              disable = false
-
-            case _ =>
-              disable = true
-          }
+        subscriptions ::= InstallSettings.device.listen { v =>
+          disable = Option(v).isEmpty
         }
       }
     }
