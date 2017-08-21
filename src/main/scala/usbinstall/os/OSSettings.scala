@@ -77,6 +77,7 @@ object PartitionFormat extends Enumeration {
 }
 
 class OSSettings(
+  val settings: BaseSettings,
   val kind: OSKind.Value,
   val label: String,
   val size: Long,
@@ -85,24 +86,21 @@ class OSSettings(
   val partitionFormat: PartitionFormat.Value,
   val syslinuxLabel: Option[String],
   val syslinuxVersion: Option[String]
-)(implicit settings: BaseSettings)
-{
+) {
 
   import PersistentSetting._
 
-  implicit private val osInstallStatusEnum: OSInstallStatus.type = OSInstallStatus
-
   val format: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from("settings.format", default = true))
+    PersistentProperty(PersistentSetting.from(settings, "settings.format", default = true))
 
   val installStatus: PersistentProperty[OSInstallStatus.Value] =
-    PersistentProperty(PersistentSetting.from("settings.status", OSInstallStatus.Install))
+    PersistentProperty(PersistentSetting.from(settings, "settings.status", OSInstallStatus, OSInstallStatus.Install))
 
   protected val partitionSetting: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from("settings.partition", null))
+    PersistentProperty(PersistentSetting.from(settings, "settings.partition", null))
 
   val persistent: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from("settings.persistence", default = false))
+    PersistentProperty(PersistentSetting.from(settings, "settings.persistence", default = false))
 
   val partition: ObjectProperty[Option[DevicePartition]] =
     new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))

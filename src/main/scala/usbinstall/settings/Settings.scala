@@ -77,24 +77,20 @@ class Settings(
 
   import PersistentSetting._
 
-  implicit private val settings: BaseSettings = this
-  implicit private val errorActionEnum: ErrorAction.type = ErrorAction
-  implicit private val logThresholdEnum: LogLevel.type = LogLevel
-
   val logDebugPattern: String = config.getString("log.debug.pattern")
   val logInstallPattern: String = config.getString("log.install.pattern")
 
   val logDebugThreshold =
-    PersistentProperty(PersistentSetting.from("logDebugThreshold", LogLevel.DEBUG))
+    PersistentProperty(PersistentSetting.from(this, "logDebugThreshold", LogLevel, LogLevel.DEBUG))
 
   val logInstallThreshold =
-    PersistentProperty(PersistentSetting.from("logInstallThreshold", LogLevel.INFO))
+    PersistentProperty(PersistentSetting.from(this, "logInstallThreshold", LogLevel, LogLevel.INFO))
 
   val componentInstallError =
-    PersistentProperty(PersistentSetting.from("componentInstallError", ErrorAction.Ask))
+    PersistentProperty(PersistentSetting.from(this, "componentInstallError", ErrorAction, ErrorAction.Ask))
 
   val profile: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from("installation.profile", null))
+    PersistentProperty(PersistentSetting.from(this, "installation.profile", null))
 
   def reset() {
     logDebugThreshold.reset()
@@ -121,21 +117,20 @@ class ProfileSettings(
   import BaseConfig._
   import PersistentSetting._
 
-  implicit private val settings: BaseSettings = this
-
   val name: String = config.getString("name")
 
   val device: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from("device", null))
+    PersistentProperty(PersistentSetting.from(this, "device", null))
 
   val oses: List[OSSettings] = config.getConfigList("oses").asScala.toList.map { config =>
     val kind = config.getString("kind")
     val label = option[String]("label", config).getOrElse(kind)
 
-    implicit val settings: BaseSettings =
+    val settings: BaseSettings =
       new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
 
     new OSSettings(
+      settings,
       OSKind.byName(kind),
       label,
       Units.storage.fromHumanReadable(config.getString("size")),
