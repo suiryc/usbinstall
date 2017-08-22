@@ -117,7 +117,7 @@ class ProfileSettings(
   import BaseConfig._
   import PersistentSetting._
 
-  val name: String = config.getString("name")
+  val profileName: String = config.getString("name")
 
   val device: PersistentProperty[String] =
     PersistentProperty(PersistentSetting.from(this, "device", null))
@@ -164,17 +164,17 @@ class ProfileSettings(
     syslinuxExtra.getConfigList("components").asScala.toList.map { config =>
       val kind = option[String]("kind", config).getOrElse("image")
       val label = option[String]("label", config).getOrElse(kind)
-      val image = option[String]("image", config).flatMap { name =>
+      val image = option[String]("image", config).flatMap { imgName =>
         val r = syslinuxExtraImagesPath.map { path =>
-          path.resolve(name)
+          path.resolve(imgName)
         }.find(_.toFile.exists)
 
         if (r.isEmpty) {
           Dialogs.error(
             owner = Some(USBInstall.stage),
             title = Some("Missing component image"),
-            headerText = Some(label),
-            contentText = Some(s"Image[$name] not found in configured path for profile[$name]")
+            headerText = Some(s"Image not found in configured path"),
+            contentText = Some(s"Profile: $profileName\nImage: $imgName")
           )
         }
 
