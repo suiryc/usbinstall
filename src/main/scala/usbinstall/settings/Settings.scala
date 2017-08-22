@@ -154,18 +154,34 @@ class ProfileSettings(
     PathsEx.get(path)
   }
 
-  private val syslinuxExtra = config.getConfig("syslinux.extra")
+  val syslinuxSettings = new SyslinuxSettings(this, config.getConfig("syslinux"))
 
-  val syslinuxExtraImagesPath: List[Path] = syslinuxExtra.getStringList("images.path").asScala.toList.map { path =>
+  val rEFIndPath: Path = PathsEx.get(config.getString("refind.path"))
+
+}
+
+class SyslinuxSettings(profile: ProfileSettings, config: Config) extends BaseConfig(config) {
+
+  import BaseConfig._
+
+  private val menuEntries = option[Config]("menu.entries", config)
+
+  val menuEntriesDefault: Option[String] = menuEntries.flatMap(option[String]("default", _))
+
+  val menuEntriesHeader: Option[String] = menuEntries.flatMap(option[String]("header", _))
+
+  private val extra = option[Config]("extra", config)
+
+  val extraImagesPath: List[Path] = extra.toList.flatMap(_.getStringList("images.path").asScala.toList).map { path =>
     PathsEx.get(path)
   }
 
-  lazy val syslinuxExtraComponents: List[SyslinuxComponent] =
-    syslinuxExtra.getConfigList("components").asScala.toList.map { config =>
+  lazy val extraComponents: List[SyslinuxComponent] =
+    extra.toList.flatMap(_.getConfigList("components").asScala.toList).map { config =>
       val kind = option[String]("kind", config).getOrElse("image")
       val label = option[String]("label", config).getOrElse(kind)
       val image = option[String]("image", config).flatMap { imgName =>
-        val r = syslinuxExtraImagesPath.map { path =>
+        val r = extraImagesPath.map { path =>
           path.resolve(imgName)
         }.find(_.toFile.exists)
 
@@ -174,7 +190,7 @@ class ProfileSettings(
             owner = Some(USBInstall.stage),
             title = Some("Missing component image"),
             headerText = Some(s"Image not found in configured path"),
-            contentText = Some(s"Profile: $profileName\nImage: $imgName")
+            contentText = Some(s"Profile: ${profile.profileName}\nImage: $imgName")
           )
         }
 
@@ -187,8 +203,6 @@ class ProfileSettings(
         image
       )
     }
-
-  val rEFIndPath: Path = PathsEx.get(config.getString("refind.path"))
 
 }
 

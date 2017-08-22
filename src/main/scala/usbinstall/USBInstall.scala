@@ -154,7 +154,7 @@ class USBInstall extends Application {
     Settings.profiles.values.foreach { profile =>
       // Accessing this lazy val now will trigger exceptions (error stage) for
       // non-existing paths.
-      profile.syslinuxExtraComponents
+      profile.syslinuxSettings.extraComponents
     }
     ()
   }

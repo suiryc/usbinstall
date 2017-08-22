@@ -38,7 +38,8 @@ class SyslinuxInstall(
     val pathBootdisk = targetRoot.resolve("bootdisk")
 
     val others = profile.oses.filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
-    val components = profile.syslinuxExtraComponents
+    val syslinuxSettings = profile.syslinuxSettings
+    val components = syslinuxSettings.extraComponents
 
     Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
       skipResult = false)
@@ -132,9 +133,11 @@ class SyslinuxInstall(
     ui.action("Configure syslinux") {
       val syslinuxFile = getSyslinuxFile(targetRoot)
       val sb = new StringBuilder
-      val defaultEntry = others.find { other =>
-        other.kind == OSKind.SystemRescueCD
-      }.orElse(others.headOption)
+      val defaultEntry = syslinuxSettings.menuEntriesDefault.orElse {
+        others.find { other =>
+          other.kind == OSKind.SystemRescueCD
+        }.orElse(others.headOption).flatMap(_.syslinuxLabel)
+      }
 
       sb.append(
 """PATH modules
@@ -146,7 +149,7 @@ PROMPT 0
 TIMEOUT 100
 """)
 
-      defaultEntry.flatMap(_.syslinuxLabel).foreach { label =>
+      defaultEntry.foreach { label =>
         sb.append(
 s"""ONTIMEOUT $label
 
@@ -154,6 +157,8 @@ MENU DEFAULT $label
 
 """)
       }
+
+      syslinuxSettings.menuEntriesHeader.foreach(sb.append)
 
       for {
         other <- others
