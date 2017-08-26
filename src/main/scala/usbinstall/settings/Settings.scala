@@ -5,6 +5,7 @@ import java.io.File
 import java.nio.file.Path
 import java.util.prefs.Preferences
 import scala.collection.JavaConverters._
+import scala.util.matching.Regex
 import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
@@ -157,6 +158,9 @@ class ProfileSettings(
   val syslinuxSettings = new SyslinuxSettings(this, config.getConfig("syslinux"))
 
   val rEFIndPath: Path = PathsEx.get(config.getString("refind.path"))
+
+  val rEFIndDrivers: List[Regex] =
+    option[List[String]]("refind.drivers", config).getOrElse(List(".*")).map(new Regex(_))
 
 }
 

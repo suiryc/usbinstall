@@ -302,6 +302,7 @@ MENU END
 
   protected def installREFInd(profile: ProfileSettings, partMount: PartitionMount): Unit = {
     val refindPath = profile.rEFIndPath
+    val refindDrivers = profile.rEFIndDrivers
     val pathISO = ui.action(s"Search rEFInd") {
       SyslinuxInstall.findPath(List(refindPath.resolve("iso")), """(?i)refind.*""".r).fold {
         throw new Exception("Could not find rEFInd ISO")
@@ -313,26 +314,70 @@ MENU END
     iso.mount()
     try {
       val source = iso.to
+      val refind = source.resolve(Paths.get("refind"))
       val sourceRoot = source.toAbsolutePath
+      val refindRoot = refind.toAbsolutePath
 
-      copy(source.***, sourceRoot, targetRoot, settings.partitionFormat, "Copy rEFInd ISO content")
+      // refind/refind_x64.efi -> EFI/boot/bootx64.efi
+      duplicate(
+        refind.resolve(Paths.get("refind_x64.efi")),
+        sourceRoot,
+        targetRoot.resolve(Paths.get("EFI", "boot", "bootx64.efi")),
+        None
+      )
+      // refind/drivers_x64/** -> EFI/boot/drivers_x64/**
+      refind.resolve(Paths.get("drivers_x64")).asFile.listFiles.toList.filter { f =>
+        refindDrivers.exists(_.findFirstMatchIn(f.getName).isDefined)
+      }.foreach { f =>
+        duplicate(
+          f,
+          sourceRoot,
+          targetRoot.resolve(Paths.get("EFI", "boot", "drivers_x64", f.getName)),
+          None
+        )
+      }
+      // refind/icons -> EFI/boot/icons
+      copy(
+        refind.resolve(Paths.get("icons")).***,
+        refindRoot,
+        targetRoot.resolve(Paths.get("EFI", "boot")),
+        settings.partitionFormat,
+        "Copy rEFInd icons"
+      )
+      // shellx64.efi -> EFI/tools/shell.efi
+      duplicate(
+        source.resolve(Paths.get("shellx64.efi")),
+        sourceRoot,
+        targetRoot.resolve(Paths.get("EFI", "tools", "shell.efi")),
+        None
+      )
+      // refind/refind.conf-sample -> EFI/boot/
+      copy(
+        refind.resolve(Paths.get("refind.conf-sample")),
+        refindRoot,
+        targetRoot.resolve(Paths.get("EFI", "boot")),
+        None
+      )
     }
     finally {
       iso.umount()
     }
 
-    copy(PathFinder(refindPath) / "drivers_x64".***, refindPath, targetRoot.resolve(Paths.get("EFI", "boot")), settings.partitionFormat, "Copy rEFInd extra content")
+    copy(
+      PathFinder(refindPath) / "drivers_x64".***,
+      refindPath,
+      targetRoot.resolve(Paths.get("EFI", "boot")),
+      settings.partitionFormat,
+      "Copy rEFInd extra content"
+    )
 
     ui.action("Configure rEFInd") {
       val refindFile = targetRoot.resolve(Paths.get("EFI", "boot", "refind.conf"))
       val sb = new StringBuilder
 
-      sb.append(refindFile.read())
-
+      // Note: rEFInd conf starting with empty line does not work.
       sb.append(
-"""
-# USB stick configuration
-
+"""timeout 20
 scanfor manual
 """)
 

@@ -68,6 +68,15 @@ class OSInstall(
   protected def getSyslinuxFile(targetRoot: Path): Path =
     Paths.get(targetRoot.toString, "syslinux", settings.syslinuxFile)
 
+  /**
+   * Copies source hierarchy to target.
+   *
+   * @param finder source hierarchy finder
+   * @param sourceRoot source root, to determine relative paths to copy
+   * @param targetRoot target root
+   * @param targetType target filesystem kind
+   * @param label label to log as UI action
+   */
   protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFormat.Value, label: String) {
     ui.action(label) {
       finder.get().toList.sortBy(_.getPath).foreach { file =>
@@ -96,24 +105,56 @@ class OSInstall(
     }
   }
 
+  /**
+   * Copies files to target folder.
+   *
+   * Source folder hierarchy is not preserved. Files are copied directly
+   * inside the target folder.
+   *
+   * @param sources files to copy
+   * @param sourceRoot source root (informational)
+   * @param targetRoot target root
+   * @param mode copied files mode
+   */
   protected def copy(sources: List[Path], sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
     for (source <- sources) {
       copy(source, sourceRoot, targetRoot, mode)
     }
   }
 
+  /**
+   * Copies file.
+   *
+   * @param source file to copy
+   * @param sourceRoot source root (informational)
+   * @param target target file
+   * @param mode copied file mode
+   */
   protected def duplicate(source: Path, sourceRoot: Path, target: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
     checkCancelled()
-    if (target.exists)
+    if (target.exists) {
       logger.warn(s"Path[${sourceRoot.relativize(source)}] already processed, skipping")
-    else {
+    } else {
       ui.activity(s"Copying file[${sourceRoot.relativize(source)}]")
+      // First create target hierarchy if needed
+      target.getParent.mkdirs
       Files.copy(source, target,
         StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     }
     mode.foreach(target.toFile.changeMode)
   }
 
+  /**
+   * Copies file to target folder.
+   *
+   * Source folder hierarchy is not preserved. File is copied directly
+   * inside the target folder.
+   *
+   * @param source file to copy
+   * @param sourceRoot source root (informational)
+   * @param targetRoot target root
+   * @param mode copied file mode
+   */
   protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
     val target = targetRoot.resolve(source.getFileName)
     duplicate(source, sourceRoot, target, mode)
