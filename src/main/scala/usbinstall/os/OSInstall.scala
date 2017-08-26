@@ -210,9 +210,28 @@ class OSInstall(
     regexReplace(root, file.toPath, rrs:_*)
 
   private def findEFI(mount: PartitionMount): Option[Path] = {
-    val finder = PathFinder(mount.to) * """(?i:efi)""".r * """(?i:boot)""".r * ("""(?i:bootx64.efi)""".r & RegularFileFilter)
-    finder.get().toList.sorted.headOption.foreach { path =>
-      settings.efiBootloader = Some(mount.to.relativize(path.toPath))
+    def find(loader0: String): Option[Path] = {
+      val loader = loader0.toLowerCase
+      if (loader.endsWith(".efi")) {
+        val finder0 = loader.split('/').toList.filterNot(_.isEmpty).map { p =>
+          new Regex(s"(?i)$p")
+        }.foldLeft(PathFinder(mount.to)) { (acc, r) =>
+          acc * r
+        }
+        val finder = finder0 ? RegularFileFilter
+        finder.get().toList.sorted.headOption.map(f => mount.to.relativize(f.toPath))
+      } else {
+        find(s"efi/boot/${loader}x64.efi").orElse {
+          find(s"efi/boot/$loader.efi")
+        }
+      }
+    }
+
+    val search = settings.efiLoader.toList ::: List("grub", "boot")
+    search.foreach { s =>
+      if (settings.efiBootloader.isEmpty) {
+        settings.efiBootloader = find(s)
+      }
     }
     settings.efiBootloader
   }

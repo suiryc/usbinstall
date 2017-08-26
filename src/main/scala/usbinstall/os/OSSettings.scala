@@ -85,7 +85,8 @@ class OSSettings(
   val partitionLabel: String,
   val partitionFormat: PartitionFormat.Value,
   val syslinuxLabel: Option[String],
-  val syslinuxVersion: Option[String]
+  val syslinuxVersion: Option[String],
+  val efiLoader: Option[String]
 ) {
 
   import PersistentSetting._

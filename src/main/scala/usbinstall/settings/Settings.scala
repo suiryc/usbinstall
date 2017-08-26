@@ -139,7 +139,8 @@ class ProfileSettings(
       config.getString("partition.label"),
       PartitionFormat.byName(config.getString("partition.format")),
       option[String]("syslinux.label", config),
-      option[String]("syslinux.version", config)
+      option[String]("syslinux.version", config),
+      option[String]("efi.loader", config)
     )
   }
 
