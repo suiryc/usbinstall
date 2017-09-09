@@ -72,6 +72,7 @@ object PartitionFormat extends Enumeration {
   trait MS
 
   val ext2 = new Val with extX
+  val fat16 = new Val with MS
   val fat32 = new Val with MS
   val ntfs = new Val with MS
 }

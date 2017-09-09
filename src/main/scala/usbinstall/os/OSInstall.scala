@@ -54,7 +54,7 @@ class OSInstall(
         case PartitionFormat.ext2 =>
           Set(s"mkfs.$kind", "e2label")
 
-        case PartitionFormat.fat32 =>
+        case PartitionFormat.fat16 | PartitionFormat.fat32 =>
           Set("mkfs.vfat", "mlabel")
 
         case PartitionFormat.ntfs =>
@@ -88,7 +88,7 @@ class OSInstall(
           logger.warn(s"Path[$pathRelative] already processed, skipping")
         else {
           val copyOptions =
-           if (targetType == PartitionFormat.fat32)
+           if ((targetType == PartitionFormat.fat16) || (targetType == PartitionFormat.fat32))
              List(StandardCopyOption.COPY_ATTRIBUTES)
            else
              List(StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
@@ -329,6 +329,9 @@ object OSInstall
           case PartitionFormat.ext2 =>
             Seq(s"mkfs.$kind", part.dev.toString)
 
+          case PartitionFormat.fat16 =>
+            Seq("mkfs.vfat", "-F", "16", part.dev.toString)
+
           case PartitionFormat.fat32 =>
             Seq("mkfs.vfat", "-F", "32", part.dev.toString)
 
@@ -346,6 +349,7 @@ object OSInstall
     def setType() = {
       val (partType, id) = kind match {
         case PartitionFormat.ext2 => ("ext2", "83")
+        case PartitionFormat.fat16 => ("vfat", "6")
         case PartitionFormat.fat32 => ("vfat", "b")
         case PartitionFormat.ntfs => ("ntfs", "7")
       }
@@ -373,7 +377,7 @@ w
             // Max ext2 label length: 16
             (Seq("e2label", part.dev.toString, label), None)
 
-          case PartitionFormat.fat32 =>
+          case PartitionFormat.fat16 | PartitionFormat.fat32 =>
             def commandEnvf(env: java.util.Map[String, String]) {
               env.put("MTOOLS_SKIP_CHECK", "1")
               ()
