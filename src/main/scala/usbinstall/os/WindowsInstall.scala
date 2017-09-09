@@ -1,7 +1,6 @@
 package usbinstall.os
 
 import java.nio.file.{Files, Paths}
-import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.Command
 import usbinstall.InstallUI
@@ -14,17 +13,20 @@ class WindowsInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def installRequirements() =
-    Set("7z")
+  override def installRequirements(): Set[String] = {
+    super.installRequirements() ++ Set("7z")
+  }
 
-  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
-    val source = isoMount.get.to
+  override def install(isoMount: PartitionMount, partMount: PartitionMount): Unit = {
+    val source = isoMount.to
     val sourceRoot = source.toAbsolutePath
-    val targetRoot = partMount.get.to.toAbsolutePath
-    val finder = source.***
+    val targetRoot = partMount.to.toAbsolutePath
 
-    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
+    super.install(isoMount, partMount)
 
+    // We need to extract the EFI boot file from the WIM image.
+    // We could do it from the file copied in the partition, but it should
+    // be faster to access the one from the original ISO.
     val bootx64 = targetRoot.resolve(Paths.get("efi", "boot", "bootx64.efi"))
     if (!bootx64.exists) ui.action("Copy EFI boot file") {
       val wim = sourceRoot.resolve(Paths.get("sources", "install.wim"))

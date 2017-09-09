@@ -84,10 +84,11 @@ object USBInstall {
 
     for (requirement <- requirements if !checkedRequirements.contains(requirement)) {
       val CommandResult(result, stdout, _) = Command.execute(Seq("which", requirement))
-      if ((result != 0) || (stdout == ""))
+      if ((result != 0) || (stdout == "")) {
         unmet += requirement
-      else
+      } else {
         checkedRequirements += requirement
+      }
     }
 
     unmet
@@ -142,7 +143,7 @@ class USBInstall extends Application {
       }
     }
     catch {
-      case ex: Throwable =>
+      case ex: Exception =>
         Dialogs.error(
           owner = Some(USBInstall.stage),
           title = Some("Missing requirements"),

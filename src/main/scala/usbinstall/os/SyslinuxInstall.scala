@@ -24,25 +24,19 @@ class SyslinuxInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def installRequirements() =
-    Set("parted", "dd")
+  override def installRequirements(): Set[String] = {
+    super.installRequirements() ++ Set("parted", "dd")
+  }
 
-  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
+  override def install(isoMount: PartitionMount, partMount: PartitionMount): Unit = {
     val profile = InstallSettings.profile.get.get
     val syslinuxVersion = settings.syslinuxVersion.get
     val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
-    val partition = settings.partition.get.get
-    val device = partition.device
-    val devicePath = device.dev
-    val targetRoot = partMount.get.to.toAbsolutePath
+    val targetRoot = partMount.to.toAbsolutePath
     val pathBootdisk = targetRoot.resolve("bootdisk")
 
-    val others = profile.oses.filter(other => (other ne settings) && other.enabled && other.syslinuxLabel.isDefined)
     val syslinuxSettings = profile.syslinuxSettings
     val components = syslinuxSettings.extraComponents
-
-    Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
-      skipResult = false)
 
     ui.action("Copy syslinux files") {
       val pathModules = targetRoot.resolve(Paths.get("syslinux", "modules"))
@@ -69,6 +63,24 @@ class SyslinuxInstall(
         copy(image, image.getParent, pathBootdisk, Some(PosixFilePermissions.fromString("rw-rw-rw-")))
       }
     }
+  }
+
+  override def setup(partMount: PartitionMount): Unit = {
+    val profile = InstallSettings.profile.get.get
+    val syslinuxVersion = settings.syslinuxVersion.get
+    val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
+    val partition = settings.partition.get.get
+    val device = partition.device
+    val devicePath = device.dev
+    val targetRoot = partMount.to.toAbsolutePath
+    val pathBootdisk = targetRoot.resolve("bootdisk")
+
+    val others = profile.oses.filter(other => (other ne settings) && other.isSelected && other.syslinuxLabel.isDefined)
+    val syslinuxSettings = profile.syslinuxSettings
+    val components = syslinuxSettings.extraComponents
+
+    Command.execute(Seq("parted", "-s", partition.device.dev.toString, "set", partition.partNumber.toString, "boot", "on"),
+      skipResult = false)
 
     ui.action("Apply MBR") {
       // Original (disabled) code with altmbr
@@ -272,9 +284,9 @@ MENU END
       syslinuxFile.toFile.write(sb.toString())
     }
 
-    installGrub4DOS(profile, partMount.get)
+    installGrub4DOS(profile, partMount)
 
-    installREFInd(profile, partMount.get)
+    installREFInd(profile, partMount)
   }
 
   protected def installGrub4DOS(profile: ProfileSettings, partMount: PartitionMount): Unit = {
@@ -381,9 +393,9 @@ MENU END
 scanfor manual
 """)
 
-      searchEFI(Some(partMount))
+      searchEFI(partMount)
       for {
-        os <- profile.oses if os.enabled
+        os <- profile.oses if os.isSelected
         _ <- os.partition.get
         efiBootloader <- os.efiBootloader
       } {

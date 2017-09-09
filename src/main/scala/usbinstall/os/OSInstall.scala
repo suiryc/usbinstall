@@ -8,6 +8,7 @@ import scala.io.Codec
 import scala.util.matching.Regex
 import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
+import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
 import suiryc.scala.sys.{Command, CommandResult}
 import suiryc.scala.sys.linux.DevicePartition
@@ -27,42 +28,65 @@ class OSInstall(
   /**
    * Lists the requirements for installing this OS.
    */
-  def installRequirements(): Set[String] = Set.empty
+  def installRequirements(): Set[String] = {
+    // Install actions are: format, set type, set label, refresh partitions
+    val fs = settings.partitionFilesystem
+    val (formatRequirements, labelRequirements) = fs match {
+      case PartitionFilesystem.ext2 =>
+        (Set(s"mkfs.$fs"), Set("e2label"))
 
-  /**
-   * Prepares OS installation.
-   *
-   * Does anything necessary before partition is formatted (if requested) and
-   * actual OS installation.
-   * E.g.: find/compile tools files necessary for OS installation.
-   * Syslinux prepared separately.
-   */
-  def prepare() { }
+      case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
+        (Set("mkfs.vfat"), Set("mlabel"))
+
+      case PartitionFilesystem.ntfs =>
+        (Set(s"mkfs.$fs"), Set("ntfslabel"))
+    }
+
+    // We only format when requested.
+    // We set type and label in every case.
+    (if (settings.isPartitionFormat) formatRequirements else Set.empty[String]) ++
+      (labelRequirements ++ Set("fdisk", "partprobe"))
+  }
 
   /**
    * Installs OS.
    *
-   * Partition is already formatted.
-   * EFI setup and syslinux bootloader install are performed right after.
+   * Partition is already formatted/erased.
+   * Default is to copy ISO content when applicable.
+   * Setup is performed right after.
    */
-  def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = { }
+  def install(isoMount: PartitionMount, partMount: PartitionMount): Unit = {
+    val source = isoMount.to
+    val sourceRoot = source.toAbsolutePath
+    val targetRoot = partMount.to.toAbsolutePath
+    val finder = source.***
 
-  def requirements(): Set[String] = {
-    val formatRequirements = if (settings.install && settings.formatable) {
-      val kind = settings.partitionFilesystem
-      (kind match {
-        case PartitionFilesystem.ext2 =>
-          Set(s"mkfs.$kind", "e2label")
+    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
+  }
 
-        case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
-          Set("mkfs.vfat", "mlabel")
+  /**
+   * Setups OS.
+   *
+   * OS is already installed.
+   * Default is to handle generic syslinux and grub configuration fixes.
+   * EFI search and syslinux bootloader install are performed right after.
+   */
+  def setup(partMount: PartitionMount): Unit = {
+    val targetRoot = partMount.to.toAbsolutePath
 
-        case PartitionFilesystem.ntfs =>
-          Set(s"mkfs.$kind", "ntfslabel")
-      }) ++ Set("fdisk", "partprobe")
-    } else Set.empty
+    renameSyslinux(targetRoot)
 
-    installRequirements() ++ formatRequirements
+    ui.action("Prepare syslinux (generic)") {
+      val confs = PathFinder(targetRoot) / "syslinux" * (".*\\.cfg".r | ".*\\.conf".r)
+      val regexReplacers = List(renameSyslinuxRegexReplacer)
+      for (conf <- confs.get()) {
+        regexReplace(targetRoot, conf, regexReplacers:_*)
+      }
+    }
+
+    ui.action("Prepare grub (generic)") {
+      fixGrubSearch(targetRoot)
+    }
   }
 
   protected def getSyslinuxFile(targetRoot: Path): Path =
@@ -237,8 +261,8 @@ class OSInstall(
     settings.efiBootloader
   }
 
-  def searchEFI(partMount: Option[PartitionMount]) {
-    if (settings.efiBootloader.isEmpty) partMount.foreach { partMount =>
+  def searchEFI(partMount: PartitionMount) {
+    if (settings.efiBootloader.isEmpty) {
       ui.action(s"Search EFI path") {
         checkCancelled()
         findEFI(partMount) match {
@@ -289,9 +313,13 @@ object OSInstall
         throw new Exception(msg)
     }
 
-  private def mountAndDo(os: OSInstall, todo: (Option[PartitionMount], Option[PartitionMount]) => Unit): Unit = {
-    val iso = os.settings.iso.get.map { pathISO =>
-      new PartitionMount(pathISO, InstallSettings.pathMountISO)
+  private def mountAndDo(os: OSInstall, todo: (PartitionMount, PartitionMount) => Unit): Unit = {
+    val iso = if (os.settings.isPartitionInstall) {
+      os.settings.iso.get.map { pathISO =>
+        new PartitionMount(pathISO, InstallSettings.pathMountISO)
+      }
+    } else {
+      None
     }
     val part = os.settings.partition.get.map { partition =>
       new PartitionMount(partition.dev, InstallSettings.pathMountPartition)
@@ -306,9 +334,8 @@ object OSInstall
         os.ui.activity(s"Mounting partition[${part.from}]")
         part.mount()
       }
-      todo(iso, part)
-    }
-    finally {
+      todo(iso.orNull, part.orNull)
+    } finally {
       part.foreach { part =>
         os.ui.activity("Unmounting partition")
         part.umount()
@@ -325,7 +352,7 @@ object OSInstall
     val label = os.settings.partitionLabel
 
     def format = {
-      if (os.settings.formatable) {
+      if (os.settings.isPartitionFormat) {
         val command = kind match {
           case PartitionFilesystem.ext2 =>
             Seq(s"mkfs.$kind", part.dev.toString)
@@ -343,8 +370,7 @@ object OSInstall
         os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
           Command.execute(command).toEither("Failed to format partition")
         }
-      }
-      else Right("Not formatable")
+      } else Right("Not formatable")
     }
 
     def setType() = {
@@ -404,11 +430,10 @@ w
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
-  private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: Option[PartitionMount]): Unit = {
+  private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
     for {
       syslinuxVersion <- os.settings.syslinuxVersion
       part <- os.settings.partition.get
-      mount <- mount
     } {
       // Note: we already ensured this syslinux version was found
       val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
@@ -453,29 +478,20 @@ w
   def install(profile: ProfileSettings, os: OSInstall): Unit = {
     os.ui.none()
 
-    // Prepare
-    if (os.settings.install) {
-      os.ui.setStep(s"Prepare ${os.settings.label} installation")
+    if (os.settings.isSelected) {
+      os.ui.setStep(s"Process ${os.settings.label}")
       os.checkCancelled()
-      os.prepare()
-    }
 
-    // Actual install
-    if (os.settings.enabled) {
-      os.ui.none()
-      os.ui.setStep(s"Install ${os.settings.label}")
-      os.checkCancelled()
-    }
-
-    if (os.settings.enabled) {
-      // prepare syslinux
-      os.settings.syslinuxVersion.foreach { version =>
-        os.ui.action(s"Search syslinux $version") {
-          if (SyslinuxInstall.get(profile, version).isEmpty) {
-            throw new Exception(s"Could not find syslinux $version")
+      if (os.settings.isBootloader) {
+        // prepare syslinux
+        os.settings.syslinuxVersion.foreach { version =>
+          os.ui.action(s"Search syslinux $version") {
+            if (SyslinuxInstall.get(profile, version).isEmpty) {
+              throw new Exception(s"Could not find syslinux $version")
+            }
+            val name = SyslinuxInstall.getSource(profile, version).map(_.getFileName.toString).getOrElse("n/a")
+            os.ui.activity(s"Syslinux found: $name")
           }
-          val name = SyslinuxInstall.getSource(profile, version).map(_.getFileName.toString).getOrElse("n/a")
-          os.ui.activity(s"Syslinux found: $name")
         }
       }
 
@@ -484,28 +500,33 @@ w
         os.checkCancelled()
         preparePartition(os, part).orThrow
       }
-    }
 
-    if (os.settings.enabled) {
       os.checkCancelled()
       mountAndDo(os, (isoMount, partMount) => {
-        // erase content
-        if (os.settings.erasable) {
+        if (os.settings.isPartitionErase) {
+          // erase content
           os.checkCancelled()
           os.ui.action("Erasing partition content") {
-            deleteContent(partMount.get.to)
+            deleteContent(partMount.to)
           }
         }
 
-        if (os.settings.install) {
+        if (os.settings.isPartitionInstall) {
+          // install content
           os.checkCancelled()
           os.install(isoMount, partMount)
+        }
+
+        if (os.settings.isSetup) {
+          // setup content
+          os.checkCancelled()
+          os.setup(partMount)
         }
 
         // prepare EFI
         os.searchEFI(partMount)
 
-        if (os.settings.enabled) {
+        if (os.settings.isBootloader) {
           os.ui.action(s"Install bootloader") {
             os.checkCancelled()
             installBootloader(profile, os, partMount)

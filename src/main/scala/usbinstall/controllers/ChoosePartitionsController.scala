@@ -8,10 +8,11 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.geometry.{HPos, Insets, VPos}
 import javafx.scene.{Node, Parent}
-import javafx.scene.control.{Button, CheckBox, ComboBox, Hyperlink, Label, Tooltip}
+import javafx.scene.control._
 import javafx.scene.layout.{AnchorPane, ColumnConstraints, GridPane, RowConstraints}
 import javafx.scene.paint.Color
 import javafx.stage.{Popup, Window}
+import suiryc.scala.javafx.beans.value.RichObservableValue
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.Dialogs
@@ -19,7 +20,7 @@ import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
-import usbinstall.os.{OSInstall, OSInstallStatus, OSSettings, SyslinuxInstall}
+import usbinstall.os._
 import usbinstall.settings.InstallSettings
 
 
@@ -35,10 +36,16 @@ class ChoosePartitionsController
   protected var elements: GridPane = _
 
   @FXML
-  protected var formatAll: CheckBox = _
+  protected var selectAll: CheckBox = _
 
   @FXML
   protected var installAll: CheckBox = _
+
+  @FXML
+  protected var setupAll: CheckBox = _
+
+  @FXML
+  protected var bootloaderAll: CheckBox = _
 
   @FXML
   protected var autoSelectPartitions: Hyperlink = _
@@ -75,22 +82,39 @@ class ChoosePartitionsController
     loadPopup(installPopup, "/fxml/choosePartitions-installPopup.fxml")
     loadPopup(infoPopup, "/fxml/choosePartitions-infoPopup.fxml")
 
-    formatAll.setOnAction { _ =>
+    selectAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.format() = formatAll.isSelected
+        settings.select() = selectAll.isSelected
       }
     }
 
     installAll.setOnAction { _ =>
-      val status = if (installAll.isIndeterminate) OSInstallStatus.Installed
-        else if (installAll.isSelected) OSInstallStatus.Install
-        else OSInstallStatus.NotInstalled
+      val status =
+        if (installAll.isIndeterminate) {
+          OSPartitionAction.Copy
+        } else if (installAll.isSelected) {
+          OSPartitionAction.Format
+        } else {
+          OSPartitionAction.None
+        }
       profile.oses.foreach { settings =>
-        settings.installStatus() = status
+        settings.partitionAction() = status
       }
     }
 
     attachDelayedPopup(installPopup, installAll)
+
+    setupAll.setOnAction { _ =>
+      profile.oses.foreach { settings =>
+        settings.setup() = setupAll.isSelected
+      }
+    }
+
+    bootloaderAll.setOnAction { _ =>
+      profile.oses.foreach { settings =>
+        settings.bootloader() = bootloaderAll.isSelected
+      }
+    }
 
     // Initial partitions selection
     selectPartitions(redo = false)
@@ -111,21 +135,26 @@ class ChoosePartitionsController
 
   private def updateRequirements() {
     val nok = profile.oses.foldLeft(false) { (nok, settings) =>
-      // We just need to create an instance to check its requirements
-      val osInstall = OSInstall(settings, null, () => {})
-      val unmet = USBInstall.checkRequirements(osInstall.requirements())
-      val osNok = (settings.enabled && !settings.installable) || unmet.nonEmpty
-
       var missingRequirements = List[String]()
 
-      if (settings.enabled) {
-        if (settings.partition.get.isEmpty)
-          missingRequirements :+= "Installation partition no set"
-        if (settings.isoPattern.isDefined && settings.iso.get.isEmpty)
-          missingRequirements :+= "ISO source not specified"
+      if (settings.isSelected) {
+        if (settings.isPartitionInstall) {
+          if (settings.partition.get.isEmpty) {
+            missingRequirements :+= "Installation partition no set"
+          }
+          if (settings.isoPattern.isDefined && settings.iso.get.isEmpty) {
+            missingRequirements :+= "ISO source not specified"
+          }
+        }
+
+        // We just need to create an instance to check its requirements
+        val osInstall = OSInstall(settings, null, () => {})
+        val unmet = USBInstall.checkRequirements(osInstall.installRequirements())
+        if (unmet.nonEmpty) {
+          missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
+        }
       }
-      if (unmet.nonEmpty)
-        missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
+      val osNok = missingRequirements.nonEmpty
 
       osLabels.get(settings).foreach { label =>
         if (osNok) {
@@ -133,8 +162,7 @@ class ChoosePartitionsController
           label.setTooltip(tooltip)
           label.setTextFill(Color.RED)
           detachDelayedPopup(label)
-        }
-        else {
+        } else {
           label.setTooltip(null)
           label.setTextFill(Color.BLACK)
           attachDelayedPopup(infoPopup, label, updateInfoPopup(settings))
@@ -153,9 +181,16 @@ class ChoosePartitionsController
     updateRequirements()
 
     profile.oses.foreach { settings =>
-      subscriptions ::= settings.installStatus.listen(updateRequirements())
-      subscriptions ::= settings.partition.listen(updateRequirements())
-      subscriptions ::= settings.iso.listen(updateRequirements())
+      subscriptions ::= RichObservableValue.listen[Any](
+        List(
+          settings.select,
+          settings.partitionAction,
+          settings.setup,
+          settings.bootloader,
+          settings.partition,
+          settings.iso
+        ), updateRequirements()
+      )
     }
   }
 
@@ -207,51 +242,73 @@ class ChoosePartitionsController
   }
 
   private def osRow(settings: OSSettings): List[Node] = {
+    // Columns:
+    //  - select checkbox
+    //  - OS label
+    //  - install checkbox
+    //  - setup checkbox
+    //  - bootloader checkbox
+    //  - partition combobox
+    //  - image combobox
+
+    // Notes:
+    // For checkbox with indeterminate state, there is no single property to
+    // listen to to get all state changes. We have to set the action callback
+    // which is only triggered by UI actions (not internal property changes).
+    // So to react on such changes internally, it is easier to listen to *our*
+    // settings property.
+
+    // Column: select checkbox
+    val osSelect = new CheckBox
+
+    // Column: OS label
     val osLabel = new Label(settings.label)
     osLabel.setStyle("-fx-font-weight:bold")
 
     osLabels += settings -> osLabel
 
-    val osFormat = new CheckBox
-    osFormat.setSelected(settings.format())
-    osFormat.selectedProperty.listen { selected =>
-      settings.format() = selected
-    }
-    subscriptions ::= settings.format.listen { newValue =>
-      osFormat.setSelected(newValue)
-    }
-
+    // Column: install checkbox
     val osInstall = new CheckBox
     osInstall.setAllowIndeterminate(true)
-    osInstall.setOnAction { _ =>
-      settings.installStatus() = if (osInstall.isIndeterminate) OSInstallStatus.Installed
-        else if (osInstall.isSelected) OSInstallStatus.Install
-        else OSInstallStatus.NotInstalled
-    }
     attachDelayedPopup(installPopup, osInstall)
 
-    def installStatusToUI(v: OSInstallStatus.Value) {
+    def partitionActionToUI(v: OSPartitionAction.Value) {
       v match {
-        case OSInstallStatus.Installed =>
-          osInstall.setSelected(true)
+        case OSPartitionAction.Copy =>
           osInstall.setIndeterminate(true)
-
-        case OSInstallStatus.Install =>
           osInstall.setSelected(true)
-          osInstall.setIndeterminate(false)
 
-        case OSInstallStatus.NotInstalled =>
+        case OSPartitionAction.Format =>
+          osInstall.setIndeterminate(false)
+          osInstall.setSelected(true)
+
+        case OSPartitionAction.None =>
+          osInstall.setIndeterminate(false)
           osInstall.setSelected(false)
-          osInstall.setIndeterminate(false)
       }
-      osFormat.setDisable(v != OSInstallStatus.Install)
     }
 
-    subscriptions ::= settings.installStatus.listen { newValue =>
-      installStatusToUI(newValue)
+    // Column: setup checkbox
+    val osSetup = new CheckBox
+    osSetup.setSelected(settings.setup())
+    osSetup.selectedProperty.listen { selected =>
+      settings.setup() = selected
     }
-    installStatusToUI(settings.installStatus())
+    subscriptions ::= settings.setup.listen { newValue =>
+      osSetup.setSelected(newValue)
+    }
 
+    // Column: bootloader checkbox
+    val osBootloader = new CheckBox
+    osBootloader.setSelected(settings.bootloader())
+    osBootloader.selectedProperty.listen { selected =>
+      settings.bootloader() = selected
+    }
+    subscriptions ::= settings.bootloader.listen { newValue =>
+      osBootloader.setSelected(newValue)
+    }
+
+    // Column: partition combobox
     val osPartition = new ComboBox[String]
     osPartition.setPromptText("Partition")
     osPartition.getItems.setAll(partitionsStringProp.get:_*)
@@ -288,6 +345,7 @@ class ChoosePartitionsController
       settings.partition.set(newValue)
     }
 
+    // Column: image combobox
     val osISO = settings.isoPattern.map { regex =>
       val available = profile.isos.filter { path =>
         regex.pattern.matcher(path.getFileName.toString).find()
@@ -304,7 +362,55 @@ class ChoosePartitionsController
       osISO
     }
 
-    osLabel :: osFormat :: osInstall :: osPartition :: Nil ++ osISO
+    val nodes = List(osSelect, osLabel, osInstall, osSetup, osBootloader, osPartition) ++ osISO.toList
+
+    def settingsChanged(): Unit = {
+      val isSelected = settings.isSelected
+      val isPartitionInstall = settings.isPartitionInstall
+
+      osLabel.setDisable(!isSelected)
+      osInstall.setDisable(!isSelected)
+      osSetup.setDisable(!isSelected || isPartitionInstall)
+      osBootloader.setDisable(!isSelected || isPartitionInstall)
+      osPartition.setDisable(!isSelected)
+      if (isPartitionInstall) {
+        osSetup.setSelected(true)
+        osBootloader.setSelected(true)
+      }
+    }
+
+    // OS selection: link setting to node, and disable other nodes when OS is
+    // not selected.
+    osSelect.selectedProperty().listen { selected =>
+      settings.select() = selected
+    }
+    subscriptions ::= settings.select.listen { newValue =>
+      osSelect.setSelected(newValue)
+      settingsChanged()
+    }
+    osSelect.setSelected(settings.select())
+
+    // Partition action: link setting to node, and force setup+bootloader upon
+    // install.
+    osInstall.setOnAction { _ =>
+      settings.partitionAction() =
+        if (osInstall.isIndeterminate) {
+          OSPartitionAction.Copy
+        } else if (osInstall.isSelected) {
+          OSPartitionAction.Format
+        } else {
+          OSPartitionAction.None
+        }
+    }
+    subscriptions ::= settings.partitionAction.listen { newValue =>
+      partitionActionToUI(newValue)
+      settingsChanged()
+    }
+    partitionActionToUI(settings.partitionAction())
+
+    settingsChanged()
+
+    nodes
   }
 
   private def availablePartitions() =
@@ -338,15 +444,17 @@ class ChoosePartitionsController
       // fitting.
       if (redo || !os.partition.get.exists(devicePartitions.contains(_)))
         os.partition.set {
-          if (devicePartitions.isEmpty || (os.installStatus() == OSInstallStatus.NotInstalled))
+          if (devicePartitions.isEmpty || !os.isSelected) {
             None
-          else Some(
-            devicePartitions.find(_.size() >= os.size).getOrElse(
-              // Note: double reverse gives us the 'first' partition when more
-              // than one have the same size
-              devicePartitions.reverse.sortBy(_.size()).reverse.head
+          } else {
+            Some(
+              devicePartitions.find(_.size() >= os.size).getOrElse(
+                // Note: double reverse gives us the 'first' partition when more
+                // than one have the same size
+                devicePartitions.reverse.sortBy(_.size()).reverse.head
+              )
             )
-          )
+          }
         }
 
       import RichOptional._

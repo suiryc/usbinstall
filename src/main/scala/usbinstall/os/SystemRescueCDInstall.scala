@@ -13,13 +13,8 @@ class SystemRescueCDInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
-    val source = isoMount.get.to
-    val sourceRoot = source.toAbsolutePath
-    val targetRoot = partMount.get.to.toAbsolutePath
-    val finder = source.***
-
-    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
+  override def setup(partMount: PartitionMount): Unit = {
+    val targetRoot = partMount.to.toAbsolutePath
 
     renameSyslinux(targetRoot)
 

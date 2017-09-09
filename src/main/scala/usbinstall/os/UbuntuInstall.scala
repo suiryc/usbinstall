@@ -19,22 +19,24 @@ class UbuntuInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def installRequirements() =
-    Set("dd")
-  //  Set("cpio", "lzma")
+  override def installRequirements(): Set[String] = {
+    val extra = if (settings.persistent()) {
+      Set("dd")
+      //Set("cpio", "lzma")
+    } else {
+      Set.empty
+    }
+    super.installRequirements() ++ extra
+  }
 
-  override def install(isoMount: Option[PartitionMount], partMount: Option[PartitionMount]): Unit = {
-    val source = isoMount.get.to
-    val sourceRoot = source.toAbsolutePath
-    val targetRoot = partMount.get.to.toAbsolutePath
-    val finder = source.***
+  override def setup(partMount: PartitionMount): Unit = {
+    val targetRoot = partMount.to.toAbsolutePath
     val persistent = settings.persistent()
 
-    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
-
     // Without 'casper', we need to patch 'initrd'. See comments below.
-    if (!targetRoot.resolve("casper").isDirectory)
+    if (!targetRoot.resolve("casper").isDirectory) {
       throw new Exception("Ubuntu LiveCD without 'casper' directory are not handled")
+    }
 
     // Not always necessary, but without 'fallback.efi' OS may not boot
     val grubx64EFI = PathFinder(targetRoot) / "(?i)EFI".r / "(?i)BOOT".r / "(?i)grubx64.efi".r
@@ -65,8 +67,9 @@ class UbuntuInstall(
             s"${m.group("pre")} persistent"
           )
           regexUUIDReplacer :: regexPersReplacer :: Nil
+        } else {
+          regexUUIDReplacer :: Nil
         }
-        else regexUUIDReplacer :: Nil
       for (conf <- confs.get()) {
         regexReplace(targetRoot, conf, rrs:_*)
       }

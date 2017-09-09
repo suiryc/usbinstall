@@ -48,9 +48,9 @@ class InstallUI(
       r
     }
     catch {
-      case e: Throwable =>
+      case ex: Exception =>
         setAction(s"'$value' failed")
-        throw e
+        throw ex
     }
   }
 

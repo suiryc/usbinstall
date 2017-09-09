@@ -232,7 +232,7 @@ class InstallController
       oses.foldLeft[(Tab, ThresholdLogLinePatternWriter, List[String])](installTab, installLogWriter, Nil) { (previous, settings) =>
       val (previousTab, previousLogWriter, previousFailedOSes) = previous
 
-      if (settings.enabled) {
+      if (settings.isSelected) {
         val osActivity = new TextArea()
         osActivity.setWrapText(true)
         val osLogArea = LogArea(osActivity)
@@ -270,13 +270,12 @@ class InstallController
 
           OSInstall.install(profile, os)
           (osTab, osLogWriter, previousFailedOSes)
-        }
-        catch {
+        } catch {
           case ex: Cancelled =>
             resetAppender()
             throw ex
 
-          case ex: Throwable =>
+          case ex: Exception =>
             logger.error(s"Failed to install ${settings.label}: ${ex.getMessage}", ex)
             resetAppender()
 
