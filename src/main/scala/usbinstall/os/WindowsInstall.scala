@@ -23,7 +23,7 @@ class WindowsInstall(
     val targetRoot = partMount.get.to.toAbsolutePath
     val finder = source.***
 
-    copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
+    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
 
     val bootx64 = targetRoot.resolve(Paths.get("efi", "boot", "bootx64.efi"))
     if (!bootx64.exists) ui.action("Copy EFI boot file") {

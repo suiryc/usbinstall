@@ -16,7 +16,7 @@ import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.misc.Units
 import usbinstall.USBInstall
-import usbinstall.os.{OSKind, OSSettings, PartitionFormat, SyslinuxComponent, SyslinuxComponentKind}
+import usbinstall.os.{OSKind, OSSettings, PartitionFilesystem, SyslinuxComponent, SyslinuxComponentKind}
 
 
 object Settings {
@@ -137,7 +137,7 @@ class ProfileSettings(
       Units.storage.fromHumanReadable(config.getString("size")),
       option[String]("iso.pattern", config).map { _.r },
       config.getString("partition.label"),
-      PartitionFormat.byName(config.getString("partition.format")),
+      PartitionFilesystem.byName(config.getString("partition.filesystem")),
       option[String]("syslinux.label", config),
       option[String]("syslinux.version", config),
       option[String]("efi.loader", config)

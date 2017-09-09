@@ -434,7 +434,7 @@ class ChoosePartitionsController
     val syslinuxInfo = root.lookup("#syslinuxInfo").asInstanceOf[Label]
     val persistenceInfo = root.lookup("#persistenceInfo").asInstanceOf[Label]
 
-    partitionInfo.setText(s"(${settings.partitionFormat}) ${settings.partitionLabel}")
+    partitionInfo.setText(s"(${settings.partitionFilesystem}) ${settings.partitionLabel}")
     val syslinux = settings.syslinuxVersion.map { version =>
       val name = SyslinuxInstall.getSource(profile, version).map(_.getFileName.toString).getOrElse("n/a")
       s"($version) $name"

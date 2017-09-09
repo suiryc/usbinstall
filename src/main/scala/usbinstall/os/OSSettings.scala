@@ -66,7 +66,7 @@ class SyslinuxComponent(
 
 }
 
-object PartitionFormat extends Enumeration {
+object PartitionFilesystem extends Enumeration {
 
   trait extX
   trait MS
@@ -84,7 +84,7 @@ class OSSettings(
   val size: Long,
   val isoPattern: Option[Regex],
   val partitionLabel: String,
-  val partitionFormat: PartitionFormat.Value,
+  val partitionFilesystem: PartitionFilesystem.Value,
   val syslinuxLabel: Option[String],
   val syslinuxVersion: Option[String],
   val efiLoader: Option[String]
@@ -141,9 +141,9 @@ class OSSettings(
 
   def erasable: Boolean = install && !format() && installable
 
-  def syslinuxFile: String = partitionFormat match {
-    case _: PartitionFormat.extX => "extlinux.conf"
-    case _: PartitionFormat.MS => "syslinux.cfg"
+  def syslinuxFile: String = partitionFilesystem match {
+    case _: PartitionFilesystem.extX => "extlinux.conf"
+    case _: PartitionFilesystem.MS => "syslinux.cfg"
   }
 
   def reset() {

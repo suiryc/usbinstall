@@ -20,7 +20,7 @@ class RedHatInstall(
     val targetRoot = partMount.get.to.toAbsolutePath
     val finder = source.***
 
-    copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
+    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
 
     renameSyslinux(targetRoot)
 

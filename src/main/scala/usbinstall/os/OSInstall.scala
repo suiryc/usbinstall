@@ -49,15 +49,15 @@ class OSInstall(
 
   def requirements(): Set[String] = {
     val formatRequirements = if (settings.install && settings.formatable) {
-      val kind = settings.partitionFormat
+      val kind = settings.partitionFilesystem
       (kind match {
-        case PartitionFormat.ext2 =>
+        case PartitionFilesystem.ext2 =>
           Set(s"mkfs.$kind", "e2label")
 
-        case PartitionFormat.fat16 | PartitionFormat.fat32 =>
+        case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
           Set("mkfs.vfat", "mlabel")
 
-        case PartitionFormat.ntfs =>
+        case PartitionFilesystem.ntfs =>
           Set(s"mkfs.$kind", "ntfslabel")
       }) ++ Set("fdisk", "partprobe")
     } else Set.empty
@@ -77,7 +77,7 @@ class OSInstall(
    * @param targetType target filesystem kind
    * @param label label to log as UI action
    */
-  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFormat.Value, label: String) {
+  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFilesystem.Value, label: String) {
     ui.action(label) {
       finder.get().toList.sortBy(_.getPath).foreach { file =>
         val pathFile = file.toAbsolutePath
@@ -88,7 +88,7 @@ class OSInstall(
           logger.warn(s"Path[$pathRelative] already processed, skipping")
         else {
           val copyOptions =
-           if ((targetType == PartitionFormat.fat16) || (targetType == PartitionFormat.fat32))
+           if ((targetType == PartitionFilesystem.fat16) || (targetType == PartitionFilesystem.fat32))
              List(StandardCopyOption.COPY_ATTRIBUTES)
            else
              List(StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
@@ -321,22 +321,22 @@ object OSInstall
   }
 
   private def preparePartition(os: OSInstall, part: DevicePartition) = {
-    val kind = os.settings.partitionFormat
+    val kind = os.settings.partitionFilesystem
     val label = os.settings.partitionLabel
 
     def format = {
       if (os.settings.formatable) {
         val command = kind match {
-          case PartitionFormat.ext2 =>
+          case PartitionFilesystem.ext2 =>
             Seq(s"mkfs.$kind", part.dev.toString)
 
-          case PartitionFormat.fat16 =>
+          case PartitionFilesystem.fat16 =>
             Seq("mkfs.vfat", "-F", "16", part.dev.toString)
 
-          case PartitionFormat.fat32 =>
+          case PartitionFilesystem.fat32 =>
             Seq("mkfs.vfat", "-F", "32", part.dev.toString)
 
-          case PartitionFormat.ntfs =>
+          case PartitionFilesystem.ntfs =>
             Seq(s"mkfs.$kind", "--fast", part.dev.toString)
         }
 
@@ -349,10 +349,10 @@ object OSInstall
 
     def setType() = {
       val (partType, id) = kind match {
-        case PartitionFormat.ext2 => ("ext2", "83")
-        case PartitionFormat.fat16 => ("vfat", "6")
-        case PartitionFormat.fat32 => ("vfat", "b")
-        case PartitionFormat.ntfs => ("ntfs", "7")
+        case PartitionFilesystem.ext2 => ("ext2", "83")
+        case PartitionFilesystem.fat16 => ("vfat", "6")
+        case PartitionFilesystem.fat32 => ("vfat", "b")
+        case PartitionFilesystem.ntfs => ("ntfs", "7")
       }
 
       if (!part.fsType.contains(partType)) {
@@ -374,11 +374,11 @@ w
     def setLabel() = {
       if (!part.label.contains(label)) {
         val (command, envf) = kind match {
-          case PartitionFormat.ext2 =>
+          case PartitionFilesystem.ext2 =>
             // Max ext2 label length: 16
             (Seq("e2label", part.dev.toString, label), None)
 
-          case PartitionFormat.fat16 | PartitionFormat.fat32 =>
+          case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
             def commandEnvf(env: java.util.Map[String, String]) {
               env.put("MTOOLS_SKIP_CHECK", "1")
               ()
@@ -389,7 +389,7 @@ w
             // To work correctly, it is better to truncate/pad it.
             (Seq("mlabel", "-i", part.dev.toString, s"::$actualLabel"), Some(commandEnvf _))
 
-          case PartitionFormat.ntfs =>
+          case PartitionFilesystem.ntfs =>
             (Seq("ntfslabel", "--force", part.dev.toString, label), None)
         }
 
@@ -413,13 +413,13 @@ w
       // Note: we already ensured this syslinux version was found
       val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
       val CommandResult(result, _, stderr) =
-        os.settings.partitionFormat match {
-          case _: PartitionFormat.extX =>
+        os.settings.partitionFilesystem match {
+          case _: PartitionFilesystem.extX =>
             val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
             val target = mount.to.resolve("syslinux")
             Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
 
-          case _: PartitionFormat.MS =>
+          case _: PartitionFilesystem.MS =>
             // Note: it is safer (and mandatory for NTFS) to unmount partition first
             mount.umount()
             val syslinuxBin = syslinux.modules.resolve(Paths.get("linux", "syslinux"))

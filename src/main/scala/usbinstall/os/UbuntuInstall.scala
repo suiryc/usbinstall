@@ -30,7 +30,7 @@ class UbuntuInstall(
     val finder = source.***
     val persistent = settings.persistent()
 
-    copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
+    copy(finder, sourceRoot, targetRoot, settings.partitionFilesystem, "Copy ISO content")
 
     // Without 'casper', we need to patch 'initrd'. See comments below.
     if (!targetRoot.resolve("casper").isDirectory)

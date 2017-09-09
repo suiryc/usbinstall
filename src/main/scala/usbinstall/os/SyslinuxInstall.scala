@@ -341,7 +341,7 @@ MENU END
         refind.resolve(Paths.get("icons")).***,
         refindRoot,
         targetRoot.resolve(Paths.get("EFI", "boot")),
-        settings.partitionFormat,
+        settings.partitionFilesystem,
         "Copy rEFInd icons"
       )
       // shellx64.efi -> EFI/tools/shell.efi
@@ -367,7 +367,7 @@ MENU END
       PathFinder(refindPath) / "drivers_x64".***,
       refindPath,
       targetRoot.resolve(Paths.get("EFI", "boot")),
-      settings.partitionFormat,
+      settings.partitionFilesystem,
       "Copy rEFInd extra content"
     )
 
