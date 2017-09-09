@@ -1,5 +1,6 @@
 package usbinstall.os
 
+import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import usbinstall.InstallUI
 
@@ -20,6 +21,14 @@ class GenericInstall(
     copy(finder, sourceRoot, targetRoot, settings.partitionFormat, "Copy ISO content")
 
     renameSyslinux(targetRoot)
+
+    ui.action("Prepare syslinux") {
+      val confs = targetRoot / "syslinux" * (".*\\.cfg".r | ".*\\.conf".r)
+      val regexReplacers = List(renameSyslinuxRegexReplacer)
+      for (conf <- confs.get()) {
+        regexReplace(targetRoot, conf, regexReplacers:_*)
+      }
+    }
 
     ui.action("Prepare grub") {
       fixGrubSearch(targetRoot)

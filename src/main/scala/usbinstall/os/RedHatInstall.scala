@@ -51,10 +51,7 @@ class RedHatInstall(
 
       val efiBoot = targetRoot / "(?i)EFI".r / "(?i)BOOT".r
       val confs = (efiBoot ++ (targetRoot / "syslinux")) * (".*\\.cfg".r | ".*\\.conf".r)
-      val regexReplacers = List(RegexReplacer(
-        new Regex("""(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+)/isolinux/""", "pre"),
-        (m: Regex.Match) => s"${m.group("pre")}/syslinux/"
-      ), RegexReplacer(
+      val regexReplacers = List(renameSyslinuxRegexReplacer, RegexReplacer(
         new Regex("""(?i)([ \t]+(?:kernel|append|linuxefi|initrdefi)[ \t]+[^\r\n]*[ \t]+root=live:)[^\s]+""", "pre"),
         (m: Regex.Match) => s"${m.group("pre")}$optuuid"
       ), RegexReplacer(

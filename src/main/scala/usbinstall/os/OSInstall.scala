@@ -169,8 +169,7 @@ class OSInstall(
       if (syslinuxCfg.exists) ui.action("Rename syslinux configuration file") {
         ui.activity(s"Rename source[${targetRoot.relativize(syslinuxCfg)}] target[${targetRoot.relativize(syslinuxFile)}]")
         Files.move(syslinuxCfg, syslinuxFile)
-      }
-      else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
+      } else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
         syslinuxFile.getParent.delete(recursive = true)
         ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent}] target[${targetRoot.relativize(syslinuxFile).getParent}]")
         Files.move(isolinuxCfg, isolinuxCfg.getParent.resolve(syslinuxFile.getFileName))
@@ -179,6 +178,8 @@ class OSInstall(
     }
     ()
   }
+
+  protected val renameSyslinuxRegexReplacer = RegexReplacer("(?i)/isolinux/", "/syslinux/")
 
   protected def fixGrubSearch(targetRoot: Path): Unit = {
     val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
