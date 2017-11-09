@@ -14,7 +14,7 @@ class WindowsInstall(
 {
 
   override def installRequirements(): Set[String] = {
-    super.installRequirements() ++ Set("7z")
+    super.installRequirements() ++ Set("wimextract")
   }
 
   override def install(isoMount: PartitionMount, partMount: PartitionMount): Unit = {
@@ -24,25 +24,39 @@ class WindowsInstall(
 
     super.install(isoMount, partMount)
 
-    // We need to extract the EFI boot file from the WIM image.
+    // We need to extract the EFI boot file from the WIM/ESD image.
     // We could do it from the file copied in the partition, but it should
     // be faster to access the one from the original ISO.
     val bootx64 = targetRoot.resolve(Paths.get("efi", "boot", "bootx64.efi"))
     if (!bootx64.exists) ui.action("Copy EFI boot file") {
-      val wim = sourceRoot.resolve(Paths.get("sources", "install.wim"))
-      val wimExtract = "1/Windows/Boot/EFI/bootmgfw.efi"
-      val bootmgfw = targetRoot.resolve(Paths.get("efi", "boot", "bootmgfw.efi"))
+      val srcOpt = List("esd", "wim").map { ext =>
+        sourceRoot.resolve(Paths.get("sources", s"install.$ext"))
+      }.find { path =>
+        path.exists
+      }
 
-      ui.activity(s"Extract source[${sourceRoot.relativize(wim)}] file[$wimExtract] to[${targetRoot.relativize(bootmgfw).getParent}]")
-      Command.execute(Seq(
-        "7z", "e",
-        wim.toString,
-        wimExtract,
-        s"-o${bootmgfw.getParent.toString}"
-      ))
+      srcOpt match {
+        case Some(src) =>
+          val srcImage = "1"
+          val srcExtract = "/Windows/Boot/EFI/bootmgfw.efi"
+          val bootmgfw = targetRoot.resolve(Paths.get("efi", "boot", "bootmgfw.efi"))
 
-      ui.activity(s"Rename source[${targetRoot.relativize(bootmgfw)}] target[${targetRoot.relativize(bootx64)}]")
-      Files.move(bootmgfw, bootx64)
+          ui.activity(s"Extract source[${sourceRoot.relativize(src)}] image[$srcImage] file[$srcExtract] to[${targetRoot.relativize(bootmgfw).getParent}]")
+          bootmgfw.getParent.mkdirs
+          Command.execute(Seq(
+            "wimextract",
+            src.toString,
+            srcImage,
+            srcExtract,
+            s"--dest-dir=${bootmgfw.getParent.toString}"
+          ))
+
+          ui.activity(s"Rename source[${targetRoot.relativize(bootmgfw)}] target[${targetRoot.relativize(bootx64)}]")
+          Files.move(bootmgfw, bootx64)
+
+        case None =>
+          ui.activity("Could not find WIM/ESD install file")
+      }
     }
     ()
     // Original code to handle booting on FAT partition:
