@@ -106,13 +106,13 @@ class ChoosePartitionsController
 
     setupAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.setup() = setupAll.isSelected
+        settings.setup() = if (settings.isPartitionInstall) true else setupAll.isSelected
       }
     }
 
     bootloaderAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.bootloader() = bootloaderAll.isSelected
+        settings.bootloader() = if (settings.isPartitionInstall) true else bootloaderAll.isSelected
       }
     }
 
