@@ -383,7 +383,13 @@ object OSInstall
         case PartitionFilesystem.ntfs => ("ntfs", "7")
       }
 
-      if (!part.fsType.contains(partType)) {
+      // Note: blkid (used to check current type) inspect the boot sector,
+      // instead of only relying on the partition table type, and already sees
+      // partitions as of the correct type when freshly formatted.
+      // The best choice is to set the type if we format the partition, or if
+      // the current format is not the wanted one. In other cases we assume the
+      // type was already correctly set.
+      if (os.settings.isPartitionFormat || !part.fsType.contains(partType)) {
         val input =
           s"""t
 ${part.partNumber}
