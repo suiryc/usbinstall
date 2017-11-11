@@ -149,7 +149,7 @@ class ChoosePartitionsController
 
         // We just need to create an instance to check its requirements
         val osInstall = OSInstall(settings, null, () => {})
-        val unmet = USBInstall.checkRequirements(osInstall.installRequirements())
+        val unmet = USBInstall.checkRequirements(osInstall.requirements())
         if (unmet.nonEmpty) {
           missingRequirements :+= unmet.mkString("Missing executable(s): ", ", ", "")
         }

@@ -19,14 +19,14 @@ class UbuntuInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def installRequirements(): Set[String] = {
+  override def requirements(): Set[String] = {
     val extra = if (settings.persistent()) {
       Set("dd")
       //Set("cpio", "lzma")
     } else {
       Set.empty
     }
-    super.installRequirements() ++ extra
+    super.requirements() ++ extra
   }
 
   override def setup(partMount: PartitionMount): Unit = {

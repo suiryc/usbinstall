@@ -24,8 +24,8 @@ class SyslinuxInstall(
 ) extends OSInstall(settings, ui, checkCancelled)
 {
 
-  override def installRequirements(): Set[String] = {
-    super.installRequirements() ++ Set("parted", "dd")
+  override def requirements(): Set[String] = {
+    super.requirements() ++ Set("parted", "dd")
   }
 
   override def install(isoMount: PartitionMount, partMount: PartitionMount): Unit = {

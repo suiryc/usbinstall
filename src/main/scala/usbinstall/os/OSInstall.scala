@@ -26,26 +26,28 @@ class OSInstall(
 {
 
   /**
-   * Lists the requirements for installing this OS.
+   * Lists the requirements for this OS.
    */
-  def installRequirements(): Set[String] = {
+  def requirements(): Set[String] = {
     // Install actions are: format, set type, set label, refresh partitions
     val fs = settings.partitionFilesystem
-    val (formatRequirements, labelRequirements) = fs match {
+    val (formatRequirements, labelRequirements, bootloaderRequirements) = fs match {
       case PartitionFilesystem.ext2 =>
-        (Set(s"mkfs.$fs"), Set("e2label"))
+        (Set(s"mkfs.$fs"), Set("e2label"), Set.empty[String])
 
       case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
-        (Set("mkfs.vfat"), Set("mlabel"))
+        (Set("mkfs.vfat"), Set("mlabel"), Set.empty[String])
 
       case PartitionFilesystem.ntfs =>
-        (Set(s"mkfs.$fs"), Set("ntfslabel"))
+        (Set(s"mkfs.$fs"), Set("ntfslabel"), Set("ms-sys"))
     }
 
-    // We only format when requested.
+    // We format when requested.
     // We set type and label in every case.
+    // We set bootloader when requested.
     (if (settings.isPartitionFormat) formatRequirements else Set.empty[String]) ++
-      (labelRequirements ++ Set("fdisk", "partprobe"))
+      (labelRequirements ++ Set("fdisk", "partprobe")) ++
+      (if (settings.isBootloader) bootloaderRequirements else Set.empty[String])
   }
 
   /**
@@ -431,29 +433,36 @@ w
   }
 
   private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
-    for {
-      syslinuxVersion <- os.settings.syslinuxVersion
-      part <- os.settings.partition.get
-    } {
-      // Note: we already ensured this syslinux version was found
-      val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
-      val CommandResult(result, _, stderr) =
-        os.settings.partitionFilesystem match {
-          case _: PartitionFilesystem.extX =>
-            val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
-            val target = mount.to.resolve("syslinux")
-            Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
+    for (part <- os.settings.partition.get) {
+      // NTFS boot sector needs to be written.
+      // Was apparently done in earlier versions of mkfs.ntfs ?
+      // Can be explicitly done with ms-sys.
+      if (os.settings.partitionFilesystem == PartitionFilesystem.ntfs) {
+        val target = part.dev
+        Command.execute(Seq("ms-sys", "--ntfs", target.toString))
+      }
 
-          case _: PartitionFilesystem.MS =>
-            // Note: it is safer (and mandatory for NTFS) to unmount partition first
-            mount.umount()
-            val syslinuxBin = syslinux.modules.resolve(Paths.get("linux", "syslinux"))
-            val target = part.dev
-            Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
+      for(syslinuxVersion <- os.settings.syslinuxVersion) {
+        // Note: we already ensured this syslinux version was found
+        val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
+        val CommandResult(result, _, stderr) =
+          os.settings.partitionFilesystem match {
+            case _: PartitionFilesystem.extX =>
+              val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
+              val target = mount.to.resolve("syslinux")
+              Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
+
+            case _: PartitionFilesystem.MS =>
+              // Note: it is safer (and mandatory for NTFS) to unmount partition first
+              mount.umount()
+              val syslinuxBin = syslinux.modules.resolve(Paths.get("linux", "syslinux"))
+              val target = part.dev
+              Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
+          }
+        if (result != 0) {
+          logger.error(s"Failed to install syslinux bootloader: $stderr")
+          throw new Exception("Failed to install syslinux bootloader")
         }
-      if (result != 0) {
-        logger.error(s"Failed to install syslinux bootloader: $stderr")
-        throw new Exception("Failed to install syslinux bootloader")
       }
     }
   }
