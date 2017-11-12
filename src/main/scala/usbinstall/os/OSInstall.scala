@@ -445,7 +445,7 @@ w
       // Can be explicitly done with ms-sys.
       if (os.settings.partitionFilesystem == PartitionFilesystem.ntfs) {
         val target = part.dev
-        Command.execute(Seq("ms-sys", "--ntfs", target.toString))
+        Command.execute(Seq("ms-sys", "--ntfs", target.toString), skipResult = false)
       }
 
       for(syslinuxVersion <- os.settings.syslinuxVersion) {

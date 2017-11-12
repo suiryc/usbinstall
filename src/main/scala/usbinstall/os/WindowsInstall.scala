@@ -49,7 +49,7 @@ class WindowsInstall(
             srcImage,
             srcExtract,
             s"--dest-dir=${bootmgfw.getParent.toString}"
-          ))
+          ), skipResult = false)
 
           ui.activity(s"Rename source[${targetRoot.relativize(bootmgfw)}] target[${targetRoot.relativize(bootx64)}]")
           Files.move(bootmgfw, bootx64)
