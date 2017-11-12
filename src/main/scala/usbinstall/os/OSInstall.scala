@@ -6,7 +6,7 @@ import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermission
 import scala.io.Codec
 import scala.util.matching.Regex
-import suiryc.scala.io.{FilesEx, PathFinder, RegularFileFilter}
+import suiryc.scala.io.{ExistsFileFilter, FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.io.RichFile._
@@ -47,7 +47,8 @@ class OSInstall(
     // We set bootloader when requested.
     (if (settings.isPartitionFormat) formatRequirements else Set.empty[String]) ++
       (labelRequirements ++ Set("fdisk", "partprobe")) ++
-      (if (settings.isBootloader) bootloaderRequirements else Set.empty[String])
+      (if (settings.isBootloader) bootloaderRequirements else Set.empty[String]) ++
+      (if (settings.isBootloader && settings.efiSettings.grubOverride.isDefined) Set("grub-kbdcomp", "grub-mkstandalone") else Set.empty[String])
   }
 
   /**
@@ -208,7 +209,7 @@ class OSInstall(
   protected val renameSyslinuxRegexReplacer = RegexReplacer("(?i)/isolinux/", "/syslinux/")
 
   protected def fixGrubSearch(targetRoot: Path): Unit = {
-    val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
+    val uuid = settings.partition.get.get.uuid.fold(throw _, identity)
 
     val pfroot = (PathFinder(targetRoot) * "(?i)boot".r) ++ (PathFinder(targetRoot) * "(?i)efi".r)
     val confs = pfroot ** ("(?i).*\\.cfg".r | "(?i).*\\.conf".r)
@@ -254,7 +255,7 @@ class OSInstall(
       }
     }
 
-    val search = settings.efiLoader.toList ::: List("grub", "boot")
+    val search = settings.efiSettings.loader.toList ::: List("grub", "boot")
     search.foreach { s =>
       if (settings.efiBootloader.isEmpty) {
         settings.efiBootloader = find(s)
@@ -438,6 +439,66 @@ w
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
+  private def buildBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
+    def find(loader: String): Option[Path] = {
+      val finder0 = loader.toLowerCase.split('/').toList.filterNot(_.isEmpty).map { p =>
+        new Regex(s"(?i)$p")
+      }.foldLeft(PathFinder(mount.to)) { (acc, r) =>
+        acc * r
+      }
+      val finder = finder0 ? ExistsFileFilter
+      finder.get().toList.sorted.headOption.map(f => mount.to.relativize(f.toPath))
+    }
+
+    val target = find("efi/boot").map(mount.to.resolve).getOrElse {
+      val path = mount.to.resolve("efi/boot")
+      path.mkdirs
+      path
+    }.resolve("bootx64.efi")
+
+    val kbdFr = InstallSettings.pathTemp.resolve("fr.gkb")
+    if (!kbdFr.exists) {
+      os.ui.activity("Build fr keyboard layout")
+      Command.execute(Seq("grub-kbdcomp", "-o", kbdFr.toString, "fr"), skipResult = false)
+    }
+
+    val grubConfigFile = InstallSettings.pathTemp.resolve("grub_efi.conf")
+    val uuid = os.settings.partition.get.get.uuid.fold(throw _, identity)
+    val grubConfig = """
+      |# Use modules from memdisk first
+      |# Usually we later *DO NOT* want to reset it, and keep on using *our* modules
+      |set prefix=(memdisk)/boot/grub
+      |
+      |terminal_input at_keyboard
+      |keymap $prefix/fr.gkb
+      |
+      |insmod configfile
+      |insmod ext2
+      |insmod fat
+      |insmod ntfs
+      |insmod part_gpt
+      |insmod part_msdos
+      |insmod search
+      |insmod search_fs_uuid
+      |
+    """.stripMargin +
+      os.settings.efiSettings.grubOverride.get.replaceAll("\\$\\{partition\\.uuid\\}", uuid)
+    grubConfigFile.toFile.write(grubConfig)
+
+    val fonts = os.settings.efiSettings.grubFonts.getOrElse("ascii,euro")
+    os.ui.activity("Build EFI image")
+    Command.execute(Seq("grub-mkstandalone",
+      "--compress=xz",
+      "--format=x86_64-efi",
+      s"--fonts=$fonts",
+      "--themes=",
+      s"--output=$target",
+      s"boot/grub/grub.cfg=$grubConfigFile",
+      s"boot/grub/fr.gkb=$kbdFr"
+    ), skipResult = false)
+    ()
+  }
+
   private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
     for (part <- os.settings.partition.get) {
       // NTFS boot sector needs to be written.
@@ -539,6 +600,13 @@ w
         }
 
         // prepare EFI
+        if (os.settings.isBootloader && os.settings.efiSettings.grubOverride.isDefined) {
+          os.ui.action(s"Build EFI bootloader") {
+            os.checkCancelled()
+            buildBootloader(profile, os, partMount)
+          }
+        }
+
         os.searchEFI(partMount)
 
         if (os.settings.isBootloader) {

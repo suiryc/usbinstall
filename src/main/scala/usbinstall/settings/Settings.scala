@@ -140,7 +140,7 @@ class ProfileSettings(
       PartitionFilesystem.byName(config.getString("partition.filesystem")),
       option[String]("syslinux.label", config),
       option[String]("syslinux.version", config),
-      option[String]("efi.loader", config)
+      new EFISettings(option[Config]("efi", config).getOrElse(ConfigFactory.empty()))
     )
   }
 
@@ -162,6 +162,18 @@ class ProfileSettings(
 
   val rEFIndDrivers: List[Regex] =
     option[List[String]]("refind.drivers", config).getOrElse(List(".*")).map(new Regex(_))
+
+}
+
+class EFISettings(config: Config) extends BaseConfig(config) {
+
+  import BaseConfig._
+
+  val loader: Option[String] = option[String]("efi.loader", config)
+
+  val grubOverride: Option[String] = option[String]("grub.override", config)
+
+  val grubFonts: Option[String] = option[String]("grub.fonts", config)
 
 }
 

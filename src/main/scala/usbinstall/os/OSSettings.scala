@@ -5,14 +5,10 @@ import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.PersistentProperty
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.settings.{
-  BaseSettings,
-  PersistentSetting,
-  SettingSnapshot,
-  SettingsSnapshot
-}
+import suiryc.scala.settings.{BaseSettings, PersistentSetting, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.Panes
+import usbinstall.settings.EFISettings
 
 
 object OSKind extends Enumeration {
@@ -87,7 +83,7 @@ class OSSettings(
   val partitionFilesystem: PartitionFilesystem.Value,
   val syslinuxLabel: Option[String],
   val syslinuxVersion: Option[String],
-  val efiLoader: Option[String]
+  val efiSettings: EFISettings
 ) {
 
   import PersistentSetting._
