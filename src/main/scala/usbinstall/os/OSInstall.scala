@@ -46,6 +46,7 @@ class OSInstall(
     // We set type and label in every case.
     // We set bootloader when requested.
     (if (settings.isPartitionFormat) formatRequirements else Set.empty[String]) ++
+      (if (settings.isPartitionFormat) Set("dd") else Set.empty[String]) ++
       (labelRequirements ++ Set("fdisk", "partprobe")) ++
       (if (settings.isBootloader) bootloaderRequirements else Set.empty[String]) ++
       (if (settings.isBootloader && settings.efiSettings.grubOverride.isDefined) Set("grub-kbdcomp", "grub-mkstandalone") else Set.empty[String])
@@ -371,7 +372,12 @@ object OSInstall
         }
 
         os.ui.action(s"Format partition ${part.dev.toString} ($kind)") {
-          Command.execute(command).toEither("Failed to format partition")
+          // Previous format, or some random data may be interpreted as valid
+          // format, may still be visible and prevent real re-format.
+          // So reset the start of the partition.
+          Command.execute(Seq("dd", "bs=8K", "count=1", "if=/dev/zero", s"of=${part.dev}")).toEither("Failed to format partition") &&
+            Command.execute(command).toEither("Failed to format partition") &&
+            part.device.partprobe().toEither("Failed to format partition")
         }
       } else Right("Not formatable")
     }
