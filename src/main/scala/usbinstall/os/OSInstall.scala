@@ -405,8 +405,8 @@ w
 """.getBytes
 
         os.ui.action(s"Set partition ${part.dev.toString} type ($kind)") {
-          Command.execute(Seq("fdisk", part.device.dev.toString), stdinSource = Command.input(input)).toEither("Failed to set partition type") ||
-            Command.execute(Seq("partprobe", "-d", part.device.dev.toString)).toEither("Failed to set partition type")
+          Command.execute(Seq("fdisk", part.device.dev.toString), stdinSource = Command.input(input)).toEither("Failed to set partition type") &&
+            part.device.partprobe().toEither("Failed to set partition type")
         }
       }
       else Right("Partition type already set")
