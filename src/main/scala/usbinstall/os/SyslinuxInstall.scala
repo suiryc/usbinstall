@@ -486,12 +486,12 @@ object SyslinuxInstall
   private val versions = mutable.Map[String, Option[SyslinuxArchive]]()
 
   def get(profile: ProfileSettings, version: String): Option[Syslinux] =
-    versions.getOrElseUpdate(version, find(profile, version, doBuild = true)).map(_.uncompressed)
+    versions.getOrElseUpdate(version, find(profile, version/*, doBuild = true*/)).map(_.uncompressed)
 
   def getSource(profile: ProfileSettings, version: String): Option[Path] =
-    versions.getOrElse(version, find(profile, version, doBuild = false)).map(_.archive)
+    versions.getOrElse(version, find(profile, version/*, doBuild = false*/)).map(_.archive)
 
-  protected def find(profile: ProfileSettings, version: String, doBuild: Boolean): Option[SyslinuxArchive] = {
+  protected def find(profile: ProfileSettings, version: String/*, doBuild: Boolean*/): Option[SyslinuxArchive] = {
     findSyslinuxArchive(profile, version).fold[Option[SyslinuxArchive]] {
       logger.error(s"No archive found for syslinux version[$version]")
       None
@@ -505,7 +505,7 @@ object SyslinuxInstall
         logger.error(s"Could not find syslinux version[$version] files in archive[$archive]")
         None
       } { syslinux =>
-        if (doBuild) build(syslinux)
+        //if (doBuild) build(syslinux)
         Some(SyslinuxArchive(archive, syslinux))
       })
     }
@@ -558,19 +558,19 @@ object SyslinuxInstall
     }
   }
 
-  protected def build(syslinux: Syslinux) {
-    //import scala.collection.JavaConversions._
-    //
-    //def commandEnvf(env: java.util.Map[String, String]) {
-    //  env.put("DEBUG", "")
-    //}
-    //
-    //val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
-    //
-    //if ((result == 0) && (arch != "i386")) {
-    //  Command.execute(Seq("make"), workingDirectory = Some(syslinux.root.toFile), envf = Some(commandEnvf _))
-    //}
-  }
+//  protected def build(syslinux: Syslinux) {
+//    import scala.collection.JavaConversions._
+//
+//    def commandEnvf(env: java.util.Map[String, String]) {
+//      env.put("DEBUG", "")
+//    }
+//
+//    val CommandResult(result, arch, stderr) = Command.execute(Seq("uname", "-i"))
+//
+//    if ((result == 0) && (arch != "i386")) {
+//      Command.execute(Seq("make"), workingDirectory = Some(syslinux.root.toFile), envf = Some(commandEnvf _))
+//    }
+//  }
 
   protected def findGrub4DOSArchive(profile: ProfileSettings): Option[Path] =
     findPath(profile.toolsPath, """(?i)grub4dos.*""".r)

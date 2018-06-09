@@ -229,7 +229,7 @@ class InstallController
     val (notsyslinux, syslinux) = profile.oses.partition(_.kind != OSKind.Syslinux)
     val oses = notsyslinux ::: syslinux
     val (previousTab, previousLogWriter, failedOses) =
-      oses.foldLeft[(Tab, ThresholdLogLinePatternWriter, List[String])](installTab, installLogWriter, Nil) { (previous, settings) =>
+      oses.foldLeft[(Tab, ThresholdLogLinePatternWriter, List[String])]((installTab, installLogWriter, Nil)) { (previous, settings) =>
       val (previousTab, previousLogWriter, previousFailedOSes) = previous
 
       if (settings.isSelected) {

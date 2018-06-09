@@ -463,7 +463,7 @@ class ChoosePartitionsController
     ()
   }
 
-  def onAutoSelectPartitions(event: ActionEvent) {
+  def onAutoSelectPartitions(@deprecated("unused","") event: ActionEvent) {
     autoSelectPartitions.getParent.requestFocus()
     selectPartitions(redo = true)
   }

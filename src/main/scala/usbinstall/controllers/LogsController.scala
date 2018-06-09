@@ -32,11 +32,11 @@ class LogsController extends Initializable {
     logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
   }
 
-  def onLogThreshold(event: ActionEvent) {
+  def onLogThreshold(@deprecated("unused","") event: ActionEvent) {
     Settings.core.logDebugThreshold.update(logThreshold.getValue)
   }
 
-  def onClear(event: ActionEvent) {
+  def onClear(@deprecated("unused","") event: ActionEvent) {
     logArea.clear()
   }
 

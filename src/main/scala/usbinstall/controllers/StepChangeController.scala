@@ -59,11 +59,11 @@ class StepChangeController
     else next.setVisible(false)
   }
 
-  def onPrevious(event: ActionEvent) {
+  def onPrevious(@deprecated("unused","") event: ActionEvent) {
     stepPrevious.triggered()
   }
 
-  def onNext(event: ActionEvent) {
+  def onNext(@deprecated("unused","") event: ActionEvent) {
     stepNext.triggered()
   }
 

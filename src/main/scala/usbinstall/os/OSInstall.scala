@@ -445,7 +445,7 @@ w
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
-  private def buildBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
+  private def buildBootloader(os: OSInstall, mount: PartitionMount): Unit = {
     def find(loader: String): Option[Path] = {
       val finder0 = loader.toLowerCase.split('/').toList.filterNot(_.isEmpty).map { p =>
         new Regex(s"(?i)$p")
@@ -609,7 +609,7 @@ w
         if (os.settings.isBootloader && os.settings.efiSettings.grubOverride.isDefined) {
           os.ui.action(s"Build EFI bootloader") {
             os.checkCancelled()
-            buildBootloader(profile, os, partMount)
+            buildBootloader(os, partMount)
           }
         }
 

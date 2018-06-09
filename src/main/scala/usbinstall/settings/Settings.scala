@@ -115,7 +115,6 @@ class ProfileSettings(
 ) extends BaseSettings(config, prefs)
 {
 
-  import BaseConfig._
   import PersistentSetting._
 
   val profileName: String = config.getString("name")
@@ -167,8 +166,6 @@ class ProfileSettings(
 
 class EFISettings(config: Config) extends BaseConfig(config) {
 
-  import BaseConfig._
-
   val loader: Option[String] = option[String]("efi.loader", config)
 
   val grubOverride: Option[String] = option[String]("grub.override", config)
@@ -178,8 +175,6 @@ class EFISettings(config: Config) extends BaseConfig(config) {
 }
 
 class SyslinuxSettings(profile: ProfileSettings, config: Config) extends BaseConfig(config) {
-
-  import BaseConfig._
 
   private val menuEntries = option[Config]("menu.entries", config)
 

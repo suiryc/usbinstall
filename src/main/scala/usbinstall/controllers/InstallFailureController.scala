@@ -23,12 +23,12 @@ class InstallFailureController extends Initializable {
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
   }
 
-  def onStop(event: ActionEvent) {
+  def onStop(@deprecated("unused","") event: ActionEvent) {
     action = ErrorAction.Stop
     window.asInstanceOf[Stage].close()
   }
 
-  def onContinue(event: ActionEvent) {
+  def onContinue(@deprecated("unused","") event: ActionEvent) {
     action = ErrorAction.Skip
     window.asInstanceOf[Stage].close()
   }

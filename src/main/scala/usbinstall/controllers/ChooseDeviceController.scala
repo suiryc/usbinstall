@@ -72,7 +72,7 @@ class ChooseDeviceController extends Initializable {
     ()
   }
 
-  def onRefresh(event: ActionEvent) {
+  def onRefresh(@deprecated("unused","") event: ActionEvent) {
     Panes.refreshDevices()
     refreshDevices()
   }

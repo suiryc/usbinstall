@@ -57,17 +57,17 @@ class OptionsController extends Initializable {
     updateCancelButton()
   }
 
-  def onLogInstallThreshold(event: ActionEvent) {
+  def onLogInstallThreshold(@deprecated("unused","") event: ActionEvent) {
     Settings.core.logInstallThreshold.update(logInstallThreshold.getValue)
     updateCancelButton()
   }
 
-  def onComponentInstallError(event: ActionEvent) {
+  def onComponentInstallError(@deprecated("unused","") event: ActionEvent) {
     Settings.core.componentInstallError.update(componentInstallError.getValue)
     updateCancelButton()
   }
 
-  def onReset(event: ActionEvent) {
+  def onReset(@deprecated("unused","") event: ActionEvent) {
     Settings.core.logInstallThreshold.resetDefault()
     Settings.core.componentInstallError.resetDefault()
     // Note: we need to update the pane; alternatively we could make persistent
@@ -93,12 +93,12 @@ class OptionsController extends Initializable {
     }
   }
 
-  def onCancel(event: ActionEvent) {
+  def onCancel(@deprecated("unused","") event: ActionEvent) {
     snapshot.reset()
     update()
   }
 
-  def onDone(event: ActionEvent) {
+  def onDone(@deprecated("unused","") event: ActionEvent) {
     window.asInstanceOf[Stage].close()
   }
 

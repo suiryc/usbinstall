@@ -32,7 +32,7 @@ class ChooseProfileController
     InstallSettings.profile.setValue(None)
   }
 
-  def onInstallationProfile(event: ActionEvent) {
+  def onInstallationProfile(@deprecated("unused","") event: ActionEvent) {
     val profileName = installationProfile.getValue
     Settings.core.profile.update(profileName)
     setProfile(profileName)

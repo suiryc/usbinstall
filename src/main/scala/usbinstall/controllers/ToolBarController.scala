@@ -60,7 +60,7 @@ class ToolBarController
     subscription.cancel()
   }
 
-  def onShowLogs(event: ActionEvent) {
+  def onShowLogs(@deprecated("unused","") event: ActionEvent) {
     if (showLogs.isSelected) LogsStage.show()
     else LogsStage.hide()
   }
