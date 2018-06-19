@@ -122,7 +122,6 @@ class InstallController
         Dialogs.warning(
           owner = Some(USBInstall.stage),
           title = Some("Installation failed"),
-          headerText = None,
           contentText = Some("Installation was cancelled")
         )
         (false, true)
@@ -140,7 +139,6 @@ class InstallController
       Dialogs.error(
         owner = Some(USBInstall.stage),
         title = Some("Installation failed"),
-        headerText = None,
         ex = Some(ex)
       )
     }
@@ -169,7 +167,6 @@ class InstallController
             Dialogs.information(
               owner = Some(USBInstall.stage),
               title = Some("Installation done"),
-              headerText = None,
               contentText = Some("Installation ended without errors")
             )
           }
@@ -177,7 +174,6 @@ class InstallController
             Dialogs.warning(
               owner = Some(USBInstall.stage),
               title = Some("Installation done"),
-              headerText = None,
               contentText = Some(s"Installation ended.\n\nThe following elements failed:\n${failedOSes.mkString(", ")}")
             )
           }
@@ -197,7 +193,6 @@ class InstallController
           Dialogs.warning(
             owner = Some(USBInstall.stage),
             title = Some("Unexpected situation"),
-            headerText = None,
             contentText = Some("Displayed window does not appear to be the expected one (installation)!")
           )
         }
@@ -287,7 +282,7 @@ class InstallController
                 Dialogs.error(
                   owner = Some(USBInstall.stage),
                   title = Some("Installation failed"),
-                  headerText = Some(s"Failed to install ${settings.label}"),
+                  contentText = Some(s"Failed to install ${settings.label}"),
                   ex = Some(ex)
                 )
                 val action = JFXSystem.await(askOnFailure())

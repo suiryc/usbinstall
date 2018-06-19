@@ -53,7 +53,7 @@ class ChooseDeviceController extends Initializable {
               Dialogs.error(
                 owner = Some(USBInstall.stage),
                 title = Some("Cannot get device info"),
-                headerText = Some(s"Device: ${device.dev}"),
+                contentText = Some(s"Device: ${device.dev}"),
                 ex = Some(ex)
               )
           }

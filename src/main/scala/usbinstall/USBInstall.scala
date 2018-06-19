@@ -127,7 +127,6 @@ class USBInstall extends Application {
         Dialogs.warning(
           owner = Some(USBInstall.stage),
           title = Some("Non-privileged user?"),
-          headerText = None,
           contentText = Some("Running user may not have the required privileges to execute system commands")
         )
       }
@@ -147,7 +146,7 @@ class USBInstall extends Application {
         Dialogs.error(
           owner = Some(USBInstall.stage),
           title = Some("Missing requirements"),
-          headerText = Some("Could not check the requirements were met."),
+          contentText = Some("Could not check the requirements were met."),
           ex = Some(ex)
         )
     }
