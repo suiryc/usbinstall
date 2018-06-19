@@ -8,8 +8,8 @@ lazy val versions = Map[String, String](
   "scala"         -> "2.12.6",
   "scala-logging" -> "3.9.0",
   "slf4j"         -> "1.7.25",
-  "suiryc-scala"  -> "0.0.2-SNAPSHOT",
-  "usbinstall"    -> "0.0.2-SNAPSHOT"
+  "suiryc-scala"  -> "0.0.3-SNAPSHOT",
+  "usbinstall"    -> "0.0.3-SNAPSHOT"
 )
 
 
