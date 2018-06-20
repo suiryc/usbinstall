@@ -45,6 +45,7 @@ lazy val usbinstall = project.in(file(".")).
       "ch.qos.logback"             %  "logback-classic"     % versions("logback"),
       "com.typesafe"               %  "config"              % versions("config"),
       "com.typesafe.akka"          %% "akka-actor"          % versions("akka"),
+      "com.typesafe.akka"          %% "akka-slf4j"          % versions("akka"),
       "com.typesafe.scala-logging" %% "scala-logging"       % versions("scala-logging"),
       "org.slf4j"                  %  "slf4j-api"           % versions("slf4j"),
       "suiryc"                     %% "suiryc-scala-core"   % versions("suiryc-scala"),
