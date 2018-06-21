@@ -527,7 +527,7 @@ class ChoosePartitionsController
         cancellable = None
         onShow
         showPopup(popup, node)
-      })
+      }(JFXSystem.dispatcher))
     }
   }
 
