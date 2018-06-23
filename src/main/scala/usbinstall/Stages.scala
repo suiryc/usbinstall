@@ -5,15 +5,11 @@ import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
 import javafx.scene.{Parent, Scene}
 import javafx.scene.control.ButtonType
-import javafx.scene.layout.{
-  ColumnConstraints,
-  GridPane,
-  Priority,
-  RowConstraints
-}
-import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import javafx.scene.layout.{ColumnConstraints, GridPane, Priority, RowConstraints}
+import suiryc.scala.javafx.concurrent.JFXSystem
+import suiryc.scala.javafx.stage.Stages.StageLocation
+import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
-
 
 object Stages {
 
@@ -21,12 +17,13 @@ object Stages {
     val Ok_Cancel = List(ButtonType.OK, ButtonType.CANCEL)
   }
 
-  protected def changeScene(title: String, scene: Scene, size: Option[(Double, Double)] = None) {
+  protected def changeScene(title: String, scene: Scene) {
     val stage = USBInstall.stage
-    val pos =
+    // Try to keep the stage center at the same spot
+    val center =
       if (!USBInstall.firstScene) {
-        val x = stage.getX
-        val y = stage.getY
+        val x = stage.getX + stage.getWidth / 2
+        val y = stage.getY + stage.getHeight / 2
         stage.setMinWidth(0)
         stage.setMinHeight(0)
         stage.hide()
@@ -42,14 +39,22 @@ object Stages {
 
     stage.setTitle(title)
     stage.setScene(scene)
-    pos.foreach { pos =>
-      stage.setX(pos._1)
-      stage.setY(pos._2)
-    }
+
+    sfxStages.onStageReady(stage, USBInstall.firstScene) {
+      val width = stage.getWidth
+      val height = stage.getHeight
+      val x = center.map(_._1 - width / 2).getOrElse(stage.getX)
+      val y = center.map(_._2 - height / 2).getOrElse(stage.getY)
+      val loc = StageLocation(x, y, width, height, maximized = false)
+      sfxStages.setMinimumDimensions(stage)
+      // Note: setting stage size and keeping it while changing scene
+      // does not play well (at least under Gnome). Default dimension
+      // being good enough, don't change it.
+      sfxStages.setLocation(stage, loc, setSize = false)
+    }(JFXSystem.dispatcher)
+
     stage.show()
     USBInstall.firstScene = false
-
-    sfxStages.trackMinimumDimensions(stage, size)
   }
 
   protected def toolBar(pane: StepPane, paneController: Option[Any]): Parent = {
@@ -96,7 +101,7 @@ object Stages {
   }
 
   def install() {
-    changeScene("Install", step(Panes.install()), Some((800.0, 600.0)))
+    changeScene("Install", step(Panes.install()))
   }
 
 }

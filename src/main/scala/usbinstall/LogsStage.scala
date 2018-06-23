@@ -5,7 +5,8 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import suiryc.scala.javafx.concurrent.JFXSystem
+import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.controllers.LogsController
 import usbinstall.settings.Settings
@@ -97,13 +98,15 @@ object LogsStage {
   // Note: stage will disappear if declared owner is hidden.
   // So don't use initOwner.
 
-  stage.setOnCloseRequest { (event: WindowEvent) =>
+  stage.setOnCloseRequest { event: WindowEvent =>
     event.consume()
     LogsStage.hide()
   }
 
   // Only track minimum dimensions upon first display
-  sfxStages.trackMinimumDimensions(stage, Some((800.0, 600.0)))
+  sfxStages.onStageReady(stage, first = false) {
+    sfxStages.setMinimumDimensions(stage)
+  }(JFXSystem.dispatcher)
   // Keep position/size upon hiding/showing
   sfxStages.keepBounds(stage)
 

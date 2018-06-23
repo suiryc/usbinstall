@@ -8,7 +8,6 @@ import javafx.scene.{Parent, Scene}
 import javafx.scene.control.{Label, Tab, TabPane, TextArea}
 import javafx.scene.layout.{AnchorPane, GridPane, VBox}
 import javafx.stage.{Modality, Stage, Window}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
@@ -154,6 +153,7 @@ class InstallController
     // In case an error message needs to be shown immediately, it is best to
     // wait for this stage to be shown before starting installing.
     def install() {
+      import scala.concurrent.ExecutionContext.Implicits.global
       cancellableFuture = CancellableFuture(installTask)
       cancellableFuture.future.onComplete {
         case Failure(ex) =>
@@ -327,12 +327,11 @@ class InstallController
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
     stage.initOwner(vbox.getScene.getWindow)
-    // Track dimension as soon as shown, and unlisten once done
-    val subscription = stage.showingProperty().listen { showing =>
-      if (showing) sfxStages.trackMinimumDimensions(stage)
-    }
+
+    sfxStages.onStageReady(stage, first = false) {
+      sfxStages.setMinimumDimensions(stage)
+    }(JFXSystem.dispatcher)
     stage.showAndWait()
-    subscription.cancel()
 
     val action = controller.getAction
     if (controller.getAsDefault)
