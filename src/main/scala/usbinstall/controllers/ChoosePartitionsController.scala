@@ -510,7 +510,7 @@ class ChoosePartitionsController
     //  - '-fx-background-color' to set background (transparent otherwise)
     //  - '-fx-effect' to add shadow
     //  - see http://stackoverflow.com/questions/17551774/javafx-styling-pop-up-windows
-    @volatile var cancellable: Option[akka.actor.Cancellable] = None
+    @volatile var cancellable: Option[monix.execution.Cancelable] = None
 
     node.setOnMouseExited { _ =>
       cancellable.foreach(_.cancel())
@@ -527,7 +527,7 @@ class ChoosePartitionsController
         cancellable = None
         onShow
         showPopup(popup, node)
-      }(JFXSystem.dispatcher))
+      })
     }
   }
 
