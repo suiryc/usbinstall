@@ -182,15 +182,15 @@ class ChoosePartitionsController
 
     profile.oses.foreach { settings =>
       subscriptions ::= RichObservableValue.listen[Any](
-        List(
-          settings.select,
-          settings.partitionAction,
-          settings.setup,
-          settings.bootloader,
-          settings.partition,
-          settings.iso
-        ), updateRequirements()
-      )
+        settings.select,
+        settings.partitionAction,
+        settings.setup,
+        settings.bootloader,
+        settings.partition,
+        settings.iso
+      ) {
+        updateRequirements()
+      }
     }
   }
 
