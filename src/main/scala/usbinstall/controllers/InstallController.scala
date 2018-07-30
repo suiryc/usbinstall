@@ -13,7 +13,7 @@ import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.{Dialogs, LogArea}
-import suiryc.scala.javafx.stage.{Stages => sfxStages}
+import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.{HasEventSubscriptions, InstallUI, InstallationException, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSKind}
@@ -326,7 +326,7 @@ class InstallController
     stage.setTitle("Installation failure")
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
-    stage.initOwner(vbox.getScene.getWindow)
+    sfxStages.initOwner(stage, vbox.getScene.getWindow)
 
     sfxStages.onStageReady(stage, first = false) {
       sfxStages.setMinimumDimensions(stage)

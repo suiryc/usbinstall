@@ -52,7 +52,7 @@ class ToolBarController
     stage.setTitle("Options")
     stage.setScene(new Scene(options))
     stage.initModality(Modality.WINDOW_MODAL)
-    stage.initOwner(event.getSource.asInstanceOf[Node].getScene.getWindow)
+    sfxStages.initOwner(stage, event.getSource.asInstanceOf[Node].getScene.getWindow)
 
     sfxStages.onStageReady(stage, first = false) {
       sfxStages.setMinimumDimensions(stage)
