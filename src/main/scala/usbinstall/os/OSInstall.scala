@@ -94,7 +94,7 @@ class OSInstall(
   }
 
   protected def getSyslinuxFile(targetRoot: Path): Path =
-    Paths.get(targetRoot.toString, "syslinux", settings.syslinuxFile)
+    Paths.get(targetRoot.toString, settings.syslinuxRoot.getOrElse("syslinux"), settings.syslinuxFile)
 
   /**
    * Copies source hierarchy to target.
@@ -192,16 +192,21 @@ class OSInstall(
     checkCancelled()
     val syslinuxFile = getSyslinuxFile(targetRoot)
     if (!syslinuxFile.exists) {
-      val syslinuxCfg = Paths.get(targetRoot.toString, "syslinux", "syslinux.cfg")
-      val isolinuxCfg = Paths.get(targetRoot.toString, "isolinux", "isolinux.cfg")
+      val syslinuxCfg = Paths.get(targetRoot.toString, settings.syslinuxRoot.getOrElse("syslinux"), "syslinux.cfg")
+      val isolinuxCfg = Paths.get(targetRoot.toString, settings.syslinuxRoot.getOrElse("isolinux"), "isolinux.cfg")
       if (syslinuxCfg.exists) ui.action("Rename syslinux configuration file") {
         ui.activity(s"Rename source[${targetRoot.relativize(syslinuxCfg)}] target[${targetRoot.relativize(syslinuxFile)}]")
         Files.move(syslinuxCfg, syslinuxFile)
-      } else if (isolinuxCfg.exists) ui.action("Rename isolinux folder to syslinux") {
-        syslinuxFile.getParent.delete(recursive = true)
-        ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent}] target[${targetRoot.relativize(syslinuxFile).getParent}]")
-        Files.move(isolinuxCfg, isolinuxCfg.getParent.resolve(syslinuxFile.getFileName))
-        Files.move(isolinuxCfg.getParent, syslinuxFile.getParent)
+      } else if (isolinuxCfg.exists) {
+        if (settings.syslinuxRoot.exists(_.isEmpty)) ui.action("Rename isolinux configuration file") {
+          ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg)}] target[${targetRoot.relativize(syslinuxFile)}]")
+          Files.move(isolinuxCfg, syslinuxFile)
+        } else ui.action("Rename isolinux folder to syslinux") {
+          syslinuxFile.getParent.delete(recursive = true)
+          ui.activity(s"Rename source[${targetRoot.relativize(isolinuxCfg).getParent}] target[${targetRoot.relativize(syslinuxFile).getParent}]")
+          Files.move(isolinuxCfg, isolinuxCfg.getParent.resolve(syslinuxFile.getFileName))
+          Files.move(isolinuxCfg.getParent, syslinuxFile.getParent)
+        }
       }
     }
     ()
@@ -516,13 +521,16 @@ w
       }
 
       for(syslinuxVersion <- os.settings.syslinuxVersion) {
-        // Note: we already ensured this syslinux version was found
+        // Notes:
+        // We already ensured this syslinux version was found.
+        // 'syslinux' handles FAT and NTFS
+        // 'extlinux' handles ext2/3/4, FAT, and NTFS
         val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
         val CommandResult(result, _, stderr) =
           os.settings.partitionFilesystem match {
             case _: PartitionFilesystem.extX =>
               val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
-              val target = mount.to.resolve("syslinux")
+              val target = mount.to.resolve(os.settings.syslinuxRoot.getOrElse("syslinux"))
               Command.execute(Seq(syslinuxBin.toString, "--install", target.toString))
 
             case _: PartitionFilesystem.MS =>

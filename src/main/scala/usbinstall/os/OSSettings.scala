@@ -81,6 +81,7 @@ class OSSettings(
   val isoPattern: Option[Regex],
   val partitionLabel: String,
   val partitionFilesystem: PartitionFilesystem.Value,
+  val syslinuxRoot: Option[String],
   val syslinuxLabel: Option[String],
   val syslinuxVersion: Option[String],
   val efiSettings: EFISettings

@@ -137,6 +137,7 @@ class ProfileSettings(
       option[String]("iso.pattern", config).map { _.r },
       config.getString("partition.label"),
       PartitionFilesystem.byName(config.getString("partition.filesystem")),
+      option[String]("syslinux.root", config),
       option[String]("syslinux.label", config),
       option[String]("syslinux.version", config),
       new EFISettings(option[Config]("efi", config).getOrElse(ConfigFactory.empty()))
