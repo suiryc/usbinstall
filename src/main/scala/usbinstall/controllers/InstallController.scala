@@ -7,7 +7,7 @@ import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.scene.{Parent, Scene}
 import javafx.scene.control.{Label, Tab, TabPane, TextArea}
 import javafx.scene.layout.{AnchorPane, GridPane, VBox}
-import javafx.stage.{Modality, Stage, Window}
+import javafx.stage.{Modality, Stage}
 import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
@@ -23,7 +23,6 @@ import usbinstall.settings.{ErrorAction, InstallSettings, Settings}
 class InstallController
   extends Initializable
   with UseStepPane
-  with SettingsClearedListener
   with HasEventSubscriptions
   with StrictLogging
 {
@@ -71,7 +70,7 @@ class InstallController
     installLogWriter = activityLogArea.msgWriter
     installLogWriter.setPattern(Settings.core.logInstallPattern)
     USBInstall.addLogWriter(installLogWriter)
-    installLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
+    installLogWriter.setThreshold(Settings.core.logInstallThreshold.get.level)
     subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
       installLogWriter.setThreshold(v.level)
     }
@@ -81,18 +80,6 @@ class InstallController
     subscriptions ::= USBInstall.stage.widthProperty().listen { width =>
       logPanes.setMaxWidth(width.asInstanceOf[Double])
     }
-  }
-
-  override def canClearSettings = false
-
-  override def settingsCleared(source: Window) {
-    Dialogs.error(
-      owner = Some(source),
-      title = Some("Settings cleared"),
-      headerText = Some("Something unexpected happened"),
-      contentText = Some("Settings have been cleared while it should not be possible.")
-    )
-    ()
   }
 
   private def taskDone() {
@@ -235,7 +222,7 @@ class InstallController
 
         val osLogWriter = osLogArea.msgWriter
         osLogWriter.setPattern(Settings.core.logInstallPattern)
-        osLogWriter.setThreshold(Settings.core.logInstallThreshold().level)
+        osLogWriter.setThreshold(Settings.core.logInstallThreshold.get.level)
         subscriptions ::= Settings.core.logInstallThreshold.listen { v =>
           osLogWriter.setThreshold(v.level)
         }
@@ -277,7 +264,7 @@ class InstallController
             def doSkip() =
               (osTab, osLogWriter, previousFailedOSes :+ settings.label)
 
-            Settings.core.componentInstallError() match {
+            Settings.core.componentInstallError.get match {
               case ErrorAction.Ask =>
                 Dialogs.error(
                   owner = Some(USBInstall.stage),
@@ -335,7 +322,7 @@ class InstallController
 
     val action = controller.getAction
     if (controller.getAsDefault)
-      Settings.core.componentInstallError() = action
+      Settings.core.componentInstallError.set(action)
 
     action
   }

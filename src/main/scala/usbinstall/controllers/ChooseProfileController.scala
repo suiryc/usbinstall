@@ -5,14 +5,12 @@ import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
-import javafx.stage.Window
 import suiryc.scala.unused
 import usbinstall.settings.{InstallSettings, Settings}
 
 
 class ChooseProfileController
   extends Initializable
-  with SettingsClearedListener
 {
 
   @FXML
@@ -21,21 +19,16 @@ class ChooseProfileController
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     val profileNames = Settings.profiles.keys.toList.sorted
     installationProfile.getItems.setAll(profileNames:_*)
-    Option(Settings.core.profile()).filter(profileNames.contains).foreach { profileName =>
+    Settings.core.profile.opt.filter(profileNames.contains).foreach { profileName =>
       installationProfile.getSelectionModel.select(profileName)
       setProfile(profileName)
     }
     ()
   }
 
-  override def settingsCleared(source: Window): Unit = {
-    installationProfile.getSelectionModel.select(-1)
-    InstallSettings.profile.setValue(None)
-  }
-
   def onInstallationProfile(@unused event: ActionEvent) {
     val profileName = installationProfile.getValue
-    Settings.core.profile.update(profileName)
+    Settings.core.profile.set(profileName)
     setProfile(profileName)
   }
 

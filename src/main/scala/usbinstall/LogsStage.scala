@@ -25,10 +25,10 @@ object LogsStage {
 
   val areaWriter: ThresholdLogLinePatternWriter = controller.logArea.msgWriter
   areaWriter.setPattern(Settings.core.logDebugPattern)
-  areaWriter.setThreshold(Settings.core.logDebugThreshold().level)
+  areaWriter.setThreshold(Settings.core.logDebugThreshold.get.level)
   Settings.core.logDebugThreshold.listen { v =>
     areaWriter.setThreshold(v.level)
-    controller.logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
+    controller.logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold.get)
   }
 
   //

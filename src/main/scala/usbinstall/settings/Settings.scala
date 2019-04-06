@@ -3,34 +3,55 @@ package usbinstall.settings
 import com.typesafe.config.{Config, ConfigFactory}
 import java.io.File
 import java.nio.file.Path
-import java.util.prefs.Preferences
 import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
-import suiryc.scala.javafx.beans.property.PersistentProperty
+import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
-import suiryc.scala.settings.{BaseConfig, BaseSettings, PersistentSetting, SettingSnapshot, SettingsSnapshot}
-import suiryc.scala.misc.Units
+import suiryc.scala.settings.{BaseConfig, BaseConfigImplicits, ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
+import suiryc.scala.misc.{Units, Util}
 import usbinstall.USBInstall
 import usbinstall.os.{OSKind, OSSettings, PartitionFilesystem, SyslinuxComponent, SyslinuxComponentKind}
 
 
 object Settings {
 
-  private val confPath = "usbinstall"
+  private[usbinstall] val KEY_SUIRYC = "suiryc"
+  private[usbinstall] val KEY_USBINSTALL = "usbinstall"
 
-  val prefsRoot: Preferences = Preferences.userRoot.node("suiryc.usbinstall")
+  private[usbinstall] val KEY_SETTINGS = "settings"
 
-  /** Core settings. */
-  val core = new Settings(ConfigFactory.load().getConfig(confPath),
-    prefsRoot.node(confPath))
+  private val KEY_DEBUG = "debug"
+  private val KEY_INSTALL = "install"
+  private val KEY_LOG = "log"
+  private val KEY_PATTERN = "pattern"
+  private val KEY_THRESHOLD = "threshold"
 
-  /** Profiles settings. */
-  val profiles: Map[String, ProfileSettings] =
+  private[usbinstall] val prefix = List(KEY_SUIRYC, KEY_USBINSTALL)
+
+  private val appPath: Path = Util.classLocation[this.type]
+
+  private def processProfile[A](file: File)(f: => Option[A]): Option[A] = {
+    try {
+      f
+    } catch {
+      case ex: Exception ⇒
+        Dialogs.warning(
+          owner = Some(USBInstall.stage),
+          title = Some("Invalid profile"),
+          headerText = Some("Failed to parse profile"),
+          contentText = Some(s"File: $file"),
+          ex = Some(ex)
+        )
+        None
+    }
+  }
+
+  private val profilesConfig =
     Option(Thread.currentThread.getContextClassLoader.getResource("profiles")).toList.flatMap { r =>
       val d = new File(r.getFile)
       if (d.isDirectory) {
@@ -40,27 +61,33 @@ object Settings {
       } else {
         Nil
       }
-    }.flatMap { f =>
-      try {
-        val c = ConfigFactory.parseFile(f).resolve()
-        if (c.hasPath("name")) {
-          val name = c.getString("name")
-          val settings = new ProfileSettings(c, prefsRoot.node("profiles").node(name))
-          Some(name -> settings)
+    }.flatMap { file =>
+      processProfile(file) {
+        val profileConfig = ConfigFactory.parseFile(file).resolve()
+        if (profileConfig.hasPath("name")) {
+          val name = profileConfig.getString("name")
+          Some((name, file, profileConfig))
         } else {
           None
         }
-      } catch {
-        case ex: Exception =>
-          Dialogs.warning(
-            owner = Some(USBInstall.stage),
-            title = Some("Invalid profile"),
-            headerText = Some("Failed to parse profile"),
-            contentText = Some(s"File: $f"),
-            ex = Some(ex)
-          )
-          None
       }
+    }
+
+  /** Core settings. */
+  val core = new Settings(appPath.resolve("application.conf"))
+
+  /** Profiles settings. */
+  val profiles: Map[String, ProfileSettings] =
+    profilesConfig.flatMap {
+      case (name, file, profileConfig) ⇒
+        processProfile(file) {
+          val settings = new ProfileSettings(
+            core.settings,
+            prefix ++ Seq("profiles", name),
+            profileConfig
+          )
+          Some(name -> settings)
+        }
     }.toMap
 
   def load() {
@@ -70,28 +97,50 @@ object Settings {
 
 }
 
-class Settings(
-  config: Config,
-  prefs: Preferences
-) extends BaseSettings(config, prefs)
-{
+class Settings(path: Path) extends BaseConfigImplicits {
 
-  import PersistentSetting._
+  import Settings._
 
-  val logDebugPattern: String = config.getString("log.debug.pattern")
-  val logInstallPattern: String = config.getString("log.install.pattern")
+  // Prepare a fallback configuration containing all the profiles oses
+  // settings.
+  private val osDefaults =
+    s"""
+       |$KEY_SETTINGS {
+       |  select = true
+       |  partitionAction = "Format"
+       |  setup = true
+       |  bootloader = true
+       |  persistence = false
+       |}
+    """.stripMargin
+  private val fallback = profilesConfig.foldLeft(ConfigFactory.empty) { case (c1, (name, _, profileConfig)) ⇒
+    import BaseConfig._
+    profileConfig.getConfigList("oses").asScala.toList.foldLeft(c1) { case (c2, osConfig) ⇒
+      val kind = osConfig.getString("kind")
+      val label = osConfig.option[String]("label", osConfig).getOrElse(kind)
+      val path = BaseConfig.joinPath(prefix ++ Seq("profiles", name, "oses", label))
+      c2.withFallback(osConfig.withFallback(ConfigFactory.parseString(osDefaults)).atPath(path))
+    }
+  }
 
-  val logDebugThreshold =
-    PersistentProperty(PersistentSetting.from(this, "logDebugThreshold", LogLevel, LogLevel.DEBUG))
+  private[usbinstall] val settings = PortableSettings(path, fallback, prefix)
 
-  val logInstallThreshold =
-    PersistentProperty(PersistentSetting.from(this, "logInstallThreshold", LogLevel, LogLevel.INFO))
+  val logDebugPattern: String =
+    ConfigEntry.from[String](settings, prefix ++ Seq(KEY_LOG, KEY_DEBUG, KEY_PATTERN)).get
+  val logInstallPattern: String =
+    ConfigEntry.from[String](settings, prefix ++ Seq(KEY_LOG, KEY_INSTALL, KEY_PATTERN)).get
 
-  val componentInstallError =
-    PersistentProperty(PersistentSetting.from(this, "componentInstallError", ErrorAction, ErrorAction.Ask))
+  val logDebugThreshold: ConfigEntryProperty[LogLevel.Value] =
+    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_DEBUG, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.Value]]
 
-  val profile: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from(this, "installation.profile", null))
+  val logInstallThreshold: ConfigEntryProperty[LogLevel.Value] =
+    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_INSTALL, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.Value]]
+
+  val componentInstallError: ConfigEntry[ErrorAction.Value] =
+    ConfigEntry.from(settings, ErrorAction, prefix ++ Seq("component-install-error"))
+
+  val profile: ConfigEntry[String] =
+    ConfigEntry.from(settings, prefix ++ Seq("installation", "profile"))
 
   def snapshot(snapshot: SettingsSnapshot) {
     snapshot.add(
@@ -104,27 +153,24 @@ class Settings(
 }
 
 class ProfileSettings(
-  config: Config,
-  prefs: Preferences
-) extends BaseSettings(config, prefs)
+  settings: PortableSettings,
+  prefix: Seq[String],
+  config: Config
+) extends BaseConfig(config)
 {
-
-  import PersistentSetting._
 
   val profileName: String = config.getString("name")
 
-  val device: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from(this, "device", null))
+  val device: ConfigEntry[String] =
+    ConfigEntry.from(settings, prefix ++ Seq("installation", "device"))
 
   val oses: List[OSSettings] = config.getConfigList("oses").asScala.toList.map { config =>
     val kind = config.getString("kind")
     val label = option[String]("label", config).getOrElse(kind)
 
-    val settings: BaseSettings =
-      new BaseSettings(config, prefs.node("oses").node(label.replace('/', '_')))
-
     new OSSettings(
       settings,
+      prefix ++ Seq("oses", label),
       OSKind.byName(kind),
       label,
       Units.storage.fromHumanReadable(config.getString("size")),

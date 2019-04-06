@@ -24,17 +24,17 @@ class LogsController extends Initializable {
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
     logArea = LogArea(textArea)
-    logThreshold.getItems.setAll(LogLevel.values.toList:_*)
+    logThreshold.getItems.setAll(LogLevel.levels.toList:_*)
 
     update()
   }
 
   def update() {
-    logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
+    logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold.get)
   }
 
   def onLogThreshold(@unused event: ActionEvent) {
-    Settings.core.logDebugThreshold.update(logThreshold.getValue)
+    Settings.core.logDebugThreshold.set(logThreshold.getValue)
   }
 
   def onClear(@unused event: ActionEvent) {

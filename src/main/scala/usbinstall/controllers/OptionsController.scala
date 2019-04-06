@@ -4,13 +4,11 @@ import java.net.URL
 import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
-import javafx.scene.control.{Button, ButtonType, ComboBox}
+import javafx.scene.control.{Button, ComboBox}
 import javafx.stage.{Stage, Window}
-import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
 import suiryc.scala.unused
-import usbinstall.Stages
 import usbinstall.settings.{ErrorAction, Settings}
 
 
@@ -28,12 +26,10 @@ class OptionsController extends Initializable {
   @FXML
   protected var cancelButton: Button = _
 
-  protected var listener: SettingsClearedListener = _
-
   protected val snapshot = new SettingsSnapshot()
 
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    logInstallThreshold.getItems.setAll(LogLevel.values.toList:_*)
+    logInstallThreshold.getItems.setAll(LogLevel.levels.toList:_*)
     componentInstallError.getItems.setAll(ErrorAction.values.toList:_*)
 
     Settings.core.snapshot(snapshot)
@@ -41,57 +37,33 @@ class OptionsController extends Initializable {
     update()
   }
 
-  def setListener(listener: SettingsClearedListener) {
-    this.listener = listener
-
-    //Note: tooltip are not shown for disabled controls
-    clearButton.setDisable(!listener.canClearSettings)
-  }
-
   protected def updateCancelButton() {
     cancelButton.setDisable(!snapshot.changed())
   }
 
   protected def update() {
-    logInstallThreshold.getSelectionModel.select(Settings.core.logInstallThreshold())
-    componentInstallError.getSelectionModel.select(Settings.core.componentInstallError())
+    logInstallThreshold.getSelectionModel.select(Settings.core.logInstallThreshold.get)
+    componentInstallError.getSelectionModel.select(Settings.core.componentInstallError.get)
     updateCancelButton()
   }
 
   def onLogInstallThreshold(@unused event: ActionEvent) {
-    Settings.core.logInstallThreshold.update(logInstallThreshold.getValue)
+    Settings.core.logInstallThreshold.set(logInstallThreshold.getValue)
     updateCancelButton()
   }
 
   def onComponentInstallError(@unused event: ActionEvent) {
-    Settings.core.componentInstallError.update(componentInstallError.getValue)
+    Settings.core.componentInstallError.set(componentInstallError.getValue)
     updateCancelButton()
   }
 
   def onReset(@unused event: ActionEvent) {
-    Settings.core.logInstallThreshold.resetDefault()
-    Settings.core.componentInstallError.resetDefault()
+    Settings.core.logInstallThreshold.reset()
+    Settings.core.componentInstallError.reset()
     // Note: we need to update the pane; alternatively we could make persistent
     // properties out of those persistent settings and update the control upon
     // value changing.
     update()
-  }
-
-  def onClear(event: ActionEvent) {
-    val action = Dialogs.confirmation(
-      owner = Some(window),
-      title = Some("Clear settings"),
-      headerText = Some("Are you sure?"),
-      contentText = Some("You are about to clear all settings and get back to initial or default values"),
-      buttons = Stages.DialogButtons.Ok_Cancel
-    )
-
-    if (action.contains(ButtonType.OK)) {
-      onReset(event)
-      Settings.prefsRoot.removeNode()
-      update()
-      Option(listener).foreach(_.settingsCleared(window))
-    }
   }
 
   def onCancel(@unused event: ActionEvent) {
@@ -105,14 +77,5 @@ class OptionsController extends Initializable {
 
   protected def window: Window =
     logInstallThreshold.getScene.getWindow
-
-}
-
-
-trait SettingsClearedListener {
-
-  def canClearSettings = true
-
-  def settingsCleared(source: Window): Unit
 
 }

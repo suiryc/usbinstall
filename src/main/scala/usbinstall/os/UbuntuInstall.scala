@@ -20,7 +20,7 @@ class UbuntuInstall(
 {
 
   override def requirements(): Set[String] = {
-    val extra = if (settings.persistent()) {
+    val extra = if (settings.persistent.get) {
       Set("dd")
       //Set("cpio", "lzma")
     } else {
@@ -31,7 +31,7 @@ class UbuntuInstall(
 
   override def setup(partMount: PartitionMount): Unit = {
     val targetRoot = partMount.to.toAbsolutePath
-    val persistent = settings.persistent()
+    val persistent = settings.persistent.get
 
     // Without 'casper', we need to patch 'initrd'. See comments below.
     if (!targetRoot.resolve("casper").isDirectory) {

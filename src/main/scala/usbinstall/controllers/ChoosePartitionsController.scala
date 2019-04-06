@@ -11,7 +11,7 @@ import javafx.scene.{Node, Parent}
 import javafx.scene.control._
 import javafx.scene.layout.{AnchorPane, ColumnConstraints, GridPane, RowConstraints}
 import javafx.scene.paint.Color
-import javafx.stage.{Popup, Window}
+import javafx.stage.Popup
 import suiryc.scala.javafx.beans.value.RichObservableValue
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
@@ -28,7 +28,6 @@ import usbinstall.settings.InstallSettings
 class ChoosePartitionsController
   extends Initializable
   with UseStepPane
-  with SettingsClearedListener
   with HasEventSubscriptions
   with StrictLogging
 {
@@ -85,7 +84,7 @@ class ChoosePartitionsController
 
     selectAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.select() = selectAll.isSelected
+        settings.select.set(selectAll.isSelected)
       }
     }
 
@@ -99,7 +98,7 @@ class ChoosePartitionsController
           OSPartitionAction.None
         }
       profile.oses.foreach { settings =>
-        settings.partitionAction() = status
+        settings.partitionAction.set(status)
       }
     }
 
@@ -107,13 +106,13 @@ class ChoosePartitionsController
 
     setupAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.setup() = if (settings.isPartitionInstall) true else setupAll.isSelected
+        settings.setup.set(if (settings.isPartitionInstall) true else setupAll.isSelected)
       }
     }
 
     bootloaderAll.setOnAction { _ =>
       profile.oses.foreach { settings =>
-        settings.bootloader() = if (settings.isPartitionInstall) true else bootloaderAll.isSelected
+        settings.bootloader.set(if (settings.isPartitionInstall) true else bootloaderAll.isSelected)
       }
     }
 
@@ -128,10 +127,6 @@ class ChoosePartitionsController
     }
 
     updatePartitionsPane()
-  }
-
-  override def settingsCleared(source: Window) {
-    selectPartitions(redo = true)
   }
 
   private def updateRequirements() {
@@ -291,9 +286,9 @@ class ChoosePartitionsController
 
     // Column: setup checkbox
     val osSetup = new CheckBox
-    osSetup.setSelected(settings.setup())
+    osSetup.setSelected(settings.setup.get)
     osSetup.selectedProperty.listen { selected =>
-      settings.setup() = selected
+      settings.setup.set(selected)
     }
     subscriptions ::= settings.setup.listen { newValue =>
       osSetup.setSelected(newValue)
@@ -301,9 +296,9 @@ class ChoosePartitionsController
 
     // Column: bootloader checkbox
     val osBootloader = new CheckBox
-    osBootloader.setSelected(settings.bootloader())
+    osBootloader.setSelected(settings.bootloader.get)
     osBootloader.selectedProperty.listen { selected =>
-      settings.bootloader() = selected
+      settings.bootloader.set(selected)
     }
     subscriptions ::= settings.bootloader.listen { newValue =>
       osBootloader.setSelected(newValue)
@@ -383,18 +378,18 @@ class ChoosePartitionsController
     // OS selection: link setting to node, and disable other nodes when OS is
     // not selected.
     osSelect.selectedProperty().listen { selected =>
-      settings.select() = selected
+      settings.select.set(selected)
     }
     subscriptions ::= settings.select.listen { newValue =>
       osSelect.setSelected(newValue)
       settingsChanged()
     }
-    osSelect.setSelected(settings.select())
+    osSelect.setSelected(settings.select.get)
 
     // Partition action: link setting to node, and force setup+bootloader upon
     // install.
     osInstall.setOnAction { _ =>
-      settings.partitionAction() =
+      settings.partitionAction.set {
         if (osInstall.isIndeterminate) {
           OSPartitionAction.Copy
         } else if (osInstall.isSelected) {
@@ -402,12 +397,13 @@ class ChoosePartitionsController
         } else {
           OSPartitionAction.None
         }
+      }
     }
     subscriptions ::= settings.partitionAction.listen { newValue =>
       partitionActionToUI(newValue)
       settingsChanged()
     }
-    partitionActionToUI(settings.partitionAction())
+    partitionActionToUI(settings.partitionAction.get)
 
     settingsChanged()
 
@@ -549,7 +545,7 @@ class ChoosePartitionsController
       s"($version) $name"
     }.getOrElse("n/a")
     syslinuxInfo.setText(syslinux)
-    persistenceInfo.setText(settings.persistent().toString)
+    persistenceInfo.setText(settings.persistent.get.toString)
   }
 
 }

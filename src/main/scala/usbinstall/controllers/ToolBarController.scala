@@ -40,14 +40,6 @@ class ToolBarController
   def onOptions(event: ActionEvent) {
     val loader = new FXMLLoader(getClass.getResource("/fxml/options.fxml"))
     val options = loader.load[Parent]()
-    val controller = loader.getController[OptionsController]()
-
-    paneController.foreach {
-      case paneController: SettingsClearedListener =>
-        controller.setListener(paneController)
-
-      case _ =>
-    }
 
     val stage = new Stage
     stage.setTitle("Options")

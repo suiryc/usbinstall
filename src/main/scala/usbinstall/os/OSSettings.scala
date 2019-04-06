@@ -3,9 +3,9 @@ package usbinstall.os
 import java.nio.file.{Path, Paths}
 import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
-import suiryc.scala.javafx.beans.property.PersistentProperty
+import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.settings.{BaseSettings, PersistentSetting, SettingSnapshot, SettingsSnapshot}
+import suiryc.scala.settings.{ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.Panes
 import usbinstall.settings.EFISettings
@@ -74,7 +74,8 @@ object PartitionFilesystem extends Enumeration {
 }
 
 class OSSettings(
-  val settings: BaseSettings,
+  settings: PortableSettings,
+  prefix: Seq[String],
   val kind: OSKind.Value,
   val label: String,
   val size: Long,
@@ -87,28 +88,30 @@ class OSSettings(
   val efiSettings: EFISettings
 ) {
 
-  import PersistentSetting._
+  import usbinstall.settings.Settings._
 
-  val select: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.select", default = true))
+  // Note: default values (when applicable) have been set in the
+  // underlying configuration.
+  val select: ConfigEntryProperty[Boolean] =
+    ConfigEntryProperty(ConfigEntry.from[Boolean](settings, prefix ++ Seq(KEY_SETTINGS, "select")))
 
-  val partitionAction: PersistentProperty[OSPartitionAction.Value] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.partitionAction", OSPartitionAction, OSPartitionAction.Format))
+  val partitionAction: ConfigEntryProperty[OSPartitionAction.Value] =
+    ConfigEntryProperty(ConfigEntry.from(settings, OSPartitionAction, prefix ++ Seq(KEY_SETTINGS, "partitionAction")))
 
-  val setup: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.setup", default = true))
+  val setup: ConfigEntryProperty[Boolean] =
+    ConfigEntryProperty(ConfigEntry.from[Boolean](settings, prefix ++ Seq(KEY_SETTINGS, "setup")))
 
-  val bootloader: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.bootloader", default = true))
+  val bootloader: ConfigEntryProperty[Boolean] =
+    ConfigEntryProperty(ConfigEntry.from[Boolean](settings, prefix ++ Seq(KEY_SETTINGS, "bootloader")))
 
-  protected val partitionSetting: PersistentProperty[String] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.partition", null))
+  protected val partitionSetting: ConfigEntry[String] =
+    ConfigEntry.from(settings, prefix ++ Seq(KEY_SETTINGS, "partition"))
 
-  val persistent: PersistentProperty[Boolean] =
-    PersistentProperty(PersistentSetting.from(settings, "settings.persistence", default = false))
+  val persistent: ConfigEntry[Boolean] =
+    ConfigEntry.from[Boolean](settings, prefix ++ Seq(KEY_SETTINGS, "persistence"))
 
   val partition: ObjectProperty[Option[DevicePartition]] =
-    new SimpleObjectProperty(getDevicePartition(partitionSetting.setting.option))
+    new SimpleObjectProperty(getDevicePartition(partitionSetting.opt))
 
   protected def getDevicePartition(v: Option[String]): Option[DevicePartition] =
     v.flatMap { dev =>
@@ -124,7 +127,7 @@ class OSSettings(
     }
 
   partition.listen { newValue =>
-    partitionSetting() = newValue.map(_.dev.toString).orNull
+    partitionSetting.set(newValue.map(_.dev.toString).orNull)
   }
 
   val iso: ObjectProperty[Option[Path]] =
@@ -133,17 +136,17 @@ class OSSettings(
   var efiBootloader: Option[Path] =
     None
 
-  def isSelected: Boolean = select()
+  def isSelected: Boolean = select.get
 
-  def isPartitionInstall: Boolean = isSelected && (partitionAction() != OSPartitionAction.None)
+  def isPartitionInstall: Boolean = isSelected && (partitionAction.get != OSPartitionAction.None)
 
-  def isPartitionFormat: Boolean = isSelected && (partitionAction() == OSPartitionAction.Format)
+  def isPartitionFormat: Boolean = isSelected && (partitionAction.get == OSPartitionAction.Format)
 
-  def isPartitionErase: Boolean = isSelected && (partitionAction() == OSPartitionAction.Copy)
+  def isPartitionErase: Boolean = isSelected && (partitionAction.get == OSPartitionAction.Copy)
 
-  def isSetup: Boolean = isSelected && setup()
+  def isSetup: Boolean = isSelected && setup.get
 
-  def isBootloader: Boolean = isSelected && bootloader()
+  def isBootloader: Boolean = isSelected && bootloader.get
 
   def syslinuxFile: String = partitionFilesystem match {
     case _: PartitionFilesystem.extX => "extlinux.conf"
@@ -161,6 +164,16 @@ class OSSettings(
   }
 
   override def toString =
-    s"OSSettings(kind=$kind, label=$label, select=${select()}, partitionAction=${partitionAction()}, setup=${setup()}, bootloader=${bootloader()}, partition=${partition.get.map(_.dev)})"
+    s"OSSettings(kind=$kind, label=$label, select=${
+      select.get
+    }, partitionAction=${
+      partitionAction.get
+    }, setup=${
+      setup.get
+    }, bootloader=${
+      bootloader.get
+    }, partition=${
+      partition.get.map(_.dev)
+    })"
 
 }
