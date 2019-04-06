@@ -8,6 +8,7 @@ import javafx.scene.control.{Label, ListView}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.Units
+import suiryc.scala.unused
 import usbinstall.settings.InstallSettings
 import usbinstall.{Panes, USBInstall}
 
@@ -72,7 +73,7 @@ class ChooseDeviceController extends Initializable {
     ()
   }
 
-  def onRefresh(@deprecated("unused","") event: ActionEvent) {
+  def onRefresh(@unused vent: ActionEvent) {
     Panes.refreshDevices()
     refreshDevices()
   }

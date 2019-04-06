@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
 import javafx.stage.Window
+import suiryc.scala.unused
 import usbinstall.settings.{InstallSettings, Settings}
 
 
@@ -32,7 +33,7 @@ class ChooseProfileController
     InstallSettings.profile.setValue(None)
   }
 
-  def onInstallationProfile(@deprecated("unused","") event: ActionEvent) {
+  def onInstallationProfile(@unused event: ActionEvent) {
     val profileName = installationProfile.getValue
     Settings.core.profile.update(profileName)
     setProfile(profileName)

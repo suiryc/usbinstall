@@ -19,6 +19,7 @@ import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
+import suiryc.scala.unused
 import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
 import usbinstall.os._
 import usbinstall.settings.InstallSettings
@@ -463,7 +464,7 @@ class ChoosePartitionsController
     ()
   }
 
-  def onAutoSelectPartitions(@deprecated("unused","") event: ActionEvent) {
+  def onAutoSelectPartitions(@unused event: ActionEvent) {
     autoSelectPartitions.getParent.requestFocus()
     selectPartitions(redo = true)
   }

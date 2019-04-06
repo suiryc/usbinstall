@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.Button
 import suiryc.scala.javafx.beans.value.RichObservableValue._
+import suiryc.scala.unused
 import usbinstall.{AbstractStepButton, StepPane, UseStepPane}
 
 
@@ -59,11 +60,11 @@ class StepChangeController
     else next.setVisible(false)
   }
 
-  def onPrevious(@deprecated("unused","") event: ActionEvent) {
+  def onPrevious(@unused event: ActionEvent) {
     stepPrevious.triggered()
   }
 
-  def onNext(@deprecated("unused","") event: ActionEvent) {
+  def onNext(@unused event: ActionEvent) {
     stepNext.triggered()
   }
 

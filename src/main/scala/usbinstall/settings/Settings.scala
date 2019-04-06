@@ -93,12 +93,6 @@ class Settings(
   val profile: PersistentProperty[String] =
     PersistentProperty(PersistentSetting.from(this, "installation.profile", null))
 
-  def reset() {
-    logDebugThreshold.reset()
-    logInstallThreshold.reset()
-    componentInstallError.reset()
-  }
-
   def snapshot(snapshot: SettingsSnapshot) {
     snapshot.add(
       SettingSnapshot(logDebugThreshold),

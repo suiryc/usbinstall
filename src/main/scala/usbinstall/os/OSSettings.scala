@@ -150,15 +150,6 @@ class OSSettings(
     case _: PartitionFilesystem.MS => "syslinux.cfg"
   }
 
-  def reset() {
-    select.reset()
-    partitionAction.reset()
-    setup.reset()
-    bootloader.reset()
-    partition.setValue(getDevicePartition(Option(partitionSetting.setting())))
-    persistent.reset()
-  }
-
   def snapshot(snapshot: SettingsSnapshot) {
     snapshot.add(
       SettingSnapshot(select),

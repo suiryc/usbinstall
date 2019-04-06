@@ -6,6 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.CheckBox
 import javafx.stage.Stage
+import suiryc.scala.unused
 import usbinstall.settings.ErrorAction
 
 
@@ -14,7 +15,7 @@ class InstallFailureController extends Initializable {
   @FXML
   protected var applyDefault: CheckBox = _
 
-  protected var action = ErrorAction.Ask
+  private var action = ErrorAction.Ask
 
   def getAction: ErrorAction.Value = action
 
@@ -23,17 +24,17 @@ class InstallFailureController extends Initializable {
   override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
   }
 
-  def onStop(@deprecated("unused","") event: ActionEvent) {
+  def onStop(@unused event: ActionEvent) {
     action = ErrorAction.Stop
     window.asInstanceOf[Stage].close()
   }
 
-  def onContinue(@deprecated("unused","") event: ActionEvent) {
+  def onContinue(@unused event: ActionEvent) {
     action = ErrorAction.Skip
     window.asInstanceOf[Stage].close()
   }
 
-  protected def window =
+  private def window =
     applyDefault.getScene.getWindow
 
 }

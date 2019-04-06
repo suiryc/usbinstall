@@ -9,6 +9,7 @@ import javafx.stage.{Stage, Window}
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
+import suiryc.scala.unused
 import usbinstall.Stages
 import usbinstall.settings.{ErrorAction, Settings}
 
@@ -57,17 +58,17 @@ class OptionsController extends Initializable {
     updateCancelButton()
   }
 
-  def onLogInstallThreshold(@deprecated("unused","") event: ActionEvent) {
+  def onLogInstallThreshold(@unused event: ActionEvent) {
     Settings.core.logInstallThreshold.update(logInstallThreshold.getValue)
     updateCancelButton()
   }
 
-  def onComponentInstallError(@deprecated("unused","") event: ActionEvent) {
+  def onComponentInstallError(@unused event: ActionEvent) {
     Settings.core.componentInstallError.update(componentInstallError.getValue)
     updateCancelButton()
   }
 
-  def onReset(@deprecated("unused","") event: ActionEvent) {
+  def onReset(@unused event: ActionEvent) {
     Settings.core.logInstallThreshold.resetDefault()
     Settings.core.componentInstallError.resetDefault()
     // Note: we need to update the pane; alternatively we could make persistent
@@ -93,12 +94,12 @@ class OptionsController extends Initializable {
     }
   }
 
-  def onCancel(@deprecated("unused","") event: ActionEvent) {
+  def onCancel(@unused event: ActionEvent) {
     snapshot.reset()
     update()
   }
 
-  def onDone(@deprecated("unused","") event: ActionEvent) {
+  def onDone(@unused event: ActionEvent) {
     window.asInstanceOf[Stage].close()
   }
 

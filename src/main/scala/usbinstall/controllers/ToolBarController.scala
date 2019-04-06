@@ -10,6 +10,7 @@ import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
+import suiryc.scala.unused
 import usbinstall.{HasEventSubscriptions, LogsStage}
 
 
@@ -60,7 +61,7 @@ class ToolBarController
     stage.showAndWait()
   }
 
-  def onShowLogs(@deprecated("unused","") event: ActionEvent) {
+  def onShowLogs(@unused event: ActionEvent) {
     if (showLogs.isSelected) LogsStage.show()
     else LogsStage.hide()
   }

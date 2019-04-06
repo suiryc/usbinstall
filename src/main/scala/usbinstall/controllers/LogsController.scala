@@ -8,6 +8,7 @@ import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.log.LogLevel
+import suiryc.scala.unused
 import usbinstall.settings.Settings
 
 
@@ -32,11 +33,11 @@ class LogsController extends Initializable {
     logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold())
   }
 
-  def onLogThreshold(@deprecated("unused","") event: ActionEvent) {
+  def onLogThreshold(@unused event: ActionEvent) {
     Settings.core.logDebugThreshold.update(logThreshold.getValue)
   }
 
-  def onClear(@deprecated("unused","") event: ActionEvent) {
+  def onClear(@unused event: ActionEvent) {
     logArea.clear()
   }
 
