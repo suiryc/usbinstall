@@ -1,6 +1,8 @@
 package usbinstall.os
 
+import scala.util.matching.Regex
 import suiryc.scala.io.NameFilter._
+import suiryc.scala.io.PathFinder
 import suiryc.scala.io.PathFinder._
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
@@ -19,14 +21,14 @@ class SystemRescueCDInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val grubBoot = targetRoot / "boot" / "grub"
-      val confs = (grubBoot ++ (targetRoot / "syslinux")) * (".*\\.cfg".r | ".*\\.conf".r)
-      val regexReplacers = List(
-        renameSyslinuxRegexReplacer,
-        RegexReplacer("(?i)scandelay=1", "scandelay=2")
+      val uuid = settings.partition.get.get.uuid.fold(throw _, identity)
+      val confs = PathFinder(targetRoot) / (("sysresccd" / "boot" / "syslinux") ++ ("boot" / "grub")) * (".*\\.cfg".r | ".*\\.conf".r)
+      val regex = new Regex("""(?i)([ \t]*(?:linux|options|kernel|append)[ \t]+[^\r\n]*[ \t]+)archisolabel=[^\s]+""", "pre")
+      val regexReplacer = RegexReplacer(regex, (m: Regex.Match) =>
+        s"${m.group("pre")}archisodevice=/dev/disk/by-uuid/$uuid"
       )
       for (conf <- confs.get()) {
-        regexReplace(targetRoot, conf, regexReplacers:_*)
+        regexReplace(targetRoot, conf, regexReplacer)
       }
     }
   }
