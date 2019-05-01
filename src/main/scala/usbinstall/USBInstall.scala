@@ -3,27 +3,18 @@ package usbinstall
 import ch.qos.logback.classic.Logger
 import java.io.PrintStream
 import java.util.Locale
-import javafx.application.Application
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
-import suiryc.scala.io.{
-  LineSplitterOutputStream,
-  ProxyLineWriter,
-  SystemStreams
-}
+import suiryc.scala.io.{LineSplitterOutputStream, ProxyLineWriter, SystemStreams}
 import suiryc.scala.io.RichFile._
+import suiryc.scala.javafx.{JFXApplication, JFXLauncher}
 import suiryc.scala.javafx.scene.control.Dialogs
-import suiryc.scala.log.{
-  Loggers,
-  LogLinePatternWriter,
-  LogWriter,
-  ProxyAppender
-}
+import suiryc.scala.log.{LogLinePatternWriter, LogWriter, Loggers, ProxyAppender}
 import suiryc.scala.sys.{Command, CommandResult}
 import usbinstall.settings.{InstallSettings, Settings}
 
 
-object USBInstall {
+object USBInstall extends JFXLauncher[USBInstallApp] {
 
   // Set locale to english as application is not i18n
   Locale.setDefault(Locale.ENGLISH)
@@ -34,30 +25,25 @@ object USBInstall {
 
   var firstScene = true
 
-  protected var appender: ProxyAppender = _
-  protected var lineWriter: ProxyLineWriter = _
-  protected var systemStreams: SystemStreams = _
+  protected[usbinstall] var appender: ProxyAppender = _
+  protected[usbinstall] var lineWriter: ProxyLineWriter = _
+  protected[usbinstall] var systemStreams: SystemStreams = _
 
-
-  def main(args: Array[String]) {
-    (new USBInstall).launch()
-  }
-
-  private def newAppender(writers: Seq[LogWriter]) = {
+  private[usbinstall] def newAppender(writers: Seq[LogWriter]) = {
     val appender = new ProxyAppender(writers)
     appender.setContext(Loggers.loggerContext)
     appender.start()
     appender
   }
 
-  private def addAppender(appender: ProxyAppender) {
+  private[usbinstall] def addAppender(appender: ProxyAppender) {
     loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.addAppender(appender)
     }
   }
 
-  private def detachAppender(appender: ProxyAppender) {
+  private[usbinstall] def detachAppender(appender: ProxyAppender) {
     loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.detachAppender(appender)
@@ -74,7 +60,7 @@ object USBInstall {
     lineWriter.removeWriter(writer)
   }
 
-  val requirements =
+  private[usbinstall] val requirements =
     Set("blkid", "blockdev")
 
   protected var checkedRequirements: Set[String] = Set.empty
@@ -96,13 +82,9 @@ object USBInstall {
 
 }
 
-class USBInstall extends Application {
+class USBInstallApp extends JFXApplication {
 
   import USBInstall._
-
-  def launch() {
-    Application.launch()
-  }
 
   override def start(primaryStage: Stage) {
     stage = primaryStage
