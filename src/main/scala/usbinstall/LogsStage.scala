@@ -5,7 +5,6 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.controllers.LogsController
@@ -106,7 +105,7 @@ object LogsStage {
   // Only track minimum dimensions upon first display
   sfxStages.onStageReady(stage, first = false) {
     sfxStages.setMinimumDimensions(stage)
-  }(JFXSystem.dispatcher)
+  }
   // Keep position/size upon hiding/showing
   sfxStages.keepBounds(stage)
 

@@ -317,7 +317,7 @@ class InstallController
 
     sfxStages.onStageReady(stage, first = false) {
       sfxStages.setMinimumDimensions(stage)
-    }(JFXSystem.dispatcher)
+    }
     stage.showAndWait()
 
     val action = controller.getAction

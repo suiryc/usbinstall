@@ -6,7 +6,6 @@ import javafx.geometry.Pos
 import javafx.scene.{Parent, Scene}
 import javafx.scene.control.ButtonType
 import javafx.scene.layout.{ColumnConstraints, GridPane, Priority, RowConstraints}
-import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.stage.Stages.StageLocation
 import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
@@ -51,7 +50,7 @@ object Stages {
       // does not play well (at least under Gnome). Default dimension
       // being good enough, don't change it.
       sfxStages.setLocation(stage, loc, setSize = false)
-    }(JFXSystem.dispatcher)
+    }
 
     stage.show()
     USBInstall.firstScene = false
