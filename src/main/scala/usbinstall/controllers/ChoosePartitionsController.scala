@@ -71,8 +71,8 @@ class ChoosePartitionsController
   private val partitionsStringProp = new SimpleObjectProperty(List[String]())
   updateAvailablePartitions()
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
-    def loadPopup(popup: Popup, file: String) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
+    def loadPopup(popup: Popup, file: String): Unit = {
       val loader = new FXMLLoader(getClass.getResource(file))
       val node = loader.load[Parent]()
       popup.getContent.add(node)
@@ -129,7 +129,7 @@ class ChoosePartitionsController
     updatePartitionsPane()
   }
 
-  private def updateRequirements() {
+  private def updateRequirements(): Unit = {
     val nok = profile.oses.foldLeft(false) { (nok, settings) =>
       var missingRequirements = List[String]()
 
@@ -171,7 +171,7 @@ class ChoosePartitionsController
     stepPane.next.disable = nok
   }
 
-  override def setStepPane(stepPane: StepPane) {
+  override def setStepPane(stepPane: StepPane): Unit = {
     this.stepPane = stepPane
 
     updateRequirements()
@@ -190,7 +190,7 @@ class ChoosePartitionsController
     }
   }
 
-  private def updatePartitionsPane() {
+  private def updatePartitionsPane(): Unit = {
     val partitions = new GridPane
     partitions.setPadding(new Insets(10))
     partitions.setHgap(5)
@@ -268,7 +268,7 @@ class ChoosePartitionsController
     osInstall.setAllowIndeterminate(true)
     attachDelayedPopup(installPopup, osInstall)
 
-    def partitionActionToUI(v: OSPartitionAction.Value) {
+    def partitionActionToUI(v: OSPartitionAction.Value): Unit = {
       v match {
         case OSPartitionAction.Copy =>
           osInstall.setIndeterminate(true)
@@ -308,7 +308,7 @@ class ChoosePartitionsController
     val osPartition = new ComboBox[String]
     osPartition.setPromptText("Partition")
     osPartition.getItems.setAll(partitionsStringProp.get:_*)
-    def selectPartition() {
+    def selectPartition(): Unit = {
       settings.partition.get.foreach { partition =>
         osPartition.getSelectionModel.select(partition.dev.toString)
       }
@@ -410,18 +410,18 @@ class ChoosePartitionsController
     nodes
   }
 
-  private def availablePartitions() =
+  private def availablePartitions(): List[DevicePartition] =
     devicePartitions.filter { partition =>
       val size = partition.size()
       !partition.mounted && (size > 1 * 1024 * 1024)
     }
 
-  private def updateAvailablePartitions() {
+  private def updateAvailablePartitions(): Unit = {
     partitions = availablePartitions()
     partitionsStringProp.set(partitions.map(_.dev.toString))
   }
 
-  private def selectPartitions(redo: Boolean) {
+  private def selectPartitions(redo: Boolean): Unit = {
     profile.oses.foldLeft(partitions) { (devicePartitions, os) =>
       // First reset settings for other devices
       if (os.partition.get.exists(_.device != device))
@@ -460,7 +460,7 @@ class ChoosePartitionsController
     ()
   }
 
-  def onAutoSelectPartitions(@unused event: ActionEvent) {
+  def onAutoSelectPartitions(@unused event: ActionEvent): Unit = {
     autoSelectPartitions.getParent.requestFocus()
     selectPartitions(redo = true)
   }
@@ -474,7 +474,7 @@ class ChoosePartitionsController
     else false
   }
 
-  private def showPopup(popup: Popup, node: Node) {
+  private def showPopup(popup: Popup, node: Node): Unit = {
     // Show popup if necessary
     if (!popup.isShowing || checkPopup(popup, node)) {
       // First display the popup right next to the targeted node. This is
@@ -491,7 +491,7 @@ class ChoosePartitionsController
     }
   }
 
-  private def attachDelayedPopup(popup: Popup, node: Node, onShow: => Unit = {}) {
+  private def attachDelayedPopup(popup: Popup, node: Node, onShow: => Unit = {}): Unit = {
     // Note: we could use ControlsFX PopOver, but we would face the same kind
     // of issues with popup (transparent background) stealing the mouse.
     // It would either require to:
@@ -528,12 +528,12 @@ class ChoosePartitionsController
     }
   }
 
-  private def detachDelayedPopup(node: Node) {
+  private def detachDelayedPopup(node: Node): Unit = {
     node.setOnMouseExited { _ => }
     node.setOnMouseEntered { _ => }
   }
 
-  private def updateInfoPopup(settings: OSSettings) {
+  private def updateInfoPopup(settings: OSSettings): Unit = {
     val root = infoPopup.getContent.get(0)
     val partitionInfo = root.lookup("#partitionInfo").asInstanceOf[Label]
     val syslinuxInfo = root.lookup("#syslinuxInfo").asInstanceOf[Label]

@@ -28,7 +28,7 @@ class OptionsController extends Initializable {
 
   protected val snapshot = new SettingsSnapshot()
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     logInstallThreshold.getItems.setAll(LogLevel.levels.toList:_*)
     componentInstallError.getItems.setAll(ErrorAction.values.toList:_*)
 
@@ -37,27 +37,27 @@ class OptionsController extends Initializable {
     update()
   }
 
-  protected def updateCancelButton() {
+  protected def updateCancelButton(): Unit = {
     cancelButton.setDisable(!snapshot.changed())
   }
 
-  protected def update() {
+  protected def update(): Unit = {
     logInstallThreshold.getSelectionModel.select(Settings.core.logInstallThreshold.get)
     componentInstallError.getSelectionModel.select(Settings.core.componentInstallError.get)
     updateCancelButton()
   }
 
-  def onLogInstallThreshold(@unused event: ActionEvent) {
+  def onLogInstallThreshold(@unused event: ActionEvent): Unit = {
     Settings.core.logInstallThreshold.set(logInstallThreshold.getValue)
     updateCancelButton()
   }
 
-  def onComponentInstallError(@unused event: ActionEvent) {
+  def onComponentInstallError(@unused event: ActionEvent): Unit = {
     Settings.core.componentInstallError.set(componentInstallError.getValue)
     updateCancelButton()
   }
 
-  def onReset(@unused event: ActionEvent) {
+  def onReset(@unused event: ActionEvent): Unit = {
     Settings.core.logInstallThreshold.reset()
     Settings.core.componentInstallError.reset()
     // Note: we need to update the pane; alternatively we could make persistent
@@ -66,12 +66,12 @@ class OptionsController extends Initializable {
     update()
   }
 
-  def onCancel(@unused event: ActionEvent) {
+  def onCancel(@unused event: ActionEvent): Unit = {
     snapshot.reset()
     update()
   }
 
-  def onDone(@unused event: ActionEvent) {
+  def onDone(@unused event: ActionEvent): Unit = {
     window.asInstanceOf[Stage].close()
   }
 

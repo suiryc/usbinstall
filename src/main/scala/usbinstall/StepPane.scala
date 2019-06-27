@@ -15,7 +15,7 @@ trait StepPane
   var subscriptionHolders: List[HasEventSubscriptions] =
     Nil
 
-  override def cancelSubscriptions() {
+  override def cancelSubscriptions(): Unit = {
     super.cancelSubscriptions()
     subscriptionHolders.foreach(_.cancelSubscriptions())
     subscriptionHolders = Nil
@@ -28,7 +28,7 @@ trait StepPane
 }
 
 trait UseStepPane {
-  def setStepPane(stepPane: StepPane)
+  def setStepPane(stepPane: StepPane): Unit
 }
 
 trait HasEventSubscriptions {
@@ -40,7 +40,7 @@ trait HasEventSubscriptions {
   protected var subscriptions: List[Cancellable] =
     Nil
 
-  def cancelSubscriptions() {
+  def cancelSubscriptions(): Unit = {
     subscriptions.foreach(_.cancel())
     subscriptions = Nil
   }

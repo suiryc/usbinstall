@@ -28,10 +28,10 @@ class StepChangeController
 
   protected var stepNext: AbstractStepButton = _
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
   }
 
-  override def setStepPane(stepPane: StepPane) {
+  override def setStepPane(stepPane: StepPane): Unit = {
     stepPrevious = stepPane.previous
     if (stepPrevious.visible) {
       previous.setText(stepPrevious.label)
@@ -60,11 +60,11 @@ class StepChangeController
     else next.setVisible(false)
   }
 
-  def onPrevious(@unused event: ActionEvent) {
+  def onPrevious(@unused event: ActionEvent): Unit = {
     stepPrevious.triggered()
   }
 
-  def onNext(@unused event: ActionEvent) {
+  def onNext(@unused event: ActionEvent): Unit = {
     stepNext.triggered()
   }
 

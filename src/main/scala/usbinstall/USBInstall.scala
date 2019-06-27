@@ -19,7 +19,7 @@ object USBInstall extends JFXLauncher[USBInstallApp] {
   // Set locale to english as application is not i18n
   Locale.setDefault(Locale.ENGLISH)
 
-  protected val loggerNames = List("usbinstall", "suiryc")
+  private val loggerNames = List("usbinstall", "suiryc")
 
   var stage: Stage = _
 
@@ -36,26 +36,26 @@ object USBInstall extends JFXLauncher[USBInstallApp] {
     appender
   }
 
-  private[usbinstall] def addAppender(appender: ProxyAppender) {
+  private[usbinstall] def addAppender(appender: ProxyAppender): Unit = {
     loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.addAppender(appender)
     }
   }
 
-  private[usbinstall] def detachAppender(appender: ProxyAppender) {
+  private[usbinstall] def detachAppender(appender: ProxyAppender): Unit = {
     loggerNames.foreach { name =>
       val logger = LoggerFactory.getLogger(name).asInstanceOf[Logger]
       logger.detachAppender(appender)
     }
   }
 
-  def addLogWriter(writer: LogLinePatternWriter) {
+  def addLogWriter(writer: LogLinePatternWriter): Unit = {
     appender.addWriter(writer)
     lineWriter.addWriter(writer)
   }
 
-  def removeLogWriter(writer: LogLinePatternWriter) {
+  def removeLogWriter(writer: LogLinePatternWriter): Unit = {
     appender.removeWriter(writer)
     lineWriter.removeWriter(writer)
   }
@@ -86,7 +86,7 @@ class USBInstallApp extends JFXApplication {
 
   import USBInstall._
 
-  override def start(primaryStage: Stage) {
+  override def start(primaryStage: Stage): Unit = {
     stage = primaryStage
 
     appender = newAppender(List(LogsStage.areaWriter))
@@ -102,7 +102,7 @@ class USBInstallApp extends JFXApplication {
     checkRequirements()
   }
 
-  def checkRequirements() {
+  def checkRequirements(): Unit = {
     try {
       val CommandResult(_, stdout, _) = Command.execute(Seq("id", "-u"))
       if (stdout != "0") {
@@ -141,7 +141,7 @@ class USBInstallApp extends JFXApplication {
     ()
   }
 
-  override def stop() {
+  override def stop(): Unit = {
     InstallSettings.pathTemp.delete(recursive = true)
     detachAppender(appender)
     SystemStreams.restore(systemStreams)

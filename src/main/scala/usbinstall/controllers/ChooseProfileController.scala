@@ -16,7 +16,7 @@ class ChooseProfileController
   @FXML
   protected var installationProfile: ComboBox[String] = _
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     val profileNames = Settings.profiles.keys.toList.sorted
     installationProfile.getItems.setAll(profileNames:_*)
     Settings.core.profile.opt.filter(profileNames.contains).foreach { profileName =>
@@ -26,7 +26,7 @@ class ChooseProfileController
     ()
   }
 
-  def onInstallationProfile(@unused event: ActionEvent) {
+  def onInstallationProfile(@unused event: ActionEvent): Unit = {
     val profileName = installationProfile.getValue
     Settings.core.profile.set(profileName)
     setProfile(profileName)

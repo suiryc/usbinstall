@@ -22,22 +22,22 @@ class LogsController extends Initializable {
 
   protected[usbinstall] var logArea: LogArea = _
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     logArea = LogArea(textArea)
     logThreshold.getItems.setAll(LogLevel.levels.toList:_*)
 
     update()
   }
 
-  def update() {
+  def update(): Unit = {
     logThreshold.getSelectionModel.select(Settings.core.logDebugThreshold.get)
   }
 
-  def onLogThreshold(@unused event: ActionEvent) {
+  def onLogThreshold(@unused event: ActionEvent): Unit = {
     Settings.core.logDebugThreshold.set(logThreshold.getValue)
   }
 
-  def onClear(@unused event: ActionEvent) {
+  def onClear(@unused event: ActionEvent): Unit = {
     logArea.clear()
   }
 

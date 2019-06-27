@@ -7,16 +7,16 @@ import javafx.scene.{Parent, Scene}
 import javafx.scene.control.ButtonType
 import javafx.scene.layout.{ColumnConstraints, GridPane, Priority, RowConstraints}
 import suiryc.scala.javafx.stage.Stages.StageLocation
-import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import usbinstall.controllers.{StepChangeController, ToolBarController}
 
 object Stages {
 
   object DialogButtons {
-    val Ok_Cancel = List(ButtonType.OK, ButtonType.CANCEL)
+    val Ok_Cancel: List[ButtonType] = List(ButtonType.OK, ButtonType.CANCEL)
   }
 
-  protected def changeScene(title: String, scene: Scene) {
+  protected def changeScene(title: String, scene: Scene): Unit = {
     val stage = USBInstall.stage
     // Try to keep the stage center at the same spot
     val center =
@@ -87,19 +87,19 @@ object Stages {
     new Scene(grid)
   }
 
-  def chooseProfile() {
+  def chooseProfile(): Unit = {
     changeScene("Choose profile", step(Panes.chooseProfile()))
   }
 
-  def chooseDevice() {
+  def chooseDevice(): Unit = {
     changeScene("Choose device", step(Panes.chooseDevice()))
   }
 
-  def choosePartitions() {
+  def choosePartitions(): Unit = {
     changeScene("Choose partitions", step(Panes.choosePartitions()))
   }
 
-  def install() {
+  def install(): Unit = {
     changeScene("Install", step(Panes.install()))
   }
 

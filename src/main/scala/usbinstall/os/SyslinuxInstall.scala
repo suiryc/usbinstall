@@ -237,19 +237,19 @@ MENU TITLE Misc tools
 
         val extension = imageName.toString.split('.').last.toLowerCase
         val memdiskKind = extension match {
-          case "iso" ⇒ Some("iso")
-          case "img" ⇒ Some("floppy")
-          case _     ⇒ None
+          case "iso" => Some("iso")
+          case "img" => Some("floppy")
+          case _     => None
         }
         memdiskKind match {
-          case Some(kind) ⇒
+          case Some(kind) =>
             sb.append(
               s"""    KERNEL modules/memdisk
                  |    INITRD /bootdisk/$imageName
                  |    APPEND $kind
                  |""".stripMargin)
 
-          case None ⇒
+          case None =>
             val actualName = if (extension == "bin") {
               // Files with "bin" extension are considered as boot sectors and
               // not executable code, so rename them.

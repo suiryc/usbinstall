@@ -27,13 +27,13 @@ class ChooseDeviceController extends Initializable {
   @FXML
   protected var size: Label = _
 
-  def resetDeviceInfo() {
+  def resetDeviceInfo(): Unit = {
     vendor.setText("")
     model.setText("")
     size.setText("")
   }
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     val profile = InstallSettings.profile.get.get
 
     refreshDevices()
@@ -73,12 +73,12 @@ class ChooseDeviceController extends Initializable {
     ()
   }
 
-  def onRefresh(@unused vent: ActionEvent) {
+  def onRefresh(@unused vent: ActionEvent): Unit = {
     Panes.refreshDevices()
     refreshDevices()
   }
 
-  private def refreshDevices() {
+  private def refreshDevices(): Unit = {
     devices.getItems.setAll(Panes.devices.keys.toList.map(_.toString).sorted:_*)
     // Note: we need to reset the setting, because assigning the same value
     // is not seen as a value change.

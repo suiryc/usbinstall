@@ -153,7 +153,7 @@ class OSSettings(
     case _: PartitionFilesystem.MS => "syslinux.cfg"
   }
 
-  def snapshot(snapshot: SettingsSnapshot) {
+  def snapshot(snapshot: SettingsSnapshot): Unit = {
     snapshot.add(
       SettingSnapshot(select),
       SettingSnapshot(partitionAction),

@@ -14,7 +14,7 @@ object Panes {
 
   var devices: Map[String, Device] = Map.empty
 
-  def refreshDevices() {
+  def refreshDevices(): Unit = {
     devices = (PathFinder("/") / "sys" / "block" * AllPassFileFilter).get().map { block =>
       Device(block)
     }.filter { device =>
@@ -58,10 +58,10 @@ object Panes {
     val root = loader.load[Parent]()
     val controller = loader.getController[ChooseProfileController]()
 
-    val pane = new AnchorPane with StepPane {
+    val pane: StepPane = new AnchorPane with StepPane {
       override val previous: NoButton.type = NoButton
 
-      override val next = new NextButton(this, {
+      override val next: NextButton = new NextButton(this, {
         InstallSettings.profile.get.exists { _ =>
           Stages.chooseDevice()
           true
@@ -80,13 +80,13 @@ object Panes {
 
   def chooseDevice(): (StepPane, Option[Any]) = {
     val root = FXMLLoader.load[Parent](getClass.getResource("/fxml/chooseDevice.fxml"))
-    val pane = new AnchorPane with StepPane {
+    val pane: StepPane = new AnchorPane with StepPane {
       override val previous = new PreviousButton(this, {
         Stages.chooseProfile()
         true
       })
 
-      override val next = new NextButton(this, {
+      override val next: NextButton = new NextButton(this, {
         InstallSettings.device.get.exists { _ =>
           Stages.choosePartitions()
           true
@@ -108,7 +108,7 @@ object Panes {
     val root = loader.load[Parent]()
     val controller = loader.getController[ChoosePartitionsController]()
 
-    val pane = new AnchorPane with StepPane {
+    val pane: StepPane = new AnchorPane with StepPane {
       subscriptionHolders ::= controller
 
       override val previous = new PreviousButton(this, {
@@ -116,7 +116,7 @@ object Panes {
         true
       })
 
-      override val next = new NextButton(this, {
+      override val next: NextButton = new NextButton(this, {
         Stages.install()
         true
       }) {
@@ -134,10 +134,10 @@ object Panes {
     val root = loader.load[Parent]()
     val controller = loader.getController[InstallController]()
 
-    val pane = new AnchorPane with StepPane {
+    val pane: StepPane = new AnchorPane with StepPane {
       subscriptionHolders ::= controller
 
-      override val previous = new PreviousButton(this, {
+      override val previous: PreviousButton = new PreviousButton(this, {
         Stages.choosePartitions()
         true
       }) {

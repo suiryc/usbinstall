@@ -12,7 +12,7 @@ class InstallUI(
   var osActivity: Option[LogArea]
 ) {
 
-  def setStep(value: Option[String]) {
+  def setStep(value: Option[String]): Unit = {
     jfxSchedule {
       step.setText(value.getOrElse(""))
     }
@@ -22,11 +22,11 @@ class InstallUI(
     }
   }
 
-  def setStep(value: String) {
+  def setStep(value: String): Unit = {
     setStep(Option(value))
   }
 
-  def setAction(value: Option[String]) {
+  def setAction(value: Option[String]): Unit = {
     jfxSchedule {
       action.setText(value.getOrElse(""))
     }
@@ -36,7 +36,7 @@ class InstallUI(
     }
   }
 
-  def setAction(value: String) {
+  def setAction(value: String): Unit = {
     setAction(Option(value))
   }
 
@@ -54,16 +54,16 @@ class InstallUI(
     }
   }
 
-  def none() {
+  def none(): Unit = {
     setStep(None)
     setAction(None)
   }
 
-  def activity(value: String) {
+  def activity(value: String): Unit = {
     osActivity.foreach(_.write(value))
   }
 
-  protected def jfxSchedule(action: => Unit) {
+  protected def jfxSchedule(action: => Unit): Unit = {
     JFXSystem.schedule(action, logReentrant = false)
   }
 

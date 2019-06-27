@@ -8,7 +8,7 @@ import javafx.scene.{Node, Parent, Scene}
 import javafx.scene.control.ToggleButton
 import javafx.stage.{Modality, Stage}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.unused
 import usbinstall.{HasEventSubscriptions, LogsStage}
 
@@ -23,7 +23,7 @@ class ToolBarController
 
   protected var paneController: Option[Any] = None
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     showLogs.setSelected(LogsStage.showing.get)
     // Note: subscriptions on external object need to be cancelled for
     // pane/scene to be GCed.
@@ -32,11 +32,11 @@ class ToolBarController
     }
   }
 
-  def setPaneController(controller: Option[Any]) {
+  def setPaneController(controller: Option[Any]): Unit = {
     paneController = controller
   }
 
-  def onOptions(event: ActionEvent) {
+  def onOptions(event: ActionEvent): Unit = {
     val loader = new FXMLLoader(getClass.getResource("/fxml/options.fxml"))
     val options = loader.load[Parent]()
 
@@ -52,7 +52,7 @@ class ToolBarController
     stage.showAndWait()
   }
 
-  def onShowLogs(@unused event: ActionEvent) {
+  def onShowLogs(@unused event: ActionEvent): Unit = {
     if (showLogs.isSelected) LogsStage.show()
     else LogsStage.hide()
   }

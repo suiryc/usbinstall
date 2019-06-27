@@ -13,7 +13,7 @@ import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
 import suiryc.scala.javafx.scene.control.{Dialogs, LogArea}
-import suiryc.scala.javafx.stage.{Stages ⇒ sfxStages}
+import suiryc.scala.javafx.stage.{Stages => sfxStages}
 import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.{HasEventSubscriptions, InstallUI, InstallationException, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSKind}
@@ -65,7 +65,7 @@ class InstallController
 
   private val profile = InstallSettings.profile.get.get
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
     activityLogArea = LogArea(activityArea)
     installLogWriter = activityLogArea.msgWriter
     installLogWriter.setPattern(Settings.core.logInstallPattern)
@@ -82,7 +82,7 @@ class InstallController
     }
   }
 
-  private def taskDone() {
+  private def taskDone(): Unit = {
     USBInstall.removeLogWriter(installLogWriter)
 
     // First enable 'Previous' and disable 'Cancel'
@@ -101,7 +101,7 @@ class InstallController
     }
   }
 
-  private def taskFailed(ex: Throwable) {
+  private def taskFailed(ex: Throwable): Unit = {
     val (log, notified) = ex match {
       case _: Cancelled =>
         // Activity area already notified
@@ -132,14 +132,14 @@ class InstallController
     taskDone()
   }
 
-  override def setStepPane(stepPane: StepPane) {
+  override def setStepPane(stepPane: StepPane): Unit = {
     this.stepPane = stepPane
 
     // Note: since we access stepPane upon completion, we need to set it first
     // and cannot start installing upon 'initialize'.
     // In case an error message needs to be shown immediately, it is best to
     // wait for this stage to be shown before starting installing.
-    def install() {
+    def install(): Unit = {
       import scala.concurrent.ExecutionContext.Implicits.global
       cancellableFuture = CancellableFuture(installTask)
       cancellableFuture.future.onComplete {
@@ -197,7 +197,7 @@ class InstallController
         ui.activity("Cancelled")
       }
 
-    def switchLogWriter(previous: ThresholdLogLinePatternWriter, next: ThresholdLogLinePatternWriter) {
+    def switchLogWriter(previous: ThresholdLogLinePatternWriter, next: ThresholdLogLinePatternWriter): Unit = {
       if (!(next eq previous)) {
         USBInstall.addLogWriter(next)
         USBInstall.removeLogWriter(previous)
@@ -243,7 +243,7 @@ class InstallController
             logPanes.getSelectionModel.select(osTab)
         }
 
-        def resetAppender() {
+        def resetAppender(): Unit = {
           switchLogWriter(osLogWriter, installLogWriter)
         }
 
@@ -327,7 +327,7 @@ class InstallController
     action
   }
 
-  def onCancel() {
+  def onCancel(): Unit = {
     // Note: we are in the JavaFX thread
     ui.activity("Cancelling ...")
     activityLogArea.write("Cancelling ...")
@@ -339,7 +339,7 @@ class InstallController
     }
   }
 
-  def onDone() {
+  def onDone(): Unit = {
     import javafx.stage.WindowEvent
     // Note: we are in the JavaFX thread
     USBInstall.stage.fireEvent(new WindowEvent(null, WindowEvent.WINDOW_CLOSE_REQUEST))

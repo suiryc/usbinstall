@@ -39,7 +39,7 @@ object Settings {
     try {
       f
     } catch {
-      case ex: Exception ⇒
+      case ex: Exception =>
         Dialogs.warning(
           owner = Some(USBInstall.stage),
           title = Some("Invalid profile"),
@@ -79,7 +79,7 @@ object Settings {
   /** Profiles settings. */
   val profiles: Map[String, ProfileSettings] =
     profilesConfig.flatMap {
-      case (name, file, profileConfig) ⇒
+      case (name, file, profileConfig) =>
         processProfile(file) {
           val settings = new ProfileSettings(
             core.settings,
@@ -90,7 +90,7 @@ object Settings {
         }
     }.toMap
 
-  def load() {
+  def load(): Unit = {
     // Settings are automatically loaded by accessing this object for the
     // first time.
   }
@@ -113,9 +113,9 @@ class Settings(path: Path) extends BaseConfigImplicits {
        |  persistence = false
        |}
     """.stripMargin
-  private val fallback = profilesConfig.foldLeft(ConfigFactory.empty) { case (c1, (name, _, profileConfig)) ⇒
+  private val fallback = profilesConfig.foldLeft(ConfigFactory.empty) { case (c1, (name, _, profileConfig)) =>
     import BaseConfig._
-    profileConfig.getConfigList("oses").asScala.toList.foldLeft(c1) { case (c2, osConfig) ⇒
+    profileConfig.getConfigList("oses").asScala.toList.foldLeft(c1) { case (c2, osConfig) =>
       val kind = osConfig.getString("kind")
       val label = osConfig.option[String]("label", osConfig).getOrElse(kind)
       val path = BaseConfig.joinPath(prefix ++ Seq("profiles", name, "oses", label))
@@ -142,7 +142,7 @@ class Settings(path: Path) extends BaseConfigImplicits {
   val profile: ConfigEntry[String] =
     ConfigEntry.from(settings, prefix ++ Seq("installation", "profile"))
 
-  def snapshot(snapshot: SettingsSnapshot) {
+  def snapshot(snapshot: SettingsSnapshot): Unit = {
     snapshot.add(
       SettingSnapshot(logDebugThreshold),
       SettingSnapshot(logInstallThreshold),

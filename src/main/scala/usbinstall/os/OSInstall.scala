@@ -105,7 +105,7 @@ class OSInstall(
    * @param targetType target filesystem kind
    * @param label label to log as UI action
    */
-  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFilesystem.Value, label: String) {
+  protected def copy(finder: PathFinder, sourceRoot: Path, targetRoot: Path, targetType: PartitionFilesystem.Value, label: String): Unit = {
     ui.action(label) {
       finder.get().toList.sortBy(_.getPath).foreach { file =>
         val pathFile = file.toAbsolutePath
@@ -144,7 +144,7 @@ class OSInstall(
    * @param targetRoot target root
    * @param mode copied files mode
    */
-  protected def copy(sources: List[Path], sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+  protected def copy(sources: List[Path], sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]): Unit = {
     for (source <- sources) {
       copy(source, sourceRoot, targetRoot, mode)
     }
@@ -158,7 +158,7 @@ class OSInstall(
    * @param target target file
    * @param mode copied file mode
    */
-  protected def duplicate(source: Path, sourceRoot: Path, target: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+  protected def duplicate(source: Path, sourceRoot: Path, target: Path, mode: Option[java.util.Set[PosixFilePermission]]): Unit = {
     checkCancelled()
     if (target.exists) {
       logger.warn(s"Path[${sourceRoot.relativize(source)}] already processed, skipping")
@@ -183,12 +183,12 @@ class OSInstall(
    * @param targetRoot target root
    * @param mode copied file mode
    */
-  protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]) {
+  protected def copy(source: Path, sourceRoot: Path, targetRoot: Path, mode: Option[java.util.Set[PosixFilePermission]]): Unit = {
     val target = targetRoot.resolve(source.getFileName)
     duplicate(source, sourceRoot, target, mode)
   }
 
-  protected def renameSyslinux(targetRoot: Path) {
+  protected def renameSyslinux(targetRoot: Path): Unit = {
     checkCancelled()
     val syslinuxFile = getSyslinuxFile(targetRoot)
     if (!syslinuxFile.exists) {
@@ -270,7 +270,7 @@ class OSInstall(
     settings.efiBootloader
   }
 
-  def searchEFI(partMount: PartitionMount) {
+  def searchEFI(partMount: PartitionMount): Unit = {
     if (settings.efiBootloader.isEmpty) {
       ui.action(s"Search EFI path") {
         checkCancelled()
@@ -356,7 +356,7 @@ object OSInstall
     }
   }
 
-  private def preparePartition(os: OSInstall, part: DevicePartition) = {
+  private def preparePartition(os: OSInstall, part: DevicePartition): Either[Exception, String] = {
     val kind = os.settings.partitionFilesystem
     val label = os.settings.partitionLabel
 
@@ -425,7 +425,7 @@ w
             (Seq("e2label", part.dev.toString, label), None)
 
           case PartitionFilesystem.fat16 | PartitionFilesystem.fat32 =>
-            def commandEnvf(env: java.util.Map[String, String]) {
+            def commandEnvf(env: java.util.Map[String, String]): Unit = {
               env.put("MTOOLS_SKIP_CHECK", "1")
               ()
             }
@@ -548,7 +548,7 @@ w
     }
   }
 
-  private def deleteContent(root: Path) {
+  private def deleteContent(root: Path): Unit = {
     if (!root.toFile.delete(true, true)) {
       // Some files may have the 'immutable' attribute
       val finder = PathFinder(root).***

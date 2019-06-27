@@ -21,15 +21,15 @@ class InstallFailureController extends Initializable {
 
   def getAsDefault: Boolean = applyDefault.isSelected
 
-  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle) {
+  override def initialize(fxmlFileLocation: URL, resources: ResourceBundle): Unit = {
   }
 
-  def onStop(@unused event: ActionEvent) {
+  def onStop(@unused event: ActionEvent): Unit = {
     action = ErrorAction.Stop
     window.asInstanceOf[Stage].close()
   }
 
-  def onContinue(@unused event: ActionEvent) {
+  def onContinue(@unused event: ActionEvent): Unit = {
     action = ErrorAction.Skip
     window.asInstanceOf[Stage].close()
   }
