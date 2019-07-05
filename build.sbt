@@ -28,19 +28,12 @@ lazy val usbinstall = project.in(file(".")).
       "-feature",
       "-unchecked",
       "-Xfatal-warnings",
-      "-Xlint",
-      "-Yno-adapted-args",
-      "-Ywarn-numeric-widen",
-      "-Ywarn-value-discard",
-      "-Ywarn-inaccessible",
-      "-Ywarn-infer-any",
+      "-Xlint:_",
       "-Ywarn-dead-code",
-      "-Ywarn-nullary-override",
-      "-Ywarn-nullary-unit",
-      "-Ywarn-unused",
-      "-Ywarn-unused-import"
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused:_",
+      "-Ywarn-value-discard"
     ),
-    scalacOptions in (Compile, doc) ++= Seq("-diagrams", "-implicits"),
     resolvers += Resolver.mavenLocal,
 
     libraryDependencies ++= Seq(
