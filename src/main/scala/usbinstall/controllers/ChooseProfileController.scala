@@ -5,7 +5,7 @@ import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
-import suiryc.scala.unused
+import scala.annotation.unused
 import usbinstall.settings.{InstallSettings, Settings}
 
 

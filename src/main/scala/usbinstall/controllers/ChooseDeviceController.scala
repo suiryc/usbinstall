@@ -5,10 +5,10 @@ import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Label, ListView}
+import scala.annotation.unused
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.Units
-import suiryc.scala.unused
 import usbinstall.settings.InstallSettings
 import usbinstall.{Panes, USBInstall}
 

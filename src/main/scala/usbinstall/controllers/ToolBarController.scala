@@ -7,9 +7,9 @@ import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.scene.{Node, Parent, Scene}
 import javafx.scene.control.ToggleButton
 import javafx.stage.{Modality, Stage}
+import scala.annotation.unused
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.stage.{Stages => sfxStages}
-import suiryc.scala.unused
 import usbinstall.{HasEventSubscriptions, LogsStage}
 
 

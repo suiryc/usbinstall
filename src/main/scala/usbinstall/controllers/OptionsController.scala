@@ -6,9 +6,9 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.{Button, ComboBox}
 import javafx.stage.{Stage, Window}
+import scala.annotation.unused
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.SettingsSnapshot
-import suiryc.scala.unused
 import usbinstall.settings.{ErrorAction, Settings}
 
 

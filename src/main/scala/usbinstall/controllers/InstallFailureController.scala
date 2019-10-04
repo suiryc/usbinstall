@@ -6,7 +6,7 @@ import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.CheckBox
 import javafx.stage.Stage
-import suiryc.scala.unused
+import scala.annotation.unused
 import usbinstall.settings.ErrorAction
 
 

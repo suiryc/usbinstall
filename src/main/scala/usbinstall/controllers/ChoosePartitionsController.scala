@@ -12,6 +12,7 @@ import javafx.scene.control._
 import javafx.scene.layout.{AnchorPane, ColumnConstraints, GridPane, RowConstraints}
 import javafx.scene.paint.Color
 import javafx.stage.Popup
+import scala.annotation.unused
 import suiryc.scala.javafx.beans.value.RichObservableValue
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
@@ -19,7 +20,6 @@ import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.misc.{RichOptional, Units}
 import suiryc.scala.sys.CommandResult
 import suiryc.scala.sys.linux.DevicePartition
-import suiryc.scala.unused
 import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
 import usbinstall.os._
 import usbinstall.settings.InstallSettings

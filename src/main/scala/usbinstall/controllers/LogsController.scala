@@ -6,9 +6,9 @@ import javafx.scene.control.TextArea
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.ComboBox
+import scala.annotation.unused
 import suiryc.scala.javafx.scene.control.LogArea
 import suiryc.scala.log.LogLevel
-import suiryc.scala.unused
 import usbinstall.settings.Settings
 
 

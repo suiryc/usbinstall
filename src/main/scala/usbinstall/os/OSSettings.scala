@@ -13,14 +13,7 @@ import usbinstall.settings.EFISettings
 
 object OSKind extends Enumeration {
 
-  val Windows = Value
-  val Syslinux = Value
-  val Generic = Value
-  val SystemRescueCD = Value
-  val Ubuntu = Value
-  val Fedora = Value
-  val CentOS = Value
-  val ArchLinux = Value
+  val Windows, Syslinux, Generic, SystemRescueCD, Ubuntu, Fedora, CentOS, ArchLinux = Value
 
   def efiIcon(v: Value): String = v match {
     case Windows => "os_win.png"
@@ -37,9 +30,7 @@ object OSKind extends Enumeration {
 }
 
 object OSPartitionAction extends Enumeration {
-  val None = Value
-  val Format = Value
-  val Copy = Value
+  val None, Format, Copy = Value
 }
 
 class SyslinuxEntry(
@@ -48,8 +39,7 @@ class SyslinuxEntry(
 )
 
 object SyslinuxComponentKind extends Enumeration {
-  val Image = Value
-  val Grub4DOS = Value
+  val Image, Grub4DOS = Value
 }
 
 class SyslinuxComponent(

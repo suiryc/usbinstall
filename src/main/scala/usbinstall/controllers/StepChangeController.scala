@@ -5,8 +5,8 @@ import java.util.ResourceBundle
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, Initializable}
 import javafx.scene.control.Button
+import scala.annotation.unused
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.unused
 import usbinstall.{AbstractStepButton, StepPane, UseStepPane}
 
 

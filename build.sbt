@@ -7,7 +7,7 @@ lazy val versions = Map[String, String](
   "javafx"        -> "12.0.1",
   "logback"       -> "1.2.3",
   "monix"         -> "3.0.0",
-  "scala"         -> "2.12.10",
+  "scala"         -> "2.13.1",
   "scala-logging" -> "3.9.2",
   "slf4j"         -> "1.7.28",
   "suiryc-scala"  -> "0.0.4-SNAPSHOT",
@@ -23,11 +23,10 @@ lazy val usbinstall = project.in(file(".")).
     scalaVersion := versions("scala"),
 
     scalacOptions ++= Seq(
-      "-deprecation",
       "-encoding", "UTF-8",
       "-feature",
       "-unchecked",
-      "-Xfatal-warnings",
+      "-Werror",
       "-Xlint:_",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",

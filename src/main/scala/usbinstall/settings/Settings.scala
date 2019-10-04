@@ -3,7 +3,7 @@ package usbinstall.settings
 import com.typesafe.config.{Config, ConfigFactory}
 import java.io.File
 import java.nio.file.Path
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.matching.Regex
 import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
@@ -261,7 +261,5 @@ class SyslinuxSettings(profile: ProfileSettings, config: Config) extends BaseCon
 
 
 object ErrorAction extends Enumeration {
-  val Ask = Value
-  val Stop = Value
-  val Skip = Value
+  val Ask, Stop, Skip = Value
 }
