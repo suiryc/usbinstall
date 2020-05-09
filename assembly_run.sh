@@ -30,5 +30,5 @@ export HOME=${userHome}
 # Make sure we have access to ISOs
 $(mount | grep -q win_d) || mount /mnt/win_d
 
-java -Dfile.encoding=UTF-8 -classpath src/main/resources:target/scala-2.12/usbinstall-assembly-0.0.3-SNAPSHOT.jar usbinstall.USBInstall
+java -Dfile.encoding=UTF-8 -classpath src/main/resources:target/scala-2.13/usbinstall-assembly-0.0.3-SNAPSHOT.jar usbinstall.USBInstall
 
