@@ -12,7 +12,7 @@ import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
-import suiryc.scala.settings.{BaseConfig, BaseConfigImplicits, ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
+import suiryc.scala.settings.{BaseConfig, ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.misc.{Units, Util}
 import usbinstall.USBInstall
 import usbinstall.os.{OSKind, OSSettings, PartitionFilesystem, SyslinuxComponent, SyslinuxComponentKind}
@@ -97,7 +97,7 @@ object Settings {
 
 }
 
-class Settings(path: Path) extends BaseConfigImplicits {
+class Settings(path: Path) {
 
   import Settings._
 
