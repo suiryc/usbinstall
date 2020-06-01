@@ -8,7 +8,7 @@ idUser=
 # Restart program as root giving current user/group as parameter
 if [ $(id -u) -ne 0 ]
 then
-    sbt assembly
+    sbt assembly || exit $?
     exec sudo $0 "##sudoed##" "$(id -un)" "$(id -gn)" "$@"
 fi
 
