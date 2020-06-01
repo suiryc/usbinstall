@@ -1,12 +1,13 @@
 package usbinstall.os
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
 import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
+import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.settings.{BaseConfig, ConfigEntry, PortableSettings}
 import suiryc.scala.sys.linux.{Device, DevicePartition}
-import usbinstall.settings.{EFISettings, ProfileSettings}
+import usbinstall.settings.{EFISettings, InstallSettings, ProfileSettings}
 
 
 object OSKind extends Enumeration {
@@ -160,6 +161,8 @@ class PartitionSettings(
   protected val number: ConfigEntry[Int] =
     ConfigEntry.from(settings, prefix ++ Seq("number"))
 
+  protected var perDevice: Map[Device, ConfigEntry[Int]] = Map.empty
+
   // Notes:
   // We keep an ObjectProperty because external classes do need to listen to
   // values changes.
@@ -179,22 +182,63 @@ class PartitionSettings(
       // parse the ending number.
       val idx = path.reverse.takeWhile(_.isDigit).reverse.toInt
       number.set(idx)
+      // We also need to set the partition number for this device.
+      deviceOpt.foreach { device =>
+        set(DevicePartition.option(device, idx))
+      }
+    }
+  }
+
+  protected def deviceOpt: Option[Device] =
+    profileSettings.device.dev.opt.map(Device.apply)
+
+  protected def refresh(): Unit = {
+    for {
+      device <- deviceOpt
+      idx <- getNumber(device).opt
+    } {
+      part.set(DevicePartition.option(device, idx))
     }
   }
 
   // Initialize PartitionDevice if possible.
-  number.opt.foreach { idx =>
-    profileSettings.device.dev.opt.foreach { path =>
-      val device = Device(Paths.get(path))
-      set(DevicePartition.option(device, idx))
+  refresh()
+
+  // When selected device is changed, refresh our DevicePartition.
+  InstallSettings.device.listen { v =>
+    // Unsetting device is ignored.
+    if (v.nonEmpty) {
+      // Change only matters for our profile.
+      if (InstallSettings.profile.get.exists(_.profileName == profileSettings.profileName)) {
+        refresh()
+      }
     }
+  }
+
+  protected def getNumber(device: Device): ConfigEntry[Int] = {
+    perDevice.getOrElse(device, {
+      device.uuid.toOption.map { uuid =>
+        val v = ConfigEntry.from[Int](settings, prefix ++ Seq(uuid))
+        perDevice += (device -> v)
+        // If the partition for this device is not yet known, initialize it
+        // to the latest chosen partition.
+        if (v.opt.isEmpty) number.opt.foreach(v.set)
+        v
+      }.getOrElse(number)
+    })
+  }
+
+  protected def getNumber(device: Option[Device]): ConfigEntry[Int] = {
+    device.map(getNumber).getOrElse(number)
   }
 
   def optPart: Option[DevicePartition] = part.get
 
   def set(opt: Option[DevicePartition]): Unit = {
-    opt.fold(number.reset()) { partition =>
-      number.set(partition.partNumber)
+    // Save the per-device and general partition number.
+    val values = List(number, getNumber(deviceOpt))
+    opt.fold(values.foreach(_.reset())) { partition =>
+      values.foreach(_.set(partition.partNumber))
     }
     part.set(opt)
   }
