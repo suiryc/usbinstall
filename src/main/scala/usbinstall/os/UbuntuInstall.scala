@@ -50,7 +50,7 @@ class UbuntuInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
+      val uuid = settings.partition.optPart.get.uuid.fold(throw _, v => v)
 
       // Update 'casper'
       targetRoot.resolve(Paths.get(".disk", "casper-uuid-override")).toFile.write(s"$uuid\n")

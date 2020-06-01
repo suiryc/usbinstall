@@ -215,7 +215,7 @@ class OSInstall(
   protected val renameSyslinuxRegexReplacer = RegexReplacer("(?i)/isolinux/", "/syslinux/")
 
   protected def fixGrubSearch(targetRoot: Path): Unit = {
-    val uuid = settings.partition.get.get.uuid.fold(throw _, identity)
+    val uuid = settings.partition.optPart.get.uuid.fold(throw _, identity)
 
     val pfroot = (PathFinder(targetRoot) * "(?i)boot".r) ++ (PathFinder(targetRoot) * "(?i)efi".r)
     val confs = pfroot ** ("(?i).*\\.cfg".r | "(?i).*\\.conf".r)
@@ -330,7 +330,7 @@ object OSInstall
     } else {
       None
     }
-    val part = os.settings.partition.get.map { partition =>
+    val part = os.settings.partition.optPart.map { partition =>
       new PartitionMount(partition.dev, InstallSettings.pathMountPartition)
     }
 
@@ -474,7 +474,7 @@ w
     }
 
     val grubConfigFile = InstallSettings.pathTemp.resolve("grub_efi.conf")
-    val uuid = os.settings.partition.get.get.uuid.fold(throw _, identity)
+    val uuid = os.settings.partition.optPart.get.uuid.fold(throw _, identity)
     val grubConfig = """
       |# Use modules from memdisk first
       |# Usually we later *DO NOT* want to reset it, and keep on using *our* modules
@@ -511,7 +511,7 @@ w
   }
 
   private def installBootloader(profile: ProfileSettings, os: OSInstall, mount: PartitionMount): Unit = {
-    for (part <- os.settings.partition.get) {
+    for (part <- os.settings.partition.optPart) {
       // NTFS boot sector needs to be written.
       // Was apparently done in earlier versions of mkfs.ntfs ?
       // Can be explicitly done with ms-sys.
@@ -586,7 +586,7 @@ w
       }
 
       // prepare (format, set type and label) partition
-      os.settings.partition.get.foreach { part =>
+      os.settings.partition.optPart.foreach { part =>
         os.checkCancelled()
         preparePartition(os, part).orThrow
       }

@@ -4,11 +4,9 @@ import java.nio.file.{Path, Paths}
 import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
-import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.settings.{ConfigEntry, PortableSettings}
-import suiryc.scala.sys.linux.DevicePartition
-import usbinstall.Panes
-import usbinstall.settings.EFISettings
+import suiryc.scala.settings.{BaseConfig, ConfigEntry, PortableSettings}
+import suiryc.scala.sys.linux.{Device, DevicePartition}
+import usbinstall.settings.{EFISettings, ProfileSettings}
 
 
 object OSKind extends Enumeration {
@@ -66,6 +64,7 @@ object PartitionFilesystem extends Enumeration {
 class OSSettings(
   settings: PortableSettings,
   prefix: Seq[String],
+  profileSettings: ProfileSettings,
   val kind: OSKind.Value,
   val label: String,
   val size: Long,
@@ -100,25 +99,7 @@ class OSSettings(
   val persistent: ConfigEntry[Boolean] =
     ConfigEntry.from[Boolean](settings, prefix ++ Seq(KEY_SETTINGS, "persistence"))
 
-  val partition: ObjectProperty[Option[DevicePartition]] =
-    new SimpleObjectProperty(getDevicePartition(partitionSetting.opt))
-
-  protected def getDevicePartition(v: Option[String]): Option[DevicePartition] =
-    v.flatMap { dev =>
-      val path = Paths.get(dev)
-      if (path.toFile.exists) {
-        DevicePartition.option(path).flatMap { initial =>
-          Panes.devices.get(initial.device.dev.toString).flatMap { device =>
-            device.partitions.find(_.partNumber == initial.partNumber)
-          }
-        }
-      }
-      else None
-    }
-
-  partition.listen { newValue =>
-    partitionSetting.set(newValue.map(_.dev.toString).orNull)
-  }
+  val partition = new PartitionSettings(settings, prefix ++ Seq(KEY_SETTINGS, "partition"), profileSettings)
 
   val iso: ObjectProperty[Option[Path]] =
     new SimpleObjectProperty(None)
@@ -153,7 +134,69 @@ class OSSettings(
     }, bootloader=${
       bootloader.get
     }, partition=${
-      partition.get.map(_.dev)
+      partition.optPart.map(_.dev)
     })"
+
+}
+
+class PartitionSettings(
+  settings: PortableSettings,
+  prefix: Seq[String],
+  profileSettings: ProfileSettings
+) {
+
+  import BaseConfig._
+
+  // Legacy settings only used the partition path.
+  // Now we remember the partition number instead, and build the path
+  // relatively to the profile selected device.
+  private lazy val legacyPath_dev = BaseConfig.joinPath(prefix)
+  private lazy val legacy_dev: Option[String] = try {
+    settings.config.option[String](legacyPath_dev)
+  } catch {
+    case _: Exception => None
+  }
+
+  protected val number: ConfigEntry[Int] =
+    ConfigEntry.from(settings, prefix ++ Seq("number"))
+
+  // Notes:
+  // We keep an ObjectProperty because external classes do need to listen to
+  // values changes.
+  // However, we expose functions to get/set the DevicePartition to prevent
+  // other direct accesses (especially setting value) so that we can manage
+  // other actual settings more easily.
+  val part: ObjectProperty[Option[DevicePartition]] = new SimpleObjectProperty(None)
+
+  // Migrate legacy setting.
+  if (number.opt.isEmpty) {
+    legacy_dev.foreach { path =>
+      // Properly remove legacy path, even if not strictly necessary because
+      // the new paths will do it as a side effect.
+      settings.withoutPath(legacyPath_dev)
+      // We could try to determine the actual DevicePartition from the
+      // supposedly selected Device. But the easiest solution is to
+      // parse the ending number.
+      val idx = path.reverse.takeWhile(_.isDigit).reverse.toInt
+      number.set(idx)
+    }
+  }
+
+  // Initialize PartitionDevice if possible.
+  number.opt.foreach { idx =>
+    profileSettings.device.dev.opt.foreach { path =>
+      val device = Device(Paths.get(path))
+      set(DevicePartition.option(device, idx))
+    }
+  }
+
+  def optPart: Option[DevicePartition] = part.get
+
+  def set(opt: Option[DevicePartition]): Unit = {
+    opt.fold(number.reset()) { partition =>
+      number.set(partition.partNumber)
+    }
+    part.set(opt)
+  }
 
 }

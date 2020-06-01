@@ -21,7 +21,7 @@ class ArchLinuxInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val uuid = settings.partition.get.get.uuid.fold(throw _, v => v)
+      val uuid = settings.partition.optPart.get.uuid.fold(throw _, v => v)
 
       val confs = PathFinder(targetRoot) / (("arch" / "boot" / "syslinux") ++ ("loader" / "entries")) * (".*\\.cfg".r | ".*\\.conf".r)
       val regex = new Regex("""(?i)([ \t]*(?:options|kernel|append)[ \t]+[^\r\n]*[ \t]+)archisolabel=[^\s]+""", "pre")

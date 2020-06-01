@@ -66,7 +66,7 @@ class ChoosePartitionsController
 
   private val profile = InstallSettings.profile.get.get
   private val device = InstallSettings.device.get.get
-  private val devicePartitions = device.partitions.toList sortBy(_.partNumber)
+  private val devicePartitions = device.partitions.toList.sortBy(_.partNumber)
   private var partitions = List[DevicePartition]()
   private val partitionsStringProp = new SimpleObjectProperty(List[String]())
   updateAvailablePartitions()
@@ -135,7 +135,7 @@ class ChoosePartitionsController
 
       if (settings.isSelected) {
         if (settings.isPartitionInstall) {
-          if (settings.partition.get.isEmpty) {
+          if (settings.partition.optPart.isEmpty) {
             missingRequirements :+= "Installation partition no set"
           }
           if (settings.isoPattern.isDefined && settings.iso.get.isEmpty) {
@@ -182,7 +182,7 @@ class ChoosePartitionsController
         settings.partitionAction,
         settings.setup,
         settings.bootloader,
-        settings.partition,
+        settings.partition.part,
         settings.iso
       ) {
         updateRequirements()
@@ -309,36 +309,32 @@ class ChoosePartitionsController
     osPartition.setPromptText("Partition")
     osPartition.getItems.setAll(partitionsStringProp.get:_*)
     def selectPartition(): Unit = {
-      settings.partition.get.foreach { partition =>
+      settings.partition.optPart.foreach { partition =>
         osPartition.getSelectionModel.select(partition.dev.toString)
       }
     }
-    selectPartition()
     partitionsStringProp.listen { newValue =>
       osPartition.getItems.setAll(newValue:_*)
       selectPartition()
     }
-    settings.partition.get.foreach { partition =>
-      osPartition.getSelectionModel.select(partition.dev.toString)
-    }
+    selectPartition()
     osPartition.getSelectionModel.selectedItemProperty.listen { selected =>
       // Note: first change those settings, to shorten change cyclic
       // propagation when swapping partition with another OS.
       partitions.find(_.dev.toString == selected).foreach { partition =>
-        val current = settings.partition.get
+        val current = settings.partition.optPart
         settings.partition.set(Some(partition))
 
         // Swap partitions if previously selected for other OS
-        profile.oses.filterNot(_ == settings).find(_.partition.get.contains(partition)).foreach { os =>
+        profile.oses.filterNot(_ == settings).find(_.partition.optPart.contains(partition)).foreach { os =>
           os.partition.set(current)
         }
       }
     }
-    subscriptions ::= settings.partition.listen { newValue =>
-      settings.partition.get.fold(osPartition.getSelectionModel.select(-1)) { partition =>
+    subscriptions ::= settings.partition.part.listen { _ =>
+      settings.partition.optPart.fold(osPartition.getSelectionModel.select(-1)) { partition =>
         osPartition.getSelectionModel.select(partition.dev.toString)
       }
-      settings.partition.set(newValue)
     }
 
     // Column: image combobox
@@ -424,7 +420,7 @@ class ChoosePartitionsController
   private def selectPartitions(redo: Boolean): Unit = {
     profile.oses.foldLeft(partitions) { (devicePartitions, os) =>
       // First reset settings for other devices
-      if (os.partition.get.exists(_.device != device))
+      if (os.partition.optPart.exists(_.device != device))
         os.partition.set(None)
 
       // What we want is to the select the best fitting partition when either:
@@ -439,7 +435,7 @@ class ChoosePartitionsController
       // reserved for this OS until we redo the selection or an OS configured
       // earlier in the list needs to select a partition and finds this one as
       // fitting.
-      if (redo || !os.partition.get.exists(devicePartitions.contains(_)))
+      if (redo || !os.partition.optPart.exists(devicePartitions.contains(_)))
         os.partition.set {
           if (devicePartitions.isEmpty || !os.isSelected) {
             None
@@ -455,7 +451,7 @@ class ChoosePartitionsController
         }
 
       import RichOptional._
-      devicePartitions.optional[DevicePartition](os.partition.get, (parts, part) => parts.filterNot(_ == part))
+      devicePartitions.optional[DevicePartition](os.partition.optPart, (parts, part) => parts.filterNot(_ == part))
     }
     ()
   }

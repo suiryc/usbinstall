@@ -69,7 +69,7 @@ class SyslinuxInstall(
     val profile = InstallSettings.profile.get.get
     val syslinuxVersion = settings.syslinuxVersion.get
     val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
-    val partition = settings.partition.get.get
+    val partition = settings.partition.optPart.get
     val device = partition.device
     val devicePath = device.dev
     val targetRoot = partMount.to.toAbsolutePath
@@ -117,7 +117,7 @@ class SyslinuxInstall(
     for {
       other <- others if other.kind == OSKind.Windows
       _ <- other.syslinuxLabel
-      otherPartition <- other.partition.get if (otherPartition.partNumber > 1) && (otherPartition.partNumber < 5)
+      otherPartition <- other.partition.optPart if (otherPartition.partNumber > 1) && (otherPartition.partNumber < 5)
     } {
       try {
         ui.action(s"Backup MBR for partition ${otherPartition.partNumber}") {
@@ -175,7 +175,7 @@ MENU DEFAULT $label
       for {
         other <- others
         syslinuxLabel <- other.syslinuxLabel
-        otherPartition <- other.partition.get
+        otherPartition <- other.partition.optPart
       } {
         sb.append(
 s"""
@@ -396,7 +396,7 @@ scanfor manual
       searchEFI(partMount)
       for {
         os <- profile.oses if os.isSelected
-        _ <- os.partition.get
+        _ <- os.partition.optPart
         efiBootloader <- os.efiBootloader
       } {
         sb.append(

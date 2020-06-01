@@ -171,6 +171,7 @@ class ProfileSettings(
     new OSSettings(
       settings,
       prefix ++ Seq("oses", label),
+      this,
       OSKind.byName(kind),
       label,
       Units.storage.fromHumanReadable(config.getString("size")),
@@ -227,9 +228,8 @@ class DeviceSettings(settings: PortableSettings, prefix: Seq[String]) {
   // Migrate legacy setting to new path.
   if (dev.opt.isEmpty) {
     legacy_dev.foreach { path =>
-      // Belt and suspenders: even though we now create subpaths, which actually
-      // already remove the legacy parent path value as a side effect, better
-      // first remove the legacy path.
+      // Properly remove legacy path, even if not strictly necessary because
+      // the new paths will do it as a side effect.
       settings.withoutPath(legacyPath_dev)
       dev.set(path)
       // Also set the UUID right now if possible.
@@ -242,11 +242,7 @@ class DeviceSettings(settings: PortableSettings, prefix: Seq[String]) {
 
   def set(device: Device): Unit = {
     dev.set(device.dev.toString)
-    device.uuid.toOption.fold {
-      uuid.reset()
-    } {
-      uuid.set
-    }
+    device.uuid.toOption.fold(uuid.reset())(uuid.set)
   }
 
 }

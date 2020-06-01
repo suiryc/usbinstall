@@ -20,7 +20,7 @@ class RedHatInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val partition = settings.partition.get.get
+      val partition = settings.partition.optPart.get
       val uuid = partition.uuid.fold(throw _, v => v)
       val fsType = partition.fsType.fold(throw _, v => v)
       val optuuid = s"UUID=$uuid"

@@ -21,7 +21,7 @@ class SystemRescueCDInstall(
     renameSyslinux(targetRoot)
 
     ui.action("Prepare syslinux") {
-      val uuid = settings.partition.get.get.uuid.fold(throw _, identity)
+      val uuid = settings.partition.optPart.get.uuid.fold(throw _, identity)
       val confs = PathFinder(targetRoot) / (("sysresccd" / "boot" / "syslinux") ++ ("boot" / "grub")) * (".*\\.cfg".r | ".*\\.conf".r)
       val regex = new Regex("""(?i)([ \t]*(?:linux|options|kernel|append)[ \t]+[^\r\n]*[ \t]+)archisolabel=[^\s]+""", "pre")
       val regexReplacer = RegexReplacer(regex, (m: Regex.Match) =>
