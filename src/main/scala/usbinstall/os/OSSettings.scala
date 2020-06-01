@@ -5,7 +5,7 @@ import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
 import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.beans.value.RichObservableValue._
-import suiryc.scala.settings.{ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
+import suiryc.scala.settings.{ConfigEntry, PortableSettings}
 import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.Panes
 import usbinstall.settings.EFISettings
@@ -141,16 +141,6 @@ class OSSettings(
   def syslinuxFile: String = partitionFilesystem match {
     case _: PartitionFilesystem.extX => "extlinux.conf"
     case _: PartitionFilesystem.MS => "syslinux.cfg"
-  }
-
-  def snapshot(snapshot: SettingsSnapshot): Unit = {
-    snapshot.add(
-      SettingSnapshot(select),
-      SettingSnapshot(partitionAction),
-      SettingSnapshot(setup),
-      SettingSnapshot(bootloader),
-      SettingSnapshot(partition)
-    )
   }
 
   override def toString =
