@@ -41,7 +41,7 @@ class ChooseDeviceController extends Initializable {
     devices.getSelectionModel.selectedItemProperty.listen { newValue =>
       Panes.devices.get(newValue) match {
         case oDevice @ Some(device) =>
-          profile.device.set(newValue)
+          profile.device.set(device)
           InstallSettings.device.set(oDevice)
           vendor.setText(device.vendorOption.getOrElse(device.name))
           model.setText(device.modelOption.getOrElse(device.name))
@@ -66,7 +66,11 @@ class ChooseDeviceController extends Initializable {
       }
     }
 
-    profile.device.opt.filter(Panes.devices.contains).foreach { deviceName =>
+    profile.device.uuid.opt.flatMap { uuid =>
+      Panes.devices.values.find(_.uuid.contains(uuid)).map(_.dev.toString)
+    }.orElse {
+      profile.device.dev.opt.filter(Panes.devices.contains)
+    }.foreach { deviceName =>
       devices.getSelectionModel.select(deviceName)
     }
 

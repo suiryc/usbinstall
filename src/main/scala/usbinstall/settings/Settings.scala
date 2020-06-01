@@ -14,6 +14,7 @@ import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
 import suiryc.scala.settings.{BaseConfig, ConfigEntry, PortableSettings, SettingSnapshot, SettingsSnapshot}
 import suiryc.scala.misc.{Units, Util}
+import suiryc.scala.sys.linux.Device
 import usbinstall.USBInstall
 import usbinstall.os.{OSKind, OSSettings, PartitionFilesystem, SyslinuxComponent, SyslinuxComponentKind}
 
@@ -161,8 +162,7 @@ class ProfileSettings(
 
   val profileName: String = config.getString("name")
 
-  val device: ConfigEntry[String] =
-    ConfigEntry.from(settings, prefix ++ Seq("installation", "device"))
+  val device = new DeviceSettings(settings, prefix ++ Seq("installation", "device"))
 
   val oses: List[OSSettings] = config.getConfigList("oses").asScala.toList.map { config =>
     val kind = config.getString("kind")
@@ -202,6 +202,52 @@ class ProfileSettings(
 
   val rEFIndDrivers: List[Regex] =
     option[List[String]]("refind.drivers", config).getOrElse(List(".*")).map(new Regex(_))
+
+}
+
+class DeviceSettings(settings: PortableSettings, prefix: Seq[String]) {
+
+  import BaseConfig._
+
+  // Legacy settings only used the device path.
+  // Now we remember the path and uuid (preferred over path).
+  private lazy val legacyPath_dev = BaseConfig.joinPath(prefix)
+  private lazy val legacy_dev: Option[String] = try {
+    settings.config.option[String](legacyPath_dev)
+  } catch {
+    case _: Exception => None
+  }
+
+  val dev: ConfigEntry[String] =
+    ConfigEntry.from(settings, prefix ++ Seq("dev"))
+
+  val uuid: ConfigEntry[String] =
+    ConfigEntry.from(settings, prefix ++ Seq("uuid"))
+
+  // Migrate legacy setting to new path.
+  if (dev.opt.isEmpty) {
+    legacy_dev.foreach { path =>
+      // Belt and suspenders: even though we now create subpaths, which actually
+      // already remove the legacy parent path value as a side effect, better
+      // first remove the legacy path.
+      settings.withoutPath(legacyPath_dev)
+      dev.set(path)
+      // Also set the UUID right now if possible.
+      // Not really necessary, because upon selecting the device (done
+      // automatically when displaying the available ones) we re-set the
+      // device path and uuid through 'set' (see below).
+      Device(new File(path)).uuid.toOption.foreach(uuid.set)
+    }
+  }
+
+  def set(device: Device): Unit = {
+    dev.set(device.dev.toString)
+    device.uuid.toOption.fold {
+      uuid.reset()
+    } {
+      uuid.set
+    }
+  }
 
 }
 
