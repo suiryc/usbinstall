@@ -1,11 +1,6 @@
 package usbinstall.os
 
 import com.typesafe.scalalogging.StrictLogging
-import java.io.File
-import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
-import java.nio.file.attribute.PosixFilePermission
-import scala.io.Codec
-import scala.util.matching.Regex
 import suiryc.scala.io.{ExistsFileFilter, FilesEx, PathFinder, RegularFileFilter}
 import suiryc.scala.io.NameFilter._
 import suiryc.scala.io.PathFinder._
@@ -16,6 +11,13 @@ import suiryc.scala.util.RichEither._
 import suiryc.scala.util.matching.RegexReplacer
 import usbinstall.InstallUI
 import usbinstall.settings.{InstallSettings, ProfileSettings}
+
+import java.io.File
+import java.nio.file.{Files, LinkOption, Path, Paths, StandardCopyOption}
+import java.nio.file.attribute.PosixFilePermission
+import scala.annotation.nowarn
+import scala.io.Codec
+import scala.util.matching.Regex
 
 
 class OSInstall(
@@ -31,7 +33,8 @@ class OSInstall(
   def requirements(): Set[String] = {
     // Install actions are: format, set type, set label, refresh partitions
     val fs = settings.partitionFilesystem
-    val (formatRequirements, labelRequirements, bootloaderRequirements) = fs match {
+    // @nowarn workarounds scala 2.13.x false-positive
+    val (formatRequirements, labelRequirements, bootloaderRequirements) = (fs: @nowarn) match {
       case PartitionFilesystem.ext2 =>
         (Set(s"mkfs.$fs"), Set("e2label"), Set.empty[String])
 
@@ -212,7 +215,7 @@ class OSInstall(
     ()
   }
 
-  protected val renameSyslinuxRegexReplacer = RegexReplacer("(?i)/isolinux/", "/syslinux/")
+  protected val renameSyslinuxRegexReplacer: RegexReplacer = RegexReplacer("(?i)/isolinux/", "/syslinux/")
 
   protected def fixGrubSearch(targetRoot: Path): Unit = {
     val uuid = settings.partition.optPart.get.uuid.fold(throw _, identity)
@@ -360,9 +363,10 @@ object OSInstall
     val kind = os.settings.partitionFilesystem
     val label = os.settings.partitionLabel
 
-    def format = {
+    def format: Either[Exception, String] = {
       if (os.settings.isPartitionFormat) {
-        val command = kind match {
+        // @nowarn workarounds scala 2.13.x false-positive
+        val command = (kind: @nowarn) match {
           case PartitionFilesystem.ext2 =>
             Seq(s"mkfs.$kind", part.dev.toString)
 
@@ -388,7 +392,8 @@ object OSInstall
     }
 
     def setType() = {
-      val (partType, id) = kind match {
+      // @nowarn workarounds scala 2.13.x false-positive
+      val (partType, id) = (kind: @nowarn) match {
         case PartitionFilesystem.ext2 => ("ext2", "83")
         case PartitionFilesystem.fat16 => ("vfat", "6")
         case PartitionFilesystem.fat32 => ("vfat", "b")
@@ -419,7 +424,8 @@ w
 
     def setLabel() = {
       if (!part.label.contains(label)) {
-        val (command, envf) = kind match {
+        // @nowarn workarounds scala 2.13.x false-positive
+        val (command, envf) = (kind: @nowarn) match {
           case PartitionFilesystem.ext2 =>
             // Max ext2 label length: 16
             (Seq("e2label", part.dev.toString, label), None)
@@ -446,7 +452,7 @@ w
       else Right("Partition label already set")
     }
 
-    format && setType && setLabel &&
+    format && setType() && setLabel() &&
       part.device.partprobe().toEither("Failed to refresh partition table")
   }
 
@@ -526,8 +532,9 @@ w
         // 'syslinux' handles FAT and NTFS
         // 'extlinux' handles ext2/3/4, FAT, and NTFS
         val syslinux = SyslinuxInstall.get(profile, syslinuxVersion).get
+        // @nowarn workarounds scala 2.13.x false-positive
         val CommandResult(result, _, stderr) =
-          os.settings.partitionFilesystem match {
+          (os.settings.partitionFilesystem: @nowarn) match {
             case _: PartitionFilesystem.extX =>
               val syslinuxBin = syslinux.modules.resolve(Paths.get("extlinux", "extlinux"))
               val target = mount.to.resolve(os.settings.syslinuxRoot.getOrElse("syslinux"))

@@ -2,14 +2,14 @@ import sbt._
 import Keys._
 
 lazy val versions = Map[String, String](
-  "akka"          -> "2.5.25",
-  "config"        -> "1.3.4",
+  "akka"          -> "2.6.15",
+  "config"        -> "1.4.1",
   "javafx"        -> "12.0.1",
   "logback"       -> "1.2.3",
-  "monix"         -> "3.0.0",
-  "scala"         -> "2.13.1",
-  "scala-logging" -> "3.9.2",
-  "slf4j"         -> "1.7.28",
+  "monix"         -> "3.4.0",
+  "scala"         -> "2.13.6",
+  "scala-logging" -> "3.9.3",
+  "slf4j"         -> "1.7.31",
   "suiryc-scala"  -> "0.0.4-SNAPSHOT",
   "usbinstall"    -> "0.0.3-SNAPSHOT"
 )
@@ -23,15 +23,17 @@ lazy val usbinstall = project.in(file(".")).
     scalaVersion := versions("scala"),
 
     scalacOptions ++= Seq(
-      "-encoding", "UTF-8",
+      "-explaintypes",
       "-feature",
       "-unchecked",
       "-Werror",
-      "-Xlint:_",
-      "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen",
-      "-Ywarn-unused:_",
-      "-Ywarn-value-discard"
+      "-Wdead-code",
+      "-Wextra-implicit",
+      "-Wnumeric-widen",
+      "-Wunused",
+      "-Wvalue-discard",
+      "-Xcheckinit",
+      "-Xlint"
     ),
     resolvers += Resolver.mavenLocal,
 
@@ -56,11 +58,9 @@ lazy val usbinstall = project.in(file(".")).
     publishTo := Some(Resolver.mavenLocal)
   )
 
-assemblyMergeStrategy in assembly := {
+ThisBuild / assemblyMergeStrategy := {
   case "module-info.class" => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
-    oldStrategy(x)
+  case x => (ThisBuild / assemblyMergeStrategy).value.apply(x)
 }
 
 lazy val jfxPlatform = {

@@ -15,7 +15,7 @@ import usbinstall.settings.Settings
 class LogsController extends Initializable {
 
   @FXML
-  protected[usbinstall] var logThreshold: ComboBox[LogLevel.Value] = _
+  protected[usbinstall] var logThreshold: ComboBox[LogLevel.LevelValue] = _
 
   @FXML
   protected var textArea: TextArea = _

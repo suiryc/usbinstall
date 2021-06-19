@@ -1,13 +1,15 @@
 package usbinstall.os
 
-import java.nio.file.Path
-import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
-import scala.util.matching.Regex
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.settings.{BaseConfig, ConfigEntry, PortableSettings}
 import suiryc.scala.sys.linux.{Device, DevicePartition}
 import usbinstall.settings.{EFISettings, InstallSettings, ProfileSettings}
+
+import java.nio.file.Path
+import javafx.beans.property.{ObjectProperty, SimpleObjectProperty}
+import scala.annotation.nowarn
+import scala.util.matching.Regex
 
 
 object OSKind extends Enumeration {
@@ -120,7 +122,8 @@ class OSSettings(
 
   def isBootloader: Boolean = isSelected && bootloader.get
 
-  def syslinuxFile: String = partitionFilesystem match {
+  // @nowarn workarounds scala 2.13.x false-positive
+  def syslinuxFile: String = (partitionFilesystem: @nowarn) match {
     case _: PartitionFilesystem.extX => "extlinux.conf"
     case _: PartitionFilesystem.MS => "syslinux.cfg"
   }

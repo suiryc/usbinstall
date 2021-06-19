@@ -15,7 +15,7 @@ import usbinstall.settings.{ErrorAction, Settings}
 class OptionsController extends Initializable {
 
   @FXML
-  protected var logInstallThreshold: ComboBox[LogLevel.Value] = _
+  protected var logInstallThreshold: ComboBox[LogLevel.LevelValue] = _
 
   @FXML
   protected var componentInstallError: ComboBox[ErrorAction.Value] = _

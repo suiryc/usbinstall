@@ -1,14 +1,11 @@
 package usbinstall.controllers
 
 import com.typesafe.scalalogging.StrictLogging
-import java.net.URL
-import java.util.ResourceBundle
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
 import javafx.scene.{Parent, Scene}
 import javafx.scene.control.{Label, Tab, TabPane, TextArea}
 import javafx.scene.layout.{AnchorPane, GridPane, VBox}
 import javafx.stage.{Modality, Stage}
-import scala.util.{Failure, Success}
 import suiryc.scala.concurrent.{Cancellable, CancellableFuture, Cancelled}
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
@@ -18,6 +15,11 @@ import suiryc.scala.log.ThresholdLogLinePatternWriter
 import usbinstall.{HasEventSubscriptions, InstallUI, InstallationException, StepPane, USBInstall, UseStepPane}
 import usbinstall.os.{OSInstall, OSKind}
 import usbinstall.settings.{ErrorAction, InstallSettings, Settings}
+
+import java.net.URL
+import java.util.ResourceBundle
+import scala.annotation.nowarn
+import scala.util.{Failure, Success}
 
 
 class InstallController
@@ -264,7 +266,8 @@ class InstallController
             def doSkip() =
               (osTab, osLogWriter, previousFailedOSes :+ settings.label)
 
-            Settings.core.componentInstallError.get match {
+            // @nowarn workarounds scala 2.13.x false-positive
+            (Settings.core.componentInstallError.get: @nowarn) match {
               case ErrorAction.Ask =>
                 Dialogs.error(
                   owner = Some(USBInstall.stage),

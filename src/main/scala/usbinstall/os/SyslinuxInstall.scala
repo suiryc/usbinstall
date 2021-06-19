@@ -515,7 +515,7 @@ object SyslinuxInstall
     val files = roots.flatMap { path =>
       val finder = PathFinder(path) ** (regex & RegularFileFilter)
 
-      finder.get.map(_.toPath)
+      finder.get().map(_.toPath)
     }
     files.sorted.reverse.headOption
   }

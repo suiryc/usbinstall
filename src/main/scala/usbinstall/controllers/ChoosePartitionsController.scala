@@ -1,8 +1,6 @@
 package usbinstall.controllers
 
 import com.typesafe.scalalogging.StrictLogging
-import java.net.URL
-import java.util.ResourceBundle
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.ActionEvent
 import javafx.fxml.{FXML, FXMLLoader, Initializable}
@@ -12,7 +10,6 @@ import javafx.scene.control._
 import javafx.scene.layout.{AnchorPane, ColumnConstraints, GridPane, RowConstraints}
 import javafx.scene.paint.Color
 import javafx.stage.Popup
-import scala.annotation.unused
 import suiryc.scala.javafx.beans.value.RichObservableValue
 import suiryc.scala.javafx.beans.value.RichObservableValue._
 import suiryc.scala.javafx.concurrent.JFXSystem
@@ -23,6 +20,10 @@ import suiryc.scala.sys.linux.DevicePartition
 import usbinstall.{HasEventSubscriptions, StepPane, USBInstall, UseStepPane}
 import usbinstall.os._
 import usbinstall.settings.InstallSettings
+
+import java.net.URL
+import java.util.ResourceBundle
+import scala.annotation.{nowarn, unused}
 
 
 class ChoosePartitionsController
@@ -269,7 +270,8 @@ class ChoosePartitionsController
     attachDelayedPopup(installPopup, osInstall)
 
     def partitionActionToUI(v: OSPartitionAction.Value): Unit = {
-      v match {
+      // @nowarn workarounds scala 2.13.x false-positive
+      (v: @nowarn) match {
         case OSPartitionAction.Copy =>
           osInstall.setIndeterminate(true)
           osInstall.setSelected(true)

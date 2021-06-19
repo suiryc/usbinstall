@@ -8,7 +8,6 @@ import scala.util.matching.Regex
 import suiryc.scala.RichEnumeration
 import suiryc.scala.io.{DirectoryFileFilter, PathFinder, PathsEx}
 import suiryc.scala.io.NameFilter._
-import suiryc.scala.io.PathFinder._
 import suiryc.scala.javafx.beans.property.ConfigEntryProperty
 import suiryc.scala.javafx.scene.control.Dialogs
 import suiryc.scala.log.LogLevel
@@ -131,11 +130,11 @@ class Settings(path: Path) {
   val logInstallPattern: String =
     ConfigEntry.from[String](settings, prefix ++ Seq(KEY_LOG, KEY_INSTALL, KEY_PATTERN)).get
 
-  val logDebugThreshold: ConfigEntryProperty[LogLevel.Value] =
-    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_DEBUG, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.Value]]
+  val logDebugThreshold: ConfigEntryProperty[LogLevel.LevelValue] =
+    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_DEBUG, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.LevelValue]]
 
-  val logInstallThreshold: ConfigEntryProperty[LogLevel.Value] =
-    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_INSTALL, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.Value]]
+  val logInstallThreshold: ConfigEntryProperty[LogLevel.LevelValue] =
+    ConfigEntryProperty(ConfigEntry.from(settings, LogLevel, prefix ++ Seq(KEY_LOG, KEY_INSTALL, KEY_THRESHOLD))).asInstanceOf[ConfigEntryProperty[LogLevel.LevelValue]]
 
   val componentInstallError: ConfigEntry[ErrorAction.Value] =
     ConfigEntry.from(settings, ErrorAction, prefix ++ Seq("component-install-error"))
@@ -190,7 +189,7 @@ class ProfileSettings(
   }
 
   val isos: List[Path] = isoPath.flatMap { path =>
-    ((path:PathFinder) **(""".*\.iso""".r, DirectoryFileFilter, true, Some(2))).get.map(_.toPath)
+    (path:PathFinder).**(""".*\.iso""".r, DirectoryFileFilter, followLinks = true, Some(2)).get().map(_.toPath)
   }.sortBy { _.toString }.reverse
 
   val toolsPath: List[Path] = config.getStringList("tools.path").asScala.toList.map { path =>
