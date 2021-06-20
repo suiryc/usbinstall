@@ -59,7 +59,7 @@ lazy val usbinstall = project.in(file(".")).
   )
 
 ThisBuild / assemblyMergeStrategy := {
-  case "module-info.class" => MergeStrategy.discard
+  case PathList(x @ _*) if x.last == "module-info.class" => MergeStrategy.discard
   case x => (ThisBuild / assemblyMergeStrategy).value.apply(x)
 }
 
