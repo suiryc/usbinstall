@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import suiryc.scala.sbt.AssemblyEx
 
 lazy val versions = Map[String, String](
   "akka"          -> "2.6.15",
@@ -15,8 +16,8 @@ lazy val versions = Map[String, String](
 )
 
 
-lazy val usbinstall = project.in(file(".")).
-  settings(
+lazy val usbinstall = project.in(file("."))
+  .settings(
     organization := "suiryc",
     name := "usbinstall",
     version := versions("usbinstall"),
@@ -60,6 +61,7 @@ lazy val usbinstall = project.in(file(".")).
 
 ThisBuild / assemblyMergeStrategy := {
   case PathList(x @ _*) if x.last == "module-info.class" => MergeStrategy.discard
+  case "application.conf" => AssemblyEx.concatJarThenDir
   case x => (ThisBuild / assemblyMergeStrategy).value.apply(x)
 }
 
